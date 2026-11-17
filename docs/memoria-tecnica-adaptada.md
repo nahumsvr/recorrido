@@ -14,7 +14,7 @@ Auditorio de la Facultad de Informática, UAQ · Dream Team Networks
 | Cámaras VIGI C340I (bullet) | 4 | **2** |
 | Bocinas JBL EON715 | 4 (sin ubicación) | **4**, 2 por grada, ubicadas |
 | Canalización | 500 m (estimación) | **390 m** (calculada sobre rutas) |
-| Cable UTP Cat6 | 9 cajas (2 745 m) | **5 cajas** (1 525 m; ≈ 1 205 m calculados) |
+| Cable UTP Cat6 | 9 cajas (2 745 m) | **5 cajas** (1 525 m; ≈ 1 208 m calculados) |
 | Puntos de red (salidas) | 28 | **23** (15 AP + 7 cámaras + 1 escritorio) |
 | Perforaciones (muros y losa) | 0 (no estimadas) | **7 puntos, 13 mangas** (§5.3) |
 | Precio total al cliente (con IVA) | $1,322,718.15 | **$1,272,879.81** |
@@ -126,30 +126,43 @@ Las posiciones este son el espejo de las oeste respecto a X = 21.5.
 
 ### 5.2 Trayectorias
 
-Los datos salen todos del rack (14.44, 30.1) y se reparten por tres ramas. Alturas: bandejas de las canchas a **5.7 m** (sobre la última fila, 3.77 m, y bajo el techo, 6.85 m); vacíos técnicos a 2.4–2.5 m; anexo a 2.8 m; oficinas a 2.5 m.
+Los datos salen todos del rack (14.44, 30.1) y se reparten por tres ramas. Alturas: bandejas de las canchas a **5.7 m** (sobre la última fila, 3.77 m, y bajo el techo, 6.85 m); vacíos técnicos a 2.4–2.5 m; anexo a 3.1 m (bajo el dintel del vano, 3.28 m); oficinas a 2.5 m.
 
 | ID | Tipo | Tamaño | Recorrido | Largo (m) | Cables |
 |---|---|---|---|---:|---:|
 | ROOM_W | Bandeja | 200×50 | Rack → manga PEN-1 (muro oeste del cuarto) | 3.4 | 10 |
-| VOID_W | Bandeja | 200×50 | Vacío técnico oeste, pasillo trasero (Y 31.1) | 11.5 | 10 |
+| VOID_W | Bandeja | 200×50 | Vacío técnico oeste, pasillo trasero (Y 31.1) | 11.8 | 10 |
 | RISER_W | Manga/EMT | Ø100 | Núcleo PEN-2 por la losa y subida | 3.3 | 10 |
-| WEST | Bandeja | 100×50 | Muro oeste, sobre grada y canchas | 31.3 | 7 |
-| NORTH_W | Bandeja | 100×50 | Muro norte hasta X 37.9 | 37.8 | 5 |
-| BACK | Bandeja | 100×50 | Muro trasero, sobre la última fila, hasta X 25.8 | 26.2 | 3 |
+| WEST | Bandeja | 100×50 | Muro oeste, sobre grada y canchas | 31.0 | 7 |
+| NORTH_W | Bandeja | 100×50 | Muro norte hasta X 37.9 | 37.7 | 5 |
+| BACK | Bandeja | 100×50 | Muro trasero, sobre la última fila, hasta X 25.8 | 26.5 | 3 |
 | ANNEX_FEED | Bandeja | 200×50 | Rack → manga PEN-3 (muro sur del cuarto) | 4.0 | 12 |
 | ANNEX_W | Bandeja | 100×50 | Anexo, hacia el oeste | 7.9 | 2 |
 | ANNEX_E | Bandeja | 100×50 | Anexo, hacia el este (cruza colgada el vano del pasillo) | 23.1 | 10 |
-| PEN4 | Manga | Ø100 | Muro sur → vacío este | 1.3 | 7 |
+| PEN4 | Manga | Ø100 | Muro sur → vacío este | 1.6 | 7 |
 | VOID_E | Bandeja | 100×50 | Vacío técnico este | 6.1 | 7 |
-| PEN5 | Manga | Ø100 | Muro oeste de oficinas | 2.7 | 7 |
-| OFFICES | Bandeja | 100×50 | Oficinas, muros oeste y norte | 10.6 | 7 |
-| PEN6 | Manga | Ø100 | Muro norte de oficinas → escenario | 0.9 | 4 |
+| PEN5 | Manga | Ø100 | Muro oeste de oficinas | 2.3 | 7 |
+| OFFICES | Bandeja | 100×50 | Oficinas, muros oeste y norte | 11.4 | 7 |
+| PEN6 | Manga | Ø100 | Muro norte de oficinas → escenario | 0.5 | 4 |
 | STAGE | Bandeja | 100×50 | Borde sur y muro este del escenario | 28.7 | 4 |
 | STAGE_N | Bandeja | 100×50 | Muro este del escenario, tramo norte | 4.1 | 1 |
 | BR_M18 | Bandeja | 100×50 | Ramal al AP M18 | 5.5 | 1 |
-| AUDIO_L / AUDIO_R | Canaleta | 30×30 | Ver §4.3 | 86.1 / 21.4 | — |
+| AUDIO_L / AUDIO_R | Canaleta | 30×30 | Ver §4.3 | 86.3 / 21.4 | — |
 
-Totales: **200.2 m de bandeja de datos, 8.2 m de mangas de datos, ≈ 39 m de bajadas EMT y ≈ 102 m de canaleta de audio**, es decir ≈ 349 m; con 10% de reserva, **390 m**.
+Totales: **201.2 m de bandeja de datos, 7.7 m de mangas de datos, ≈ 38 m de bajadas EMT y ≈ 102 m de canaleta de audio**, es decir ≈ 349 m; con 10% de reserva, **390 m**.
+
+#### Pegado a paredes
+
+Cada bandeja, manga y bajada queda a **≤ 0.35 m de un muro, techo o poste** en todo su largo (la prueba mide la distancia al modelo cada 10 cm). Los vacíos técnicos y el cuarto de redes cuentan el techo; el vano del pasillo se cruza pegado al dintel (h 3.1 m, el dintel está a 3.28 m); el muro oeste, el norte y el trasero llevan la bandeja a 0.2 m de la cara. El escenario tiene postes sueltos y su techo está a 8.2 m, así que **4 tramos no pueden pegarse** y se resuelven con soporte propio:
+
+| Tramo | Largo libre | Soporte |
+|---|---:|---|
+| Bandeja STAGE, más allá del muro de oficinas (X > 50.7) | ≈ 1.7 m | Ménsula en cada extremo |
+| Ramal BR_M18 (hacia el poste del AP M18) | ≈ 5.2 m | Charola colgada del techo del escenario con varilla roscada cada 1.5 m |
+| Bajada a M17 (poste suelto) | ≈ 2.4 m | Tubo rígido entre el muro de oficinas y el poste, con soporte cada ≤ 1.5 m |
+| Bajada a M18 | ≈ 3 m | Tubo rígido a lo largo del poste |
+
+Acercar esos tramos a una pared alargaría el cable de M18 por encima de los 90 m.
 
 ### 5.3 Perforaciones (los "hoyos")
 
@@ -158,7 +171,7 @@ Cada una se validó con el modelo: la trayectoria atraviesa realmente ese sólid
 | ID | Dónde | Posición (X, Y, h) | Mangas | Espesor |
 |---|---|---|---|---|
 | PEN-1 | Muro oeste del cuarto de redes → vacío oeste | (12.29, 31.1, 2.4) | 2 × Ø100 | 0.20 m |
-| PEN-2 | **Losa** de la grada oeste (techo del vacío → piso de la grada) | (0.5, 31.1, 3.2) | 2 × Ø100 (núcleo) | 1.18 m |
+| PEN-2 | **Losa** de la grada oeste (techo del vacío → piso de la grada) | (0.2, 31.1, 3.2) | 2 × Ø100 (núcleo) | 1.18 m |
 | PEN-3 | Muro sur del cuarto de redes → anexo | (12.9, 32.3, 2.5) | 2 × Ø100 | 0.20 m |
 | PEN-4 | Anexo → vacío este (junto a la puerta de X 34.5–35.4) | (36.0, 32.3, 2.5) | 2 × Ø100 | 0.20 m |
 | PEN-5 | Vacío este → oficinas (muro oeste de oficinas) | (42.58, 30.0, 2.5) | 2 × Ø100 | 0.20 m |
@@ -178,36 +191,36 @@ Charola = distancia por las trayectorias hasta la bajada; enlace permanente = ch
 
 | ID | Tipo | Última trayectoria | Charola (m) | Bajada (m) | Enlace (m) | Corte (m) |
 |---|---|---|---:|---:|---:|---:|
-| M01 | AP | NORTH_W | 54.1 | 2.6 | 56.7 | 67.4 |
-| M02 | AP | NORTH_W | 65.1 | 2.5 | 67.6 | 79.4 |
-| M03 | AP | NORTH_W | 76.2 | 2.5 | 78.7 | 91.5 |
-| M04 | AP | NORTH_W | 87.1 | 2.5 | **89.6** | 103.6 |
-| M06 | AP | WEST | 30.2 | 2.4 | 32.7 | 40.9 |
-| M07 | AP | WEST | 20.4 | 0.7 | 21.2 | 28.3 |
-| M09 | AP | BACK | 35.0 | 0.6 | 35.6 | 44.2 |
-| M10 | AP | BACK | 44.0 | 0.5 | 44.6 | 54.0 |
-| M12 | AP | OFFICES (+ PEN-7) | 38.8 | 2.4 | 41.2 | 50.3 |
-| M13 | AP | ANNEX_W | 5.3 | 0.6 | 6.0 | 11.6 |
-| M14 | AP | ANNEX_E | 12.4 | 2.1 | 14.5 | 20.9 |
-| M15 | AP | ANNEX_E | 21.9 | 0.6 | 22.6 | 29.8 |
-| M16 | AP | OFFICES | 45.3 | 0.8 | 46.1 | 55.7 |
-| M17 | AP | STAGE | 48.7 | 5.1 | 53.8 | 64.2 |
-| M18 | AP | BR_M18 | 82.9 | 3.6 | 86.5 | 100.1 |
-| CAM02 | Domo | NORTH_W | 49.6 | 2.4 | 52.0 | 62.2 |
-| CAM04 | Domo | STAGE_N | 81.4 | 1.8 | 83.2 | 96.5 |
-| CAM05 | Domo | STAGE | 55.7 | 0.8 | 56.5 | 67.1 |
-| CAM07 | Domo | OFFICES | 37.2 | 1.7 | 38.9 | 47.8 |
-| CAM10 | Domo | BACK | 19.2 | 0.7 | 19.8 | 26.8 |
-| CAM11 | Bullet | ANNEX_W | 11.9 | 0.3 | 12.2 | 18.4 |
-| CAM12 | Bullet | ANNEX_E | 27.1 | 1.5 | 28.6 | 36.5 |
+| M01 | AP | NORTH_W | 54.0 | 2.6 | 56.6 | 67.3 |
+| M02 | AP | NORTH_W | 65.0 | 2.5 | 67.5 | 79.3 |
+| M03 | AP | NORTH_W | 76.1 | 2.5 | 78.6 | 91.4 |
+| M04 | AP | NORTH_W | 87.0 | 2.5 | **89.5** | 103.5 |
+| M06 | AP | WEST | 30.2 | 2.5 | 32.7 | 40.9 |
+| M07 | AP | WEST | 20.4 | 0.8 | 21.2 | 28.3 |
+| M09 | AP | BACK | 35.6 | 0.6 | 36.2 | 44.8 |
+| M10 | AP | BACK | 44.6 | 0.5 | 45.2 | 54.7 |
+| M12 | AP | OFFICES (+ PEN-7) | 38.7 | 2.0 | 40.7 | 49.7 |
+| M13 | AP | ANNEX_W | 5.3 | 0.9 | 6.3 | 11.9 |
+| M14 | AP | ANNEX_E | 12.4 | 1.8 | 14.2 | 20.6 |
+| M15 | AP | ANNEX_E | 21.9 | 0.9 | 22.9 | 30.2 |
+| M16 | AP | OFFICES | 45.9 | 0.5 | 46.4 | 56.1 |
+| M17 | AP | STAGE | 49.0 | 5.1 | 54.1 | 64.5 |
+| M18 | AP | BR_M18 | 83.2 | 3.6 | 86.8 | 100.4 |
+| CAM02 | Domo | NORTH_W | 49.5 | 2.4 | 51.9 | 62.1 |
+| CAM04 | Domo | STAGE_N | 81.7 | 1.8 | 83.5 | 96.8 |
+| CAM05 | Domo | STAGE | 55.9 | 0.8 | 56.7 | 67.4 |
+| CAM07 | Domo | OFFICES | 37.1 | 1.3 | 38.4 | 47.3 |
+| CAM10 | Domo | BACK | 19.5 | 0.4 | 19.8 | 26.8 |
+| CAM11 | Bullet | ANNEX_W | 11.9 | 0.6 | 12.5 | 18.7 |
+| CAM12 | Bullet | ANNEX_E | 27.1 | 1.8 | 28.9 | 36.8 |
 
-Se suma 1 salida para el escritorio de operación (≈ 8 m). **Corte total ≈ 1 205 m → 5 cajas de 305 m (1 525 m)**; la quinta caja es reserva por tendido y reterminado.
+Se suma 1 salida para el escritorio de operación (≈ 8 m). **Corte total ≈ 1 208 m → 5 cajas de 305 m (1 525 m)**; la quinta caja es reserva por tendido y reterminado.
 
 ### 5.5 Cumplimiento
 
 | Requisito | Criterio | Resultado |
 |---|---|---|
-| ANSI/TIA-568.2 (enlace permanente) | ≤ 90 m | **Cumple.** Máximo 89.6 m (M04); M18 86.5 m, CAM04 83.2 m, M03 78.7 m |
+| ANSI/TIA-568.2 (enlace permanente) | ≤ 90 m | **Cumple.** Máximo 89.5 m (M04); M18 86.8 m, CAM04 83.5 m, M03 78.6 m |
 | ANSI/TIA-568.2 (canal) | ≤ 100 m con parcheos | M04 queda justo: hay que medir el tendido real; si pasa de 90 m, el remedio es un switch intermedio en el lado norte (ver §9) |
 | ANSI/TIA-569 (llenado de charola) | ≤ 50% con 25% de crecimiento | Cumple en todas (la más cargada, 200 mm con 12 cables, usa ≈ 5%) |
 | ANSI/TIA-569 (llenado de ducto) | ≤ 40% con 25% de crecimiento | Cumple: mangas Ø100 mm con ≤ 10 cables usan ≈ 5% |
@@ -277,7 +290,7 @@ Presupuesto máximo $1,600,000.00 → se usa **79.55%**; margen **$327,120.19** 
 ## 9. Supuestos y pendientes
 
 1. **Perforaciones:** las 7 de §5.3 salen de las trayectorias que el modelo muestra libres; confirmar en obra que no haya instalaciones ni varilla (sobre todo el núcleo PEN-2 de 1.18 m en la grada oeste) y que cada muro sea el esperado. **Obra civil no presupuestada:** 13 mangas, 2 núcleos de concreto y el sellado cortafuego no tienen partida en la lista de precios del documento; falta cotizarlos.
-1b. **Enlace M04 (89.6 m):** deja 0.4 m de margen respecto a los 90 m. Si en obra el tendido real lo pasa, la solución es un switch PoE de 8 puertos en el lado norte alimentado por la fibra OM3 y los transceptores SFP+ que ya están presupuestados (el switch no está en la lista).
+1b. **Enlace M04 (89.5 m):** deja 0.5 m de margen respecto a los 90 m. Si en obra el tendido real lo pasa, la solución es un switch PoE de 8 puertos en el lado norte alimentado por la fibra OM3 y los transceptores SFP+ que ya están presupuestados (el switch no está en la lista).
 2. Posición del puesto FOH (mesa sobre el escenario en 47.6, 24.2; mesa y tablero a 0.4 m de la cabecera de la escalera sur) y cable de audio L por la parte alta del muro trasero (≈ 86 m de XLR) y lote de XLR por verificar.
 3. Cobertura de canchas y escenario sin refuerzo de audio: decisión del cliente. Protección de las bocinas contra balonazos.
 4. Mano de obra: sin ajustar por menos cámaras y nuevas rutas.

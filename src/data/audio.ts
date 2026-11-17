@@ -91,7 +91,8 @@ const WALL_RUN_H = 3.0;
 export const FLOOR_RUN_H = 0.08;
 export const FLOOR_RUN_Y = STAND_FRONT_Y - 0.15;
 const BACK_TRAY_Y = 32.12;
-const WEST_END_X = 0.4;
+/** 0.32 m off the west wall: clear of the data tray (X 0.15-0.25) the riser crosses at right angles. */
+const WEST_END_X = 0.32;
 const EAST_END_X = 42.4;
 const RISER = { x: 42.3, y: 24.48 } as const;
 const toCorner = (): PlanPoint[] => [

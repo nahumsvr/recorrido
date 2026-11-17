@@ -1,7 +1,7 @@
 import { DoubleSide, Ray, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { MODEL_ACCESS_POINTS } from '../../src/data/modelAps.ts';
-import { CABLE_DEVICES, DEVICE_ROUTES, PATHWAYS, PENETRATIONS, cablesOn, pathLength, pathway } from '../../src/data/cabling.ts';
+import { CABLE_DEVICES, DEVICE_ROUTES, FREE_SPANS, HUG_DISTANCE_M, PATHWAYS, PENETRATIONS, cablesOn, pathLength, pathway } from '../../src/data/cabling.ts';
 import { planDrop } from '../../src/domain/dropRouting.ts';
 import { loadBuildingBvh } from '../helpers/realModel.ts';
 
@@ -162,5 +162,53 @@ describe('cabling: containment (TIA-569)', () => {
     const total = PATHWAYS.filter((w) => w.service === 'data').reduce((s, w) => s + pathLength(w.points), 0);
     expect(total).toBeGreaterThan(150);
     expect(total).toBeLessThan(260);
+  });
+});
+
+describe('cabling: pathways and drops hug the walls', () => {
+  /** Length of a segment farther than HUG_DISTANCE_M from every wall, ceiling or post. */
+  async function farLength(a: P, b: P): Promise<number> {
+    const bvh = await loadBuildingBvh();
+    const A = v(a);
+    const B = v(b);
+    const len = A.distanceTo(B);
+    const target = { point: new Vector3(), distance: 0, faceIndex: 0 };
+    let far = 0;
+    const step = 0.1;
+    for (let s = 0; s <= len; s += step) {
+      const r = bvh.closestPointToPoint(A.clone().lerp(B, len ? s / len : 0), target);
+      if (r && r.distance > HUG_DISTANCE_M) far += step;
+    }
+    return far;
+  }
+  const allowed = (id: string, kind: 'pathway' | 'drop') => FREE_SPANS.find((f) => f.id === id && f.kind === kind)?.maxFarM ?? 0;
+
+  it('every data tray and conduit stays within 0.35 m of a surface, except the documented stage spans', async () => {
+    for (const w of PATHWAYS) {
+      let far = 0;
+      for (let i = 1; i < w.points.length; i++) far += await farLength(w.points[i - 1]!, w.points[i]!);
+      expect(far, w.id).toBeLessThanOrEqual(allowed(w.id, 'pathway'));
+    }
+  });
+
+  it('every drop to an AP or camera stays within 0.35 m of a surface, except the documented stage spans', async () => {
+    cachedBvh = await loadBuildingBvh();
+    for (const r of DEVICE_ROUTES) {
+      const ceiling = MODEL_ACCESS_POINTS.find((x) => x.id === r.device.id)?.mountHint?.kind === 'ceiling';
+      const d = ceiling ? { ...r.device.position, h: r.device.position.h - 0.1 } : r.device.position;
+      const plan = planDrop(r.attach, d, () => 0);
+      let far = 0;
+      for (let i = 1; i < plan.points.length; i++) far += await farLength(plan.points[i - 1]!, plan.points[i]!);
+      expect(far, r.device.id).toBeLessThanOrEqual(allowed(r.device.id, 'drop'));
+    }
+  });
+
+  it('the documented free spans really exist (no stale exceptions)', async () => {
+    for (const f of FREE_SPANS.filter((x) => x.kind === 'pathway')) {
+      const w = pathway(f.id);
+      let far = 0;
+      for (let i = 1; i < w.points.length; i++) far += await farLength(w.points[i - 1]!, w.points[i]!);
+      expect(far, f.id).toBeGreaterThan(0.3);
+    }
   });
 });

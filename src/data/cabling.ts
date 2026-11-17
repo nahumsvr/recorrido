@@ -34,10 +34,11 @@ const SLEEVE_4IN = { widthMm: 100, depthMm: 100 } as const;
 /** Heights: courts trays hang 0.95 m under the roof start (6.85 m) and above the top stand row (3.77 m). */
 const H_HIGH = 5.7;
 const H_VOID = 2.4;
-const H_ANNEX = 2.8;
+/** Just under the annex ceiling / the lintel over the aisle opening (soffit at 3.28 m). */
+const H_ANNEX = 3.1;
 const H_OFFICES = 2.5;
 /** Wall faces: west X 0, north Y 0, east X 54.6, back (south) Y 32.2. Trays sit 0.15 m off the face. */
-const X_WEST = 0.15;
+const X_WEST = 0.2;
 const Y_NORTH = 0.15;
 const X_EAST = 54.45;
 const Y_BACK = 32.05;
@@ -45,11 +46,11 @@ const Y_BACK = 32.05;
 export const PATHWAYS: readonly Pathway[] = [
   // -- Data, west branch: network room → west void → slab core → courts west wall / north wall / back wall.
   { id: 'ROOM_W', kind: 'tray', service: 'data', label: 'Network room, rack to west wall sleeve', ...BASKET_WIDE, points: [p(14.44, 30.1, H_VOID), p(14.44, 31.1, H_VOID), p(12.0, 31.1, H_VOID)] },
-  { id: 'VOID_W', kind: 'tray', service: 'data', label: 'West stand void, back corridor', ...BASKET_WIDE, points: [p(12.0, 31.1, H_VOID), p(0.5, 31.1, H_VOID)] },
-  { id: 'RISER_W', kind: 'conduit', service: 'data', label: 'Slab core to the stand top, then riser', ...SLEEVE_4IN, points: [p(0.5, 31.1, H_VOID), p(0.5, 31.1, H_HIGH)] },
-  { id: 'WEST', kind: 'tray', service: 'data', label: 'West wall, above the stands and courts', ...BASKET, points: [p(0.5, 31.1, H_HIGH), p(X_WEST, 31.1, H_HIGH), p(X_WEST, Y_NORTH, H_HIGH)] },
+  { id: 'VOID_W', kind: 'tray', service: 'data', label: 'West stand void, back corridor', ...BASKET_WIDE, points: [p(12.0, 31.1, H_VOID), p(X_WEST, 31.1, H_VOID)] },
+  { id: 'RISER_W', kind: 'conduit', service: 'data', label: 'Slab core to the stand top, then riser', ...SLEEVE_4IN, points: [p(X_WEST, 31.1, H_VOID), p(X_WEST, 31.1, H_HIGH)] },
+  { id: 'WEST', kind: 'tray', service: 'data', label: 'West wall, above the stands and courts', ...BASKET, points: [p(X_WEST, 31.1, H_HIGH), p(X_WEST, Y_NORTH, H_HIGH)] },
   { id: 'NORTH_W', kind: 'tray', service: 'data', label: 'North wall, west half', ...BASKET, points: [p(X_WEST, Y_NORTH, H_HIGH), p(37.9, Y_NORTH, H_HIGH)] },
-  { id: 'BACK', kind: 'tray', service: 'data', label: 'Back wall, above the last stand row', ...BASKET, points: [p(0.5, 31.1, H_HIGH), p(0.5, Y_BACK, H_HIGH), p(25.8, Y_BACK, H_HIGH)] },
+  { id: 'BACK', kind: 'tray', service: 'data', label: 'Back wall, above the last stand row', ...BASKET, points: [p(X_WEST, 31.1, H_HIGH), p(X_WEST, Y_BACK, H_HIGH), p(25.8, Y_BACK, H_HIGH)] },
   // -- Data, annex: room south wall sleeve → annex trunk.
   { id: 'ANNEX_FEED', kind: 'tray', service: 'data', label: 'Rack to the south wall sleeve', ...BASKET_WIDE, points: [p(14.44, 30.1, H_VOID), p(12.9, 30.1, 2.5), p(12.9, 32.6, 2.5)] },
   { id: 'ANNEX_W', kind: 'tray', service: 'data', label: 'Annex trunk, west', ...BASKET, points: [p(12.9, 32.6, H_ANNEX), p(5.0, 32.6, H_ANNEX)] },
@@ -57,10 +58,10 @@ export const PATHWAYS: readonly Pathway[] = [
   // -- Data, east branch: annex → east void → offices → stage.
   { id: 'PEN4', kind: 'conduit', service: 'data', label: 'South wall sleeve to the east void', ...SLEEVE_4IN, points: [p(36.0, 32.6, H_ANNEX), p(36.0, 32.6, 2.5), p(36.0, 31.6, 2.5)] },
   { id: 'VOID_E', kind: 'tray', service: 'data', label: 'East stand void, back corridor', ...BASKET, points: [p(36.0, 31.6, 2.5), p(40.5, 31.6, 2.5), p(40.5, 30.0, 2.5)] },
-  { id: 'PEN5', kind: 'conduit', service: 'data', label: 'Offices west wall sleeve', ...SLEEVE_4IN, points: [p(40.5, 30.0, 2.5), p(43.2, 30.0, H_OFFICES)] },
-  { id: 'OFFICES', kind: 'tray', service: 'data', label: 'Offices, west and north walls', ...BASKET, points: [p(43.2, 30.0, H_OFFICES), p(43.2, 25.2, H_OFFICES), p(49.0, 25.2, H_OFFICES)] },
-  { id: 'PEN6', kind: 'conduit', service: 'data', label: 'Offices north wall sleeve to the stage side', ...SLEEVE_4IN, points: [p(49.0, 25.2, H_OFFICES), p(49.0, 24.3, H_OFFICES)] },
-  { id: 'STAGE', kind: 'tray', service: 'data', label: 'Stage south edge and east wall', ...BASKET, points: [p(49.0, 24.3, H_OFFICES), p(X_EAST, 24.3, H_OFFICES), p(X_EAST, 24.3, H_HIGH), p(X_EAST, 4.26, H_HIGH)] },
+  { id: 'PEN5', kind: 'conduit', service: 'data', label: 'Offices west wall sleeve', ...SLEEVE_4IN, points: [p(40.5, 30.0, 2.5), p(42.8, 30.0, H_OFFICES)] },
+  { id: 'OFFICES', kind: 'tray', service: 'data', label: 'Offices, west and north walls', ...BASKET, points: [p(42.8, 30.0, H_OFFICES), p(42.8, 24.85, H_OFFICES), p(49.0, 24.85, H_OFFICES)] },
+  { id: 'PEN6', kind: 'conduit', service: 'data', label: 'Offices north wall sleeve to the stage side', ...SLEEVE_4IN, points: [p(49.0, 24.85, H_OFFICES), p(49.0, 24.35, H_OFFICES)] },
+  { id: 'STAGE', kind: 'tray', service: 'data', label: 'Stage south edge and east wall', ...BASKET, points: [p(49.0, 24.35, H_OFFICES), p(X_EAST, 24.35, H_OFFICES), p(X_EAST, 24.35, H_HIGH), p(X_EAST, 4.26, H_HIGH)] },
   { id: 'STAGE_N', kind: 'tray', service: 'data', label: 'Stage east wall, north end', ...BASKET, points: [p(X_EAST, 4.26, H_HIGH), p(X_EAST, Y_NORTH, H_HIGH)] },
   { id: 'BR_M18', kind: 'tray', service: 'data', label: 'Stage branch to M18', ...BASKET, points: [p(X_EAST, 4.26, H_HIGH), p(49.0, 4.26, H_HIGH)] },
   // -- Audio (see src/data/audio.ts for the exact routes).
@@ -92,12 +93,33 @@ export interface Penetration {
 /** Every hole the plan needs. Everything else is surface-mounted (anchors only). */
 export const PENETRATIONS: readonly Penetration[] = [
   { id: 'PEN-1', kind: 'wall', description: 'Network room west wall → west stand void', position: p(12.29, 31.1, H_VOID), sleeves: 2, diameterMm: 100, pathway: 'ROOM_W', thicknessM: 0.2 },
-  { id: 'PEN-2', kind: 'slab', description: 'Core through the west stand top slab (void ceiling 2.59 → stand floor 3.77)', position: p(0.5, 31.1, 3.2), sleeves: 2, diameterMm: 100, pathway: 'RISER_W', thicknessM: 1.18 },
+  { id: 'PEN-2', kind: 'slab', description: 'Core through the west stand top slab (void ceiling 2.59 → stand floor 3.77)', position: p(X_WEST, 31.1, 3.2), sleeves: 2, diameterMm: 100, pathway: 'RISER_W', thicknessM: 1.18 },
   { id: 'PEN-3', kind: 'wall', description: 'Network room south wall → annex', position: p(12.9, 32.3, 2.5), sleeves: 2, diameterMm: 100, pathway: 'ANNEX_FEED', thicknessM: 0.2 },
   { id: 'PEN-4', kind: 'wall', description: 'Annex → east stand void (south wall, beside the door at X 34.5–35.4)', position: p(36.0, 32.3, 2.5), sleeves: 2, diameterMm: 100, pathway: 'PEN4', thicknessM: 0.2 },
   { id: 'PEN-5', kind: 'wall', description: 'East stand void → offices (offices west wall)', position: p(42.58, 30.0, H_OFFICES), sleeves: 2, diameterMm: 100, pathway: 'PEN5', thicknessM: 0.2 },
   { id: 'PEN-6', kind: 'wall', description: 'Offices → stage side (offices north wall)', position: p(49.0, 24.6, H_OFFICES), sleeves: 2, diameterMm: 100, pathway: 'PEN6', thicknessM: 0.2 },
   { id: 'PEN-7', kind: 'wall', description: 'Offices → M12 on the east stand end wall (offices west wall)', position: p(42.58, 28.47, 3.7), sleeves: 1, diameterMm: 50, pathway: 'M12', thicknessM: 0.2 },
+];
+
+/** Closest a pathway or drop must stay to a wall, ceiling or post along its whole length. */
+export const HUG_DISTANCE_M = 0.35;
+
+/**
+ * Stretches that cannot hug a surface: the stage has free-standing posts and no
+ * roof within reach (8.2 m). `maxFarM` is the longest part allowed beyond
+ * HUG_DISTANCE_M; `support` says how the stretch is held.
+ */
+export interface FreeSpan {
+  readonly id: string;
+  readonly kind: 'pathway' | 'drop';
+  readonly maxFarM: number;
+  readonly support: string;
+}
+export const FREE_SPANS: readonly FreeSpan[] = [
+  { id: 'STAGE', kind: 'pathway', maxFarM: 2, support: 'The offices north wall ends at X 50.7: the tray bridges 1.7 m between a wall bracket and the stage side bracket.' },
+  { id: 'BR_M18', kind: 'pathway', maxFarM: 5.5, support: 'M18 sits on a free-standing post 6 m from the east wall: tray hung from the stage roof (8.2 m) with threaded rod every 1.5 m.' },
+  { id: 'M17', kind: 'drop', maxFarM: 2.5, support: 'M17 is on a free-standing post: rigid conduit from the offices wall to the post, supported every 1.5 m at most.' },
+  { id: 'M18', kind: 'drop', maxFarM: 3.2, support: 'Rigid conduit down the post from the hung tray to the AP.' },
 ];
 
 /** Devices fed by data cable, with the pathway chain that serves each (cable order, starting at the rack). */
