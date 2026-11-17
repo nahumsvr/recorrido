@@ -1,5 +1,6 @@
 import { Box3, DoubleSide, Line3, Ray, Vector3 } from 'three';
 import type { MeshBVH } from 'three-mesh-bvh';
+import { pushOutOfObstacle, type Obstacle, type Push } from './obstacles.ts';
 
 export interface PlayerInput {
   /** -1..1, positive = forward (camera look direction on the floor). */
@@ -29,6 +30,8 @@ export interface PlayerConfig {
   /** Falling below this h teleports back to the last safe spot. */
   respawnBelow: number;
   spawn: Vector3;
+  /** Extra solid footprints (props that are not part of the collision mesh). */
+  obstacles: readonly Obstacle[];
 }
 
 export const DEFAULT_PLAYER_CONFIG: PlayerConfig = {
@@ -44,6 +47,7 @@ export const DEFAULT_PLAYER_CONFIG: PlayerConfig = {
   safetyFloor: -Infinity,
   respawnBelow: -3,
   spawn: new Vector3(),
+  obstacles: [],
 };
 
 interface Ground {
@@ -88,6 +92,7 @@ export class PlayerController {
   private readonly ray = new Ray();
   private readonly tmp = new Vector3();
   private readonly groundNormal = new Vector3();
+  private readonly obstaclePush: Push = { x: 0, z: 0 };
 
   private readonly bvh: MeshBVH;
 
@@ -239,6 +244,13 @@ export class PlayerController {
     }
     this.position.x += seg.start.x - originalStart.x;
     this.position.z += seg.start.z - originalStart.z;
+
+    for (const o of this.cfg.obstacles) {
+      if (pushOutOfObstacle(o, this.position.x, this.position.z, radius, this.position.y, this.obstaclePush)) {
+        this.position.x += this.obstaclePush.x;
+        this.position.z += this.obstaclePush.z;
+      }
+    }
   }
 
   /**

@@ -403,3 +403,22 @@ body[data-mode='orbit'] .jump-button {
 .ap-panel[data-group='model'] h2 {
   color: #b07cff;
 }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  max-width: min(92vw, 460px);
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(20, 24, 30, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e8edf2;
+  font: 600 14px/1.3 system-ui, sans-serif;
+  text-align: center;
+  pointer-events: none;
+  z-index: 30;
+}
+.toast[data-tone='warn'] { border-color: #e5484d; color: #ffb4b6; }
+.toast[data-tone='ok'] { border-color: #3ddc84; color: #b7f5d2; }

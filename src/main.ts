@@ -19,6 +19,10 @@ import { createHud } from './ui/hud.ts';
 import { createMinimap } from './ui/minimap.ts';
 import { createTeleportMenu } from './ui/teleportMenu.ts';
 import { loadModel } from './world/loadModel.ts';
+import { createNetworkRack, rackObstacle } from './world/networkRack.ts';
+import { createNetworkRoomDoor } from './world/networkRoomDoor.ts';
+import { createToast } from './ui/toast.ts';
+import type { Obstacle } from './player/obstacles.ts';
 import { createWorld } from './world/scene.ts';
 
 const PHYSICS_STEP = 1 / 120;
@@ -76,6 +80,25 @@ const aps = createApGroups(
   { minX: bounds.min.x, maxX: bounds.max.x, minY: bounds.min.z, maxY: bounds.max.z, maxH: bounds.max.y },
 );
 world.scene.add(aps.root);
+world.scene.add(createNetworkRack());
+const door = createNetworkRoomDoor();
+world.scene.add(door.root);
+const toast = createToast();
+/** Solid props the player cannot cross; the door leaves this list while open. */
+const obstacles: Obstacle[] = [rackObstacle(), door.obstacle];
+function setDoorSolid(solid: boolean): void {
+  const i = obstacles.indexOf(door.obstacle);
+  if (solid && i < 0) obstacles.push(door.obstacle);
+  else if (!solid && i >= 0) obstacles.splice(i, 1);
+}
+/** One press of the interaction key/tap on the network room door. */
+function useDoor(): void {
+  const event = door.interact();
+  if (event === 'rattle') toast.show('Locked — authorized personnel only. Press E again to use your access badge.', 'warn', 3500);
+  else if (event === 'unlock') toast.show('Access granted — door unlocked.', 'ok');
+  else toast.show('Door closed and locked.', 'info', 1800);
+  setDoorSolid(!door.isOpen());
+}
 const apPanel = createApPanel();
 let panelState: PanelState = { pinned: null, nearby: null };
 function setPanelState(next: PanelState): void {
@@ -87,7 +110,7 @@ function setPanelState(next: PanelState): void {
 apPanel.onClose(() => setPanelState({ ...panelState, pinned: null }));
 
 // ---- Player ----
-const player = new PlayerController(world.bvh, { spawn: SPAWN.feet, safetyFloor: 0 });
+const player = new PlayerController(world.bvh, { spawn: SPAWN.feet, safetyFloor: 0, obstacles });
 player.teleport(SPAWN.feet, true);
 const desktop = createDesktopInput(camera, renderer.domElement);
 const physics = new FixedStep(PHYSICS_STEP);
@@ -230,6 +253,7 @@ function pickAt(clientX: number, clientY: number, center: boolean, clearOnMiss: 
   if (center) pickPointer.set(0, 0);
   else pickPointer.set((clientX / innerWidth) * 2 - 1, -(clientY / innerHeight) * 2 + 1);
   pickRaycaster.setFromCamera(pickPointer, camera);
+  if (door.pick(pickRaycaster) && door.reachable(camera.position)) return useDoor();
   const item = aps.pick(pickRaycaster);
   if (item) setPanelState({ ...panelState, pinned: item.ap.id });
   else if (clearOnMiss && panelState.pinned) setPanelState({ ...panelState, pinned: null });
@@ -257,7 +281,9 @@ const touch = touchMode
 addEventListener('keydown', (e) => {
   if (e.code !== 'KeyE' || e.repeat) return;
   pickRaycaster.setFromCamera(pickPointer.set(0, 0), camera);
-  const item = aps.pick(pickRaycaster) ?? aps.nearest(camera.position, AP_PROXIMITY_M);
+  const lookedAtAp = aps.pick(pickRaycaster);
+  if (mode === 'walk' && !lookedAtAp && door.reachable(camera.position)) return useDoor();
+  const item = lookedAtAp ?? aps.nearest(camera.position, AP_PROXIMITY_M);
   if (!item || item.ap.id === panelState.pinned) setPanelState({ ...panelState, pinned: null });
   else setPanelState({ ...panelState, pinned: item.ap.id });
 });
@@ -295,6 +321,16 @@ renderer.setAnimationLoop(() => {
     player.eyePosition(camera.position);
     const p = threeToPlan(player.position.x, player.position.y, player.position.z);
     hud.setReadout(`X ${p.x.toFixed(1)}  Y ${p.y.toFixed(1)}  floor h ${p.h.toFixed(2)} m`);
+    door.update(dt);
+    toast.setHint(
+      door.reachable(camera.position)
+        ? door.isOpen()
+          ? `${touchMode ? 'Tap' : 'E'}: close the door`
+          : door.isArmed()
+            ? `${touchMode ? 'Tap' : 'E'}: use access badge`
+            : `${touchMode ? 'Tap' : 'E'}: network room door (locked)`
+        : null,
+    );
     const near = aps.nearest(camera.position, AP_PROXIMITY_M)?.ap.id ?? null;
     if (near !== panelState.nearby) setPanelState({ ...panelState, nearby: near });
   } else {
@@ -312,5 +348,5 @@ renderer.setAnimationLoop(() => {
 
 // Exposed for automated checks (e2e / console inspection).
 Object.assign(window, {
-  __recorrido: { world, camera, renderer, player, setMode, aps, hud, goTo, getPanelState: () => panelState },
+  __recorrido: { world, camera, renderer, player, door, setMode, aps, hud, goTo, getPanelState: () => panelState },
 });
