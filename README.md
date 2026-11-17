@@ -37,6 +37,5 @@ Coordinates everywhere are plan meters: a plan point (X, Y, h) is `new Vector3(X
 ## Known gaps (2026-11-16)
 
 - AP06, AP07 and AP14 are not next to a wall in the model; they are drawn at their table position with a ⚠ warning.
-- Entrance D05 and network room teleports are disabled until their coordinates are known.
 - The gym level is not modeled; the "Gym" teleport lands on the stage under AP13.
 - Coverage spheres are a fixed 15 m radius drawing, not an RF simulation.

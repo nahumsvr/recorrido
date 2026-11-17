@@ -21,8 +21,7 @@ describe('teleports against the real model', () => {
     expect(player.position.y).toBeGreaterThan(p.h - 1);
   });
 
-  it('marks D05 and the network room as pending until coordinates arrive', () => {
-    const pending = TELEPORTS.filter((t) => !t.position).map((t) => t.id);
-    expect(pending).toEqual(['entranceD05', 'networkRoom']);
+  it('has coordinates for every destination', () => {
+    expect(TELEPORTS.filter((t) => !t.position).map((t) => t.id)).toEqual([]);
   });
 });
