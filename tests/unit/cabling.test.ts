@@ -245,12 +245,12 @@ describe('cabling: topology (restrooms and locker rooms under the stands)', () =
     expect(below.slice(0, 5)).toEqual([]);
   });
 
-  it('no wall or slab hole opens into the stand voids: only the room south wall and the offices north wall', () => {
-    expect(PENETRATIONS.map((x) => x.id)).toEqual(['PEN-3', 'PEN-6']);
+  it('no wall or slab hole opens into the stand voids: only the room south wall and the offices north and west walls', () => {
+    expect(PENETRATIONS.map((x) => x.id).sort()).toEqual(['PEN-3', 'PEN-6', 'PEN-7']);
     expect(PENETRATIONS.every((x) => x.kind === 'wall')).toBe(true);
   });
 
-  it('each device is fed from the hub its list says, and the IDF serves 12 of them', () => {
+  it('each device is fed from the hub its list says, and the IDF serves 7 of them', () => {
     expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'idf')).toHaveLength(IDF.ports);
     expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'rack')).toHaveLength(22 - IDF.ports);
     for (const r of DEVICE_ROUTES) expect(r.chain[0], r.device.id).toBe(r.device.hub === 'idf' ? 'IDF_UP' : 'ANNEX_FEED');

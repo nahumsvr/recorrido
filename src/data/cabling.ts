@@ -64,9 +64,17 @@ export const IDF = {
   size: { w: 0.6, h: 0.4, d: 0.4 },
   /** The 24-port PoE++ switch of the hardware budget, moved here from the rack; 12 of its ports are used. */
   switchModel: 'TP-Link SG3428XMPP',
-  ports: 12,
+  ports: 7,
 } as const;
 const X_IDF = IDF.position.x;
+/** Splayed wall that carries M18: it starts at the north wall (face at X 46.5) and runs to M18 at Y 4.3. The branch leaves the north tray just west of it. */
+const X_M18_WALL = 46.3;
+/** Inside face of the offices west wall (the wall is X 42.48-42.68). */
+const X_OFFICES_W = 42.85;
+/** Wall sleeve into the offices: just over the top row of the east stand (3.77 m) and under the offices roof (3.9 m). */
+const H_PEN7 = 3.8;
+/** Branch height along that wall (about 2.9 m tall): on its face, under M18 (2.84 m). */
+const H_M18 = 2.5;
 
 export const PATHWAYS: readonly Pathway[] = [
   // -- From the rack: network room → south wall sleeve → annex trunk.
@@ -86,14 +94,17 @@ export const PATHWAYS: readonly Pathway[] = [
   // -- North IDF: copper from the IDF to the north wall, west wall, stage and offices.
   { id: 'IDF_UP', kind: 'tray', service: 'data', label: 'IDF cabinet up to the north wall tray', ...BASKET_WIDE, points: [p(X_IDF, Y_NORTH, IDF.position.h), p(X_IDF, Y_NORTH, H_HIGH)] },
   { id: 'ID_W', kind: 'tray', service: 'data', label: 'Copper west from the IDF along the north wall tray', ...BASKET_WIDE, physical: 'NORTH_A', points: [p(X_IDF, Y_NORTH, H_HIGH), p(X_WEST, Y_NORTH, H_HIGH)] },
-  { id: 'WEST_R', kind: 'tray', service: 'data', label: 'Copper south along the west wall tray', ...BASKET_WIDE, physical: 'WEST', points: [p(X_WEST, Y_NORTH, H_HIGH), p(X_WEST, Y_BACK, H_HIGH)] },
-  { id: 'NORTH_B', kind: 'tray', service: 'data', label: 'North wall, east part', ...BASKET, points: [p(X_IDF, Y_NORTH, H_HIGH), p(X_EAST, Y_NORTH, H_HIGH)] },
-  { id: 'STAGE_N', kind: 'tray', service: 'data', label: 'Stage east wall, north end', ...BASKET, points: [p(X_EAST, Y_NORTH, H_HIGH), p(X_EAST, 4.26, H_HIGH)] },
-  { id: 'BR_M18', kind: 'tray', service: 'data', label: 'Stage branch to M18', ...BASKET, points: [p(X_EAST, 4.26, H_HIGH), p(49.0, 4.26, H_HIGH)] },
-  { id: 'STAGE_S', kind: 'tray', service: 'data', label: 'Stage east wall, south part', ...BASKET, points: [p(X_EAST, 4.26, H_HIGH), p(X_EAST, 24.35, H_HIGH), p(X_EAST, 24.35, H_OFFICES)] },
-  { id: 'STAGE_W', kind: 'tray', service: 'data', label: 'Offices north wall, stage side', ...BASKET, points: [p(X_EAST, 24.35, H_OFFICES), p(49.0, 24.35, H_OFFICES)] },
-  { id: 'PEN6', kind: 'conduit', service: 'data', label: 'Offices north wall sleeve (PEN-6)', ...SLEEVE_4IN, points: [p(49.0, 24.35, H_OFFICES), p(49.0, 24.85, H_OFFICES)] },
-  { id: 'OFFICES', kind: 'tray', service: 'data', label: 'Offices, north and west walls', ...BASKET, points: [p(49.0, 24.85, H_OFFICES), p(42.8, 24.85, H_OFFICES), p(42.8, 30.0, H_OFFICES)] },
+  { id: 'NORTH_B', kind: 'tray', service: 'data', label: 'North wall, east part up to the M18 wall', ...BASKET, points: [p(X_IDF, Y_NORTH, H_HIGH), p(X_M18_WALL, Y_NORTH, H_HIGH)] },
+  { id: 'BR_M18', kind: 'tray', service: 'data', label: 'Branch down the north wall and along the face of the M18 wall', ...BASKET, points: [p(X_M18_WALL, Y_NORTH, H_HIGH), p(X_M18_WALL, Y_NORTH, H_M18), p(46.43, 0.45, H_M18), p(48.18, 4.35, H_M18)] },
+  { id: 'NORTH_C', kind: 'tray', service: 'data', label: 'North wall, stage corner', ...BASKET, points: [p(X_M18_WALL, Y_NORTH, H_HIGH), p(X_EAST, Y_NORTH, H_HIGH)] },
+  // -- Offices and stage south: fed from the rack, down the end wall of the east stand (no tray on the stage east wall).
+  { id: 'OFFICES_IN', kind: 'tray', service: 'data', label: 'East stand end wall, down to the offices sleeve', ...BASKET, points: [p(42.35, 28.2, H_HIGH), p(42.35, 28.2, H_PEN7)] },
+  { id: 'PEN7', kind: 'conduit', service: 'data', label: 'Offices west wall sleeve (PEN-7)', ...SLEEVE_4IN, points: [p(42.35, 28.2, H_PEN7), p(X_OFFICES_W, 28.2, H_PEN7)] },
+  { id: 'OFF_IN', kind: 'tray', service: 'data', label: 'Inside the offices, down to the wall trays', ...BASKET, points: [p(X_OFFICES_W, 28.2, H_PEN7), p(X_OFFICES_W, 28.2, H_OFFICES)] },
+  { id: 'OFF_S', kind: 'tray', service: 'data', label: 'Offices west wall, south end', ...BASKET, points: [p(X_OFFICES_W, 28.2, H_OFFICES), p(X_OFFICES_W, 30.0, H_OFFICES)] },
+  { id: 'OFF_N', kind: 'tray', service: 'data', label: 'Offices west and north walls', ...BASKET, points: [p(X_OFFICES_W, 28.2, H_OFFICES), p(X_OFFICES_W, 24.85, H_OFFICES), p(49.0, 24.85, H_OFFICES)] },
+  { id: 'PEN6', kind: 'conduit', service: 'data', label: 'Offices north wall sleeve (PEN-6)', ...SLEEVE_4IN, points: [p(49.0, 24.85, H_OFFICES), p(49.0, 24.35, H_OFFICES)] },
+  { id: 'STAGE_W', kind: 'tray', service: 'data', label: 'Offices north wall, stage side', ...BASKET, points: [p(49.0, 24.35, H_OFFICES), p(X_EAST, 24.35, H_OFFICES)] },
   // -- Audio (see src/data/audio.ts for the exact routes).
   ...AUDIO_RUNS.map((r): Pathway => ({
     id: `AUDIO_${r.line}`,
@@ -123,6 +134,7 @@ export interface Penetration {
 /** Every hole the plan needs. Everything else is surface-mounted (anchors only). */
 export const PENETRATIONS: readonly Penetration[] = [
   { id: 'PEN-3', kind: 'wall', description: 'Network room south wall → annex', position: p(12.9, 32.3, 2.5), sleeves: 2, diameterMm: 100, pathway: 'ANNEX_FEED', thicknessM: 0.2 },
+  { id: 'PEN-7', kind: 'wall', description: 'Offices west wall (east stand end wall side) → offices', position: p(42.58, 28.2, H_PEN7), sleeves: 2, diameterMm: 100, pathway: 'PEN7', thicknessM: 0.2 },
   { id: 'PEN-6', kind: 'wall', description: 'Offices north wall → offices (stage side to inside)', position: p(49.0, 24.6, H_OFFICES), sleeves: 2, diameterMm: 100, pathway: 'PEN6', thicknessM: 0.2 },
 ];
 
@@ -141,9 +153,7 @@ export interface FreeSpan {
   readonly support: string;
 }
 export const FREE_SPANS: readonly FreeSpan[] = [
-  { id: 'BR_M18', kind: 'pathway', maxFarM: 5.5, support: 'M18 sits on a free-standing post 6 m from the east wall: tray hung from the stage roof (8.2 m) with threaded rod every 1.5 m.' },
   { id: 'M17', kind: 'drop', maxFarM: 2.5, support: 'M17 is on a free-standing post: rigid conduit from the offices wall to the post, supported every 1.5 m at most.' },
-  { id: 'M18', kind: 'drop', maxFarM: 3.2, support: 'Rigid conduit down the post from the hung tray to the AP.' },
 ];
 
 /** Where a device's copper starts: the rack, or the north IDF. */
@@ -161,7 +171,7 @@ export interface CableDevice {
 const FROM_RACK_W = ['ANNEX_FEED', 'ANNEX_E1', 'RISER_W'] as const;
 const FROM_RACK_E = ['ANNEX_FEED', 'ANNEX_E1', 'ANNEX_E2', 'RISER_E'] as const;
 const ANNEX_E = ['ANNEX_FEED', 'ANNEX_E1', 'ANNEX_E2', 'ANNEX_E3'] as const;
-const FROM_IDF_STAGE = ['IDF_UP', 'NORTH_B', 'STAGE_N', 'STAGE_S'] as const;
+const FROM_RACK_OFFICES = [...FROM_RACK_E, 'BACK_E', 'OFFICES_IN', 'PEN7', 'OFF_IN'] as const;
 /** Chain and hub by device id. */
 const ROUTE_BY_ID: Readonly<Record<string, { hub: Hub; chain: readonly string[] }>> = {
   // Rack: annex, back wall and the east stand end wall.
@@ -181,13 +191,14 @@ const ROUTE_BY_ID: Readonly<Record<string, { hub: Hub; chain: readonly string[] 
   M03: { hub: 'idf', chain: ['IDF_UP', 'ID_W'] },
   CAM02: { hub: 'idf', chain: ['IDF_UP', 'ID_W'] },
   M04: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B'] },
-  M06: { hub: 'idf', chain: ['IDF_UP', 'ID_W', 'WEST_R'] },
-  CAM04: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B', 'STAGE_N'] },
-  M18: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B', 'STAGE_N', 'BR_M18'] },
-  CAM05: { hub: 'idf', chain: [...FROM_IDF_STAGE] },
-  M17: { hub: 'idf', chain: [...FROM_IDF_STAGE, 'STAGE_W'] },
-  M16: { hub: 'idf', chain: [...FROM_IDF_STAGE, 'STAGE_W', 'PEN6', 'OFFICES'] },
-  CAM07: { hub: 'idf', chain: [...FROM_IDF_STAGE, 'STAGE_W', 'PEN6', 'OFFICES'] },
+  M06: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'WEST'] },
+  CAM04: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B', 'NORTH_C'] },
+  M18: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B', 'BR_M18'] },
+  // Rack: offices and stage south, through the east stand end wall.
+  CAM05: { hub: 'rack', chain: [...FROM_RACK_OFFICES, 'OFF_N', 'PEN6', 'STAGE_W'] },
+  M17: { hub: 'rack', chain: [...FROM_RACK_OFFICES, 'OFF_N', 'PEN6', 'STAGE_W'] },
+  M16: { hub: 'rack', chain: [...FROM_RACK_OFFICES, 'OFF_N'] },
+  CAM07: { hub: 'rack', chain: [...FROM_RACK_OFFICES, 'OFF_S'] },
 };
 
 const routeOf = (id: string) => {
