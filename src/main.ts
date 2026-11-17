@@ -11,6 +11,7 @@ import { LAYOUT } from './config/alignment.ts';
 import { threeToPlan } from './domain/coords.ts';
 import { createAlignOverlay } from './debug/alignOverlay.ts';
 import { createDesktopInput } from './input/desktopInput.ts';
+import { createTouchInput } from './input/touchInput.ts';
 import { FixedStep } from './player/fixedStep.ts';
 import { PlayerController } from './player/playerController.ts';
 import { createHud } from './ui/hud.ts';
@@ -29,10 +30,13 @@ const SPAWN = { feet: new Vector3(LAYOUT.courtWidth / 2, 0, LAYOUT.courtDepth / 
 
 const params = new URLSearchParams(location.search);
 const debugAlign = params.get('debug') === 'align';
+/** Phones/tablets (or `?touch=1`): joystick + drag look, lighter rendering. */
+const touchMode = params.get('touch') === '1' || matchMedia('(pointer: coarse)').matches;
+document.body.classList.toggle('touch', touchMode);
 
 const container = document.getElementById('app')!;
 const renderer = new WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setPixelRatio(Math.min(devicePixelRatio, touchMode ? 1.25 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.localClippingEnabled = true;
 container.append(renderer.domElement);
@@ -76,7 +80,6 @@ apPanel.onClose(() => setPanelState({ ...panelState, pinned: null }));
 // ---- Player ----
 const player = new PlayerController(world.bvh, { spawn: SPAWN.feet, safetyFloor: 0 });
 player.teleport(SPAWN.feet, true);
-camera.rotation.set(0, SPAWN.yaw, 0);
 const desktop = createDesktopInput(camera, renderer.domElement);
 const physics = new FixedStep(PHYSICS_STEP);
 
@@ -84,6 +87,9 @@ const physics = new FixedStep(PHYSICS_STEP);
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.enableDamping = true;
 orbit.enabled = false;
+// After OrbitControls: its constructor re-aims the camera at its target.
+player.eyePosition(camera.position);
+camera.rotation.set(0, SPAWN.yaw, 0);
 const walkPose = { position: new Vector3(), quaternion: camera.quaternion.clone() };
 
 let mode: 'walk' | 'orbit' = 'walk';
@@ -102,8 +108,10 @@ function setMode(next: 'walk' | 'orbit'): void {
     camera.quaternion.copy(walkPose.quaternion);
     hud.setToggle('roof', false);
   }
-  startHint.hidden = mode !== 'walk';
+  document.body.dataset.mode = mode;
+  startHint.hidden = mode !== 'walk' || desktop.isActive();
 }
+document.body.dataset.mode = mode;
 
 const hud = createHud('Auditorium walkthrough', [
   { id: 'inspect', label: 'Inspection view', initial: false, onChange: (on) => setMode(on ? 'orbit' : 'walk') },
@@ -116,11 +124,12 @@ const hud = createHud('Auditorium walkthrough', [
       apLayer.setOccluderCeiling(on ? world.roofCut.constant : null);
     },
   },
-  { id: 'edges', label: 'Edges', initial: true, onChange: (on) => (world.edges.visible = on) },
+  { id: 'edges', label: 'Edges', initial: !touchMode, onChange: (on) => (world.edges.visible = on) },
   { id: 'coverageSphere', label: 'AP coverage (spheres)', initial: false, onChange: () => syncCoverage() },
   { id: 'coverageFloor', label: 'AP coverage (on floor)', initial: false, onChange: () => syncCoverage() },
   { id: 'align', label: 'Plan grid', initial: debugAlign, onChange: (on) => (overlay.visible = on) },
-]);
+], { collapsed: innerWidth < 700 });
+world.edges.visible = hud.isOn('edges');
 function syncCoverage(): void {
   apLayer.setCoverage({ sphere: hud.isOn('coverageSphere'), floor: hud.isOn('coverageFloor') });
 }
@@ -163,13 +172,19 @@ addEventListener('keydown', (e) => {
 });
 const viewEuler = new Euler(0, 0, 0, 'YXZ');
 
-// Click-to-walk hint shown while the pointer is free in walk mode.
+// Start hint: click-to-walk on desktop, control summary on touch (hidden on first touch).
 const startHint = document.createElement('button');
 startHint.className = 'start-hint';
-startHint.innerHTML =
-  '<strong>Click to walk</strong><span>WASD move · Shift run · Space jump · mouse look · Esc release</span>';
-startHint.addEventListener('click', () => desktop.activate());
+startHint.innerHTML = touchMode
+  ? '<strong>Left thumb: move · Right thumb: look</strong><span>Tap an AP for details · Jump button to climb the stands</span>'
+  : '<strong>Click to walk</strong><span>WASD move · Shift run · Space jump · mouse look · E AP info · M map · Esc release</span>';
 document.body.append(startHint);
+if (touchMode) {
+  renderer.domElement.addEventListener('pointerdown', () => (startHint.hidden = true), { once: true });
+  startHint.addEventListener('click', () => (startHint.hidden = true));
+} else {
+  startHint.addEventListener('click', () => desktop.activate());
+}
 desktop.onActiveChange((active) => {
   startHint.hidden = active || mode !== 'walk';
   crosshair.hidden = !(active && desktop.isPointerLocked());
@@ -178,6 +193,14 @@ desktop.onActiveChange((active) => {
 // ---- Picking APs: click/tap (pointer position, or screen center with pointer lock) or E ----
 const pickRaycaster = new Raycaster();
 const pickPointer = new Vector2();
+function pickAt(clientX: number, clientY: number, center: boolean, clearOnMiss: boolean): void {
+  if (center) pickPointer.set(0, 0);
+  else pickPointer.set((clientX / innerWidth) * 2 - 1, -(clientY / innerHeight) * 2 + 1);
+  pickRaycaster.setFromCamera(pickPointer, camera);
+  const item = apLayer.pick(pickRaycaster);
+  if (item) setPanelState({ ...panelState, pinned: item.ap.id });
+  else if (clearOnMiss && panelState.pinned) setPanelState({ ...panelState, pinned: null });
+}
 let downX = 0;
 let downY = 0;
 renderer.domElement.addEventListener('pointerdown', (e) => {
@@ -185,16 +208,19 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
   downY = e.clientY;
 });
 renderer.domElement.addEventListener('click', (e) => {
+  // In touch walk mode taps arrive through the touch controller instead.
+  if (touchMode && mode === 'walk') return;
   const wasActive = desktop.isActive();
-  if (mode === 'walk') desktop.activate();
+  if (mode === 'walk' && !touchMode) desktop.activate();
   if (Math.hypot(e.clientX - downX, e.clientY - downY) > CLICK_MAX_MOVE_PX) return;
-  if (desktop.isPointerLocked()) pickPointer.set(0, 0);
-  else pickPointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  pickRaycaster.setFromCamera(pickPointer, camera);
-  const item = apLayer.pick(pickRaycaster);
-  if (item) setPanelState({ ...panelState, pinned: item.ap.id });
-  else if (wasActive && panelState.pinned) setPanelState({ ...panelState, pinned: null });
+  pickAt(e.clientX, e.clientY, desktop.isPointerLocked(), wasActive || mode === 'orbit');
 });
+const touch = touchMode
+  ? createTouchInput(camera, renderer.domElement, {
+      onTap: (x, y) => pickAt(x, y, false, true),
+      enabled: () => mode === 'walk',
+    })
+  : null;
 addEventListener('keydown', (e) => {
   if (e.code !== 'KeyE' || e.repeat) return;
   pickRaycaster.setFromCamera(pickPointer.set(0, 0), camera);
@@ -232,7 +258,7 @@ renderer.setAnimationLoop(() => {
   frame++;
   if (mode === 'walk') {
     const steps = physics.advance(dt);
-    for (let i = 0; i < steps; i++) player.step(desktop.read(), PHYSICS_STEP);
+    for (let i = 0; i < steps; i++) player.step(touch ? touch.read() : desktop.read(), PHYSICS_STEP);
     player.eyePosition(camera.position);
     const p = threeToPlan(player.position.x, player.position.y, player.position.z);
     hud.setReadout(`X ${p.x.toFixed(1)}  Y ${p.y.toFixed(1)}  floor h ${p.h.toFixed(2)} m`);
@@ -253,5 +279,5 @@ renderer.setAnimationLoop(() => {
 
 // Exposed for automated checks (e2e / console inspection).
 Object.assign(window, {
-  __recorrido: { world, camera, player, setMode, apLayer, hud, goTo, getPanelState: () => panelState },
+  __recorrido: { world, camera, renderer, player, setMode, apLayer, hud, goTo, getPanelState: () => panelState },
 });

@@ -5,6 +5,11 @@ export interface HudToggle {
   readonly onChange: (enabled: boolean) => void;
 }
 
+export interface HudOptions {
+  /** Start with the toggles and sections hidden behind the menu button. */
+  readonly collapsed?: boolean;
+}
+
 export interface Hud {
   setReadout(text: string): void;
   /** Sets a toggle and fires its onChange. */
@@ -14,12 +19,31 @@ export interface Hud {
   append(section: HTMLElement): void;
 }
 
-export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
+export function createHud(title: string, toggles: readonly HudToggle[], options: HudOptions = {}): Hud {
   const root = document.createElement('div');
   root.className = 'hud';
+  root.classList.toggle('hud--collapsed', !!options.collapsed);
+
+  const header = document.createElement('div');
+  header.className = 'hud__header';
   const h1 = document.createElement('h1');
   h1.textContent = title;
-  root.append(h1);
+  const menu = document.createElement('button');
+  menu.type = 'button';
+  menu.className = 'hud__menu';
+  menu.textContent = '☰';
+  menu.setAttribute('aria-label', 'Show or hide options');
+  menu.setAttribute('aria-expanded', String(!options.collapsed));
+  menu.addEventListener('click', () => {
+    const collapsed = root.classList.toggle('hud--collapsed');
+    menu.setAttribute('aria-expanded', String(!collapsed));
+  });
+  header.append(h1, menu);
+  root.append(header);
+
+  const body = document.createElement('div');
+  body.className = 'hud__body';
+  root.append(body);
 
   const inputs = new Map<string, { input: HTMLInputElement; toggle: HudToggle }>();
   for (const t of toggles) {
@@ -30,7 +54,7 @@ export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
     input.checked = t.initial;
     input.addEventListener('change', () => t.onChange(input.checked));
     label.append(input, document.createTextNode(t.label));
-    root.append(label);
+    body.append(label);
     inputs.set(t.id, { input, toggle: t });
   }
 
@@ -54,7 +78,7 @@ export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
       return inputs.get(id)?.input.checked ?? false;
     },
     append(section) {
-      root.append(section);
+      body.append(section);
     },
   };
 }
