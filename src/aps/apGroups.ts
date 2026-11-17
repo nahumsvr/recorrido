@@ -20,6 +20,7 @@ export interface ApGroups {
   colorOf(group: ApGroupId): number;
   setVisible(group: ApGroupId, visible: boolean): void;
   isVisible(group: ApGroupId): boolean;
+  setLabelsVisible(group: ApGroupId, visible: boolean): void;
   setCoverage(group: ApGroupId, mode: { sphere: boolean; floor: boolean }): void;
   /** Closest AP hit across visible groups. */
   pick(raycaster: Raycaster): ApItem | null;
@@ -44,7 +45,7 @@ export function createApGroups(defs: readonly ApGroupDef[], bvh: MeshBVH, footpr
   }
   const all = [...layers.values()].flatMap((l) => l.items);
   const byId = new Map(all.map((i) => [i.ap.id, i]));
-  const visibleItems = () => [...layers.values()].filter((l) => l.group.visible).flatMap((l) => l.items);
+  const visibleItems = () => [...layers.values()].filter((l) => l.isModelVisible()).flatMap((l) => l.items);
 
   return {
     root,
@@ -54,9 +55,12 @@ export function createApGroups(defs: readonly ApGroupDef[], bvh: MeshBVH, footpr
     colorOf: (group) => colors.get(group) ?? 0xffffff,
     setVisible(group, visible) {
       const layer = layers.get(group);
-      if (layer) layer.group.visible = visible;
+      layer?.setModelVisible(visible);
     },
-    isVisible: (group) => layers.get(group)?.group.visible ?? false,
+    isVisible: (group) => layers.get(group)?.isModelVisible() ?? false,
+    setLabelsVisible(group, visible) {
+      layers.get(group)?.setLabelsVisible(visible);
+    },
     setCoverage(group, mode) {
       layers.get(group)?.setCoverage(mode);
     },

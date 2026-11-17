@@ -5,6 +5,8 @@ export interface HudToggle {
   readonly onChange: (enabled: boolean) => void;
   /** Starts a new titled section before this toggle. */
   readonly section?: string;
+  /** CSS color of a small dot shown before the label (legend). */
+  readonly swatch?: string;
 }
 
 export interface HudOptions {
@@ -61,7 +63,14 @@ export function createHud(title: string, toggles: readonly HudToggle[], options:
     input.id = t.id;
     input.checked = t.initial;
     input.addEventListener('change', () => t.onChange(input.checked));
-    label.append(input, document.createTextNode(t.label));
+    label.append(input);
+    if (t.swatch) {
+      const dot = document.createElement('span');
+      dot.className = 'hud__swatch';
+      dot.style.background = t.swatch;
+      label.append(dot);
+    }
+    label.append(document.createTextNode(t.label));
     body.append(label);
     inputs.set(t.id, { input, toggle: t });
   }

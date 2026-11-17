@@ -36,7 +36,7 @@ import { createTeleportMenu } from './ui/teleportMenu.ts';
 import { loadModel } from './world/loadModel.ts';
 import { createAudioSystem, createFohStation } from './world/audio.ts';
 import { PENETRATIONS } from './data/cabling.ts';
-import { createCablingLayer } from './world/cabling.ts';
+import { createCablingLayer, FAMILY_COLORS } from './world/cabling.ts';
 import { createSupportLayer } from './world/supports.ts';
 import { createNetworkDesk, deskObstacle, monitorPoint, MONITOR_REACH_M } from './world/networkDesk.ts';
 import { createCameraViewer } from './cameras/cameraViewer.ts';
@@ -152,7 +152,7 @@ function openViewer(index?: number): void {
   viewer.open(index);
 }
 viewer.onClose(() => {
-  cameras.group.visible = hud.isOn('camShow');
+  cameras.group.visible = true;
   cameras.setFov(hud.isOn('camFov'));
   startHint.hidden = mode !== 'walk' || desktop.isActive();
 });
@@ -164,10 +164,10 @@ const cameraMarkers = cameras.items.map((c) => ({
   y: c.position.z,
   warn: !c.mounted,
   color: `#${CAMERA_COLOR.toString(16).padStart(6, '0')}`,
-  visible: () => cameras.group.visible,
+  visible: () => cameras.group.visible && cameras.isModelVisible(),
 }));
 cameraMarkers.forEach((m, i) => {
-  m.visible = () => cameras.group.visible && !cameras.items[i]?.camera.hidden;
+  m.visible = () => cameras.group.visible && cameras.isModelVisible() && !cameras.items[i]?.camera.hidden;
 });
 let editing = false;
 let selectedIndex = 0;
@@ -327,12 +327,13 @@ function apGroupToggles(group: ApGroupId, title: string) {
   const sync = () =>
     aps.setCoverage(group, { sphere: hud.isOn(`${group}Sphere`), floor: hud.isOn(`${group}Floor`) });
   return [
-    { id: `${group}Show`, label: 'Mostrar', initial: true, section: title, onChange: (on: boolean) => {
+    { id: `${group}Show`, label: 'Modelo', initial: true, section: title, onChange: (on: boolean) => {
       aps.setVisible(group, on);
       // A hidden AP cannot stay selected.
       const shown = panelApId(panelState);
       if (!on && shown && aps.get(shown)?.ap.group === group) setPanelState({ pinned: null, nearby: null });
     } },
+    { id: `${group}Labels`, label: 'Etiquetas', initial: true, onChange: (on: boolean) => aps.setLabelsVisible(group, on) },
     { id: `${group}Sphere`, label: 'Cobertura (esferas)', initial: false, onChange: sync },
     { id: `${group}Floor`, label: 'Cobertura (en piso)', initial: false, onChange: sync },
   ];
@@ -354,10 +355,18 @@ const hud = createHud(
     { id: 'edges', label: 'Aristas', initial: !touchMode, onChange: (on) => (world.edges.visible = on) },
     { id: 'align', label: 'Cuadrícula del plano', initial: debugAlign, onChange: (on) => (overlay.visible = on) },
     ...apGroupToggles('model', `APs del modelo (${MODEL_ACCESS_POINTS.length})`),
-    { id: 'camShow', label: 'Mostrar', initial: true, section: `Cámaras (${CAMERAS.length})`, onChange: (on) => (cameras.group.visible = on) },
+    { id: 'camShow', label: 'Modelo', initial: true, section: `Cámaras (${CAMERAS.length})`, onChange: (on) => cameras.setModelVisible(on) },
+    { id: 'camLabels', label: 'Etiquetas', initial: true, onChange: (on) => cameras.setLabelsVisible(on) },
     { id: 'camFov', label: 'Conos de visión', initial: false, onChange: (on) => cameras.setFov(on) },
     { id: 'camEdit', label: 'Editar cámaras', initial: false, onChange: setEditing },
     { id: 'cablingShow', label: 'Bandejas y tubos', initial: true, section: 'Cableado', onChange: (on) => (cabling.pathways.visible = on) },
+    ...(['tray', 'tubes', 'plastic'] as const).map((family) => ({
+      id: `hl_${family}`,
+      label: { tray: 'Resaltar charolas', tubes: 'Resaltar tubos (EMT, RMC y bajadas)', plastic: 'Resaltar canaletas de plástico' }[family],
+      initial: false,
+      swatch: `#${FAMILY_COLORS[family].toString(16).padStart(6, '0')}`,
+      onChange: (on: boolean) => cabling.setHighlight(family, on),
+    })),
     { id: 'supportsShow', label: 'Soportes (ménsulas, varillas y abrazaderas)', initial: true, onChange: (on) => (supports.group.visible = on) },
     { id: 'dropsShow', label: 'Bajadas a APs y cámaras', initial: true, onChange: (on) => (cabling.drops.visible = on) },
     { id: 'holesShow', label: `Hoyos en muros (${PENETRATIONS.length})`, initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
@@ -407,7 +416,7 @@ const minimap = createMinimap(
   world.setRoofCut(hud.isOn('roof'));
   overlay.visible = hud.isOn('align');
   aps.root.visible = true;
-  cameras.group.visible = hud.isOn('camShow');
+  cameras.group.visible = true;
   world.scene.fog = fog;
 }
 addEventListener('keydown', (e) => {
@@ -563,6 +572,7 @@ renderer.setAnimationLoop(() => {
     viewer.render(renderer, world.scene);
     return;
   }
+  cabling.updateHighlight(camera, innerHeight);
   if (mode === 'walk') {
     const steps = physics.advance(dt);
     for (let i = 0; i < steps; i++) player.step(touch ? touch.read() : desktop.read(), PHYSICS_STEP);

@@ -55,6 +55,11 @@ export interface ApLayer {
   readonly group: Group;
   readonly items: readonly ApItem[];
   setCoverage(mode: { sphere: boolean; floor: boolean }): void;
+  /** AP hardware on or off (coverage and labels are independent). */
+  setModelVisible(visible: boolean): void;
+  isModelVisible(): boolean;
+  /** Text tags on or off (models and coverage are independent). */
+  setLabelsVisible(visible: boolean): void;
   /** Highlights the AP shown in the panel (null clears). */
   setHighlighted(id: string | null): void;
   /** AP hit by the raycaster and its distance, or null (also when the group is hidden). */
@@ -125,6 +130,8 @@ export function createApLayer(
 
   const up = new Vector3(0, 1, 0);
   const down = new Vector3(0, -1, 0);
+  const labelObjs: CSS2DObject[] = [];
+  let modelOn = true;
   const items: ApItem[] = aps.map((ap, index) => {
     const tablePos = new Vector3(ap.position.x, ap.position.h, ap.position.y);
     const hint = ap.mountHint;
@@ -170,6 +177,7 @@ export function createApLayer(
     labelAnchor.position.copy(marker.position).setY(marker.position.y + LABEL_OFFSET_H);
     labelAnchor.add(labelObj);
     group.add(labelAnchor);
+    labelObjs.push(labelObj);
 
     // Coverage: sphere around the AP and its cut with the floor below.
     const sphere = new Mesh(coverageSphereGeo, coverageMat);
@@ -226,13 +234,22 @@ export function createApLayer(
       spheres.visible = sphere;
       floors.visible = floor;
     },
+    setModelVisible(visible) {
+      modelOn = visible;
+      for (const item of items) item.marker.visible = visible;
+    },
+    isModelVisible: () => modelOn,
+    setLabelsVisible(visible) {
+      labelObjs.forEach((o) => (o.visible = visible));
+      for (const item of items) item.label.classList.toggle('label--off', !visible);
+    },
     setHighlighted(id) {
       for (const item of items) item.label.classList.toggle('ap-label--active', item.ap.id === id);
       if (highlighted) (highlighted.marker.material as MeshStandardMaterial).emissiveIntensity = 0.7;
       highlighted = id ? (byId.get(id) ?? null) : null;
     },
     pick(raycaster) {
-      if (!group.visible) return null;
+      if (!group.visible || !modelOn) return null;
       const hits = raycaster.intersectObjects(items.map((i) => i.marker), true);
       const apHit = hits.find((h) => h.object.userData.apId);
       if (!apHit) return null;

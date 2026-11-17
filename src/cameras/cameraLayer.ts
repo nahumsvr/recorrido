@@ -55,6 +55,11 @@ export interface CameraLayer {
   readonly items: readonly CameraItem[];
   /** All view pyramids on or off (the selected camera always shows its own). */
   setFov(visible: boolean): void;
+  /** Camera hardware (and its view pyramid) on or off; labels are independent. */
+  setModelVisible(visible: boolean): void;
+  isModelVisible(): boolean;
+  /** Text tags on or off; the models are independent. */
+  setLabelsVisible(visible: boolean): void;
   setSelected(id: string | null): void;
   /** Rebuilds one camera (after an edit) and returns its new item. */
   update(index: number, camera: SecurityCamera): CameraItem;
@@ -68,6 +73,8 @@ interface Entry {
   item: CameraItem;
   readonly root: Group;
   readonly fovMesh: Mesh;
+  readonly anchor: Group;
+  readonly labelObj: CSS2DObject;
   readonly material: MeshStandardMaterial;
 }
 
@@ -143,6 +150,19 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
 
   let fovAll = false;
   let selectedId: string | null = null;
+  let modelOn = true;
+  let labelsOn = true;
+
+  /** Single place that decides what is drawn for one camera. */
+  const apply = (e: Entry): void => {
+    const cam = e.item.camera;
+    const model = modelOn && !cam.hidden;
+    const labels = labelsOn && !cam.hidden;
+    e.root.visible = model;
+    e.fovMesh.visible = model && (fovAll || cam.id === selectedId);
+    e.labelObj.visible = labels;
+    e.item.label.classList.toggle('label--off', !labels);
+  };
 
   const build = (cam: SecurityCamera): Entry => {
     const p = new Vector3(cam.position.x, cam.position.h, cam.position.y);
@@ -203,7 +223,6 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
     fovMesh.position.copy(lensPosition);
     fovMesh.lookAt(lensPosition.clone().add(aim));
     fovMesh.renderOrder = 2;
-    fovMesh.visible = !cam.hidden && (fovAll || cam.id === selectedId);
 
     const label = document.createElement('div');
     label.className = ['ap-label', 'cam-label', mounted ? '' : 'ap-label--warn'].filter(Boolean).join(' ');
@@ -215,10 +234,7 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
     const anchor = new Group();
     anchor.position.copy(position).setY(position.y + LABEL_OFFSET_H);
     anchor.add(labelObj);
-    root.add(anchor);
-    // A hidden camera disappears completely (CSS2D labels ignore a hidden parent, so hide it explicitly).
-    root.visible = !cam.hidden;
-    labelObj.visible = !cam.hidden;
+    // The label lives beside the model (not inside it) so each can be hidden on its own.
 
     root.traverse((o) => {
       o.userData.camId = cam.id;
@@ -234,15 +250,17 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
       aim,
       label,
     };
-    return { item, root, fovMesh, material };
+    const entry: Entry = { item, root, fovMesh, anchor, labelObj, material };
+    apply(entry);
+    return entry;
   };
 
   const entries: Entry[] = cameras.map(build);
-  for (const e of entries) group.add(e.root, e.fovMesh);
+  for (const e of entries) group.add(e.root, e.fovMesh, e.anchor);
   const items: CameraItem[] = entries.map((e) => e.item);
 
   const dispose = (e: Entry): void => {
-    group.remove(e.root, e.fovMesh);
+    group.remove(e.root, e.fovMesh, e.anchor);
     e.item.label.remove();
     e.fovMesh.geometry.dispose();
     e.material.dispose();
@@ -259,7 +277,16 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
     items,
     setFov(visible) {
       fovAll = visible;
-      for (const e of entries) e.fovMesh.visible = !e.item.camera.hidden && (fovAll || e.item.camera.id === selectedId);
+      entries.forEach(apply);
+    },
+    setModelVisible(visible) {
+      modelOn = visible;
+      entries.forEach(apply);
+    },
+    isModelVisible: () => modelOn,
+    setLabelsVisible(visible) {
+      labelsOn = visible;
+      entries.forEach(apply);
     },
     setSelected(id) {
       selectedId = id;
@@ -267,8 +294,8 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
         const on = e.item.camera.id === id;
         e.material.emissiveIntensity = on ? SELECTED_GLOW : NORMAL_GLOW;
         e.item.label.classList.toggle('cam-label--sel', on);
-        e.fovMesh.visible = !e.item.camera.hidden && (fovAll || on);
       }
+      entries.forEach(apply);
     },
     update(index, camera) {
       const old = entries[index];
@@ -277,13 +304,13 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
       const next = build(camera);
       entries[index] = next;
       items[index] = next.item;
-      group.add(next.root, next.fovMesh);
+      group.add(next.root, next.fovMesh, next.anchor);
       return next.item;
     },
     pick(raycaster) {
-      if (!group.visible) return null;
+      if (!group.visible || !modelOn) return null;
       const hits = raycaster.intersectObjects(
-        entries.map((e) => e.root),
+        entries.filter((e) => !e.item.camera.hidden).map((e) => e.root),
         true,
       );
       const hit = hits.find((h) => typeof h.object.userData.camId === 'string' && h.object.visible && h.object.parent?.visible !== false);
@@ -292,7 +319,7 @@ export function createCameraLayer(cameras: readonly SecurityCamera[], bvh: MeshB
     },
     updateOcclusion(camera) {
       for (const item of items) {
-        if (item.camera.hidden) continue;
+        if (item.camera.hidden || !labelsOn) continue;
         toMarker.subVectors(item.position, camera.position);
         const dist = toMarker.length();
         occlusionRay.origin.copy(camera.position);

@@ -1,4 +1,4 @@
-import { BoxGeometry, CylinderGeometry, DoubleSide, Group, Material, Mesh, MeshBasicMaterial, MeshStandardMaterial, Ray, Vector3 } from 'three';
+import { BoxGeometry, CylinderGeometry, DoubleSide, GreaterDepth, Group, Material, Mesh, MeshBasicMaterial, MeshStandardMaterial, Ray, Vector3, type PerspectiveCamera } from 'three';
 import type { MeshBVH } from 'three-mesh-bvh';
 import { DEVICE_ROUTES, IDF, JUNCTIONS, PATHWAYS, PENETRATIONS, type Penetration } from '../data/cabling.ts';
 import { MODEL_ACCESS_POINTS } from '../data/modelAps.ts';
@@ -24,6 +24,10 @@ const CONDUIT_COLOR = 0x9aa3ad;
 const SLEEVE_COLOR = 0xff8a3d;
 const DROP_COLOR = 0x6c7683;
 const PLASTIC_COLOR = 0xe9e6dc;
+/** Opacity of the see-through copy of a highlighted pathway behind walls. */
+const XRAY_OPACITY = 0.35;
+/** Highlighted pathways never look thinner than this many pixels. */
+const MIN_PX = 6;
 const JUNCTION_COLOR = 0x555d66;
 const JUNCTION_SIZE = { w: 0.14, h: 0.14, d: 0.08 } as const;
 /** A box on a conduit run sits on a wall at most this far from the tube axis. */
@@ -106,7 +110,21 @@ function solidsBetween(bvh: MeshBVH, a: PlanPoint, b: PlanPoint, device: PlanPoi
   return count;
 }
 
+/** Pathway families that can be highlighted on their own. */
+export type PathwayFamily = 'tray' | 'tubes' | 'plastic';
+
+/** Highlight colors, shared with the HUD swatches. */
+export const FAMILY_COLORS: Readonly<Record<PathwayFamily, number>> = {
+  tray: 0x2f9bff,
+  tubes: 0x3ddc84,
+  plastic: 0xffd23f,
+};
+
 export interface CablingLayer {
+  /** Paints one family (wire-basket trays, metal tubes incl. drops, plastic raceways) in its highlight color. */
+  setHighlight(family: PathwayFamily, on: boolean): void;
+  /** Keeps highlighted pathways at least MIN_PX wide on screen; call once per frame. */
+  updateHighlight(camera: PerspectiveCamera, viewportHeightPx: number): void;
   /** Data trays and conduits. */
   readonly pathways: Group;
   /** Wall and slab sleeves (the holes). */
@@ -132,6 +150,38 @@ export function createCablingLayer(bvh: MeshBVH): CablingLayer {
   const plasticMat = new MeshStandardMaterial({ color: PLASTIC_COLOR, roughness: 0.7, metalness: 0.0 });
   const junctionMat = new MeshStandardMaterial({ color: JUNCTION_COLOR, roughness: 0.5, metalness: 0.7 });
 
+  // Highlight overlay: one bar per segment that never gets thinner than MIN_PX on screen (solid where visible,
+  // faint where something solid is in front). It is resized every frame from the camera distance.
+  interface Halo {
+    readonly bar: Group;
+    readonly solid: Mesh;
+    readonly ghost: Mesh;
+    readonly actualM: number;
+  }
+  const solidMats = {} as Record<PathwayFamily, MeshBasicMaterial>;
+  const ghostMats = {} as Record<PathwayFamily, MeshBasicMaterial>;
+  const halos: Record<PathwayFamily, Halo[]> = { tray: [], tubes: [], plastic: [] };
+  const active = new Set<PathwayFamily>();
+  for (const f of ['tray', 'tubes', 'plastic'] as const) {
+    solidMats[f] = new MeshBasicMaterial({ color: FAMILY_COLORS[f] });
+    ghostMats[f] = new MeshBasicMaterial({ color: FAMILY_COLORS[f], transparent: true, opacity: XRAY_OPACITY, depthWrite: false, depthFunc: GreaterDepth });
+  }
+  const addHalo = (parent: Group, a: Vector3, b: Vector3, family: PathwayFamily, actualM: number): void => {
+    const len = a.distanceTo(b);
+    if (len < 0.01) return;
+    const geo = new BoxGeometry(1, 1, len);
+    const bar = new Group();
+    alignBetween(bar, a, b, new Vector3(0, 0, 1));
+    const solid = new Mesh(geo, solidMats[family]);
+    const ghost = new Mesh(geo, ghostMats[family]);
+    ghost.renderOrder = 5;
+    for (const m of [solid, ghost]) m.raycast = () => {};
+    bar.add(solid, ghost);
+    bar.visible = false;
+    parent.add(bar);
+    halos[family].push({ bar, solid, ghost, actualM });
+  };
+
   for (const w of PATHWAYS.filter((x) => x.service === 'data' && !x.physical)) {
     for (let i = 1; i < w.points.length; i++) {
       const a = vec(w.points[i - 1]!);
@@ -145,6 +195,13 @@ export function createCablingLayer(bvh: MeshBVH): CablingLayer {
       if (piece) {
         piece.userData = { pathway: w.id, label: w.label, info: { type: 'pathway', id: w.id } };
         pathways.add(piece);
+        addHalo(
+          pathways,
+          a,
+          b,
+          w.kind === 'tray' ? 'tray' : w.kind === 'plastic' ? 'plastic' : 'tubes',
+          w.kind === 'tray' || w.kind === 'plastic' ? Math.max(w.widthMm, w.depthMm) / 1000 : w.widthMm / 1000 + 2 * CONDUIT_WALL_M,
+        );
         if (w.kind !== 'tray') {
           const hit = cylinderBetween(a, b, CONDUIT_PICK_R, pickMat);
           if (hit) {
@@ -203,6 +260,7 @@ export function createCablingLayer(bvh: MeshBVH): CablingLayer {
         const info = { type: 'drop', id: r.device.id, blocked: plan.blocked };
         piece.userData = { device: r.device.id, blocked: plan.blocked, info };
         drops.add(piece);
+        addHalo(drops, vec(plan.points[i - 1]!), vec(plan.points[i]!), 'tubes', 2 * DROP_R);
         const hit = cylinderBetween(vec(plan.points[i - 1]!), vec(plan.points[i]!), DROP_PICK_R, pickMat);
         if (hit) {
           hit.userData = { info };
@@ -211,5 +269,40 @@ export function createCablingLayer(bvh: MeshBVH): CablingLayer {
       }
     }
   }
-  return { pathways, penetrations, drops };
+
+  // Tubes = EMT / RMC / sleeves on the walls plus the drops down to each device.
+  const families: Record<PathwayFamily, { mats: MeshStandardMaterial[]; base: number[] }> = {
+    tray: { mats: [trayMat], base: [TRAY_COLOR] },
+    tubes: { mats: [conduitMat, dropMat], base: [CONDUIT_COLOR, DROP_COLOR] },
+    plastic: { mats: [plasticMat], base: [PLASTIC_COLOR] },
+  };
+  return {
+    pathways,
+    penetrations,
+    drops,
+    updateHighlight(camera, viewportHeightPx) {
+      if (active.size === 0) return;
+      const perPx = (2 * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(viewportHeightPx, 1);
+      for (const family of active) {
+        for (const h of halos[family]) {
+          const dist = camera.position.distanceTo(h.bar.position);
+          const w = Math.max(MIN_PX * perPx * dist, h.actualM);
+          h.bar.scale.set(w, w, 1);
+          // Close up the real pathway is already thicker than the minimum: no solid copy on top of it.
+          h.solid.visible = w > h.actualM * 1.05;
+        }
+      }
+    },
+    setHighlight(family, on) {
+      const f = families[family];
+      f.mats.forEach((m, i) => {
+        m.color.setHex(on ? FAMILY_COLORS[family] : f.base[i]!);
+        m.emissive.setHex(on ? FAMILY_COLORS[family] : 0x000000);
+        m.emissiveIntensity = on ? 0.55 : 0;
+      });
+      if (on) active.add(family);
+      else active.delete(family);
+      for (const h of halos[family]) h.bar.visible = on;
+    },
+  };
 }
