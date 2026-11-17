@@ -32,6 +32,7 @@ import { createHud } from './ui/hud.ts';
 import { createMinimap } from './ui/minimap.ts';
 import { createTeleportMenu } from './ui/teleportMenu.ts';
 import { loadModel } from './world/loadModel.ts';
+import { createAudioSystem, createFohStation } from './world/audio.ts';
 import { createNetworkDesk, deskObstacle, monitorPoint, MONITOR_REACH_M } from './world/networkDesk.ts';
 import { createCameraViewer } from './cameras/cameraViewer.ts';
 import { createNetworkRack, rackObstacle } from './world/networkRack.ts';
@@ -100,11 +101,15 @@ world.scene.add(createNetworkRack());
 const desk = createNetworkDesk();
 world.scene.add(desk);
 const monitor = monitorPoint();
+const audio = createAudioSystem();
+world.scene.add(audio.installed);
+const foh = createFohStation();
+world.scene.add(foh.fixed, foh.mixer);
 const door = createNetworkRoomDoor();
 world.scene.add(door.root);
 const toast = createToast();
 /** Solid props the player cannot cross; the door leaves this list while open. */
-const obstacles: Obstacle[] = [rackObstacle(), deskObstacle(), door.obstacle];
+const obstacles: Obstacle[] = [rackObstacle(), deskObstacle(), foh.obstacle, door.obstacle];
 function setDoorSolid(solid: boolean): void {
   const i = obstacles.indexOf(door.obstacle);
   if (solid && i < 0) obstacles.push(door.obstacle);
@@ -342,6 +347,8 @@ const hud = createHud(
     { id: 'camShow', label: 'Show', initial: true, section: `Cameras (${CAMERAS.length})`, onChange: (on) => (cameras.group.visible = on) },
     { id: 'camFov', label: 'View cones', initial: false, onChange: (on) => cameras.setFov(on) },
     { id: 'camEdit', label: 'Edit cameras', initial: false, onChange: setEditing },
+    { id: 'audioShow', label: 'Speakers and cables', initial: true, section: 'Audio (4 speakers)', onChange: (on) => (audio.installed.visible = on) },
+    { id: 'mixerShow', label: 'Mixer on the table', initial: true, onChange: (on) => (foh.mixer.visible = on) },
   ],
   { collapsed: innerWidth < 700 },
 );
