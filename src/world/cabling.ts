@@ -1,6 +1,6 @@
 import { BoxGeometry, CylinderGeometry, DoubleSide, Group, Mesh, MeshStandardMaterial, Ray, Vector3 } from 'three';
 import type { MeshBVH } from 'three-mesh-bvh';
-import { DEVICE_ROUTES, PATHWAYS, PENETRATIONS, type Penetration } from '../data/cabling.ts';
+import { DEVICE_ROUTES, IDF, PATHWAYS, PENETRATIONS, type Penetration } from '../data/cabling.ts';
 import { MODEL_ACCESS_POINTS } from '../data/modelAps.ts';
 import { planToThree, type PlanPoint } from '../domain/coords.ts';
 import { planDrop } from '../domain/dropRouting.ts';
@@ -110,7 +110,7 @@ export function createCablingLayer(bvh: MeshBVH): CablingLayer {
   const sleeveMat = new MeshStandardMaterial({ color: SLEEVE_COLOR, roughness: 0.5, emissive: SLEEVE_COLOR, emissiveIntensity: 0.25 });
   const dropMat = new MeshStandardMaterial({ color: DROP_COLOR, roughness: 0.5, metalness: 0.8 });
 
-  for (const w of PATHWAYS.filter((x) => x.service === 'data')) {
+  for (const w of PATHWAYS.filter((x) => x.service === 'data' && !x.physical)) {
     for (let i = 1; i < w.points.length; i++) {
       const a = vec(w.points[i - 1]!);
       const b = vec(w.points[i]!);
@@ -124,6 +124,14 @@ export function createCablingLayer(bvh: MeshBVH): CablingLayer {
       }
     }
   }
+
+  // North IDF: wall cabinet against the north wall (its back on the wall face), door toward the courts.
+  const cabinetMat = new MeshStandardMaterial({ color: 0x2c3138, roughness: 0.5, metalness: 0.6 });
+  const cabinet = new Mesh(new BoxGeometry(IDF.size.w, IDF.size.h, IDF.size.d), cabinetMat);
+  cabinet.position.set(IDF.position.x, IDF.position.h, IDF.size.d / 2 + 0.02);
+  cabinet.name = IDF.id;
+  cabinet.userData = { id: IDF.id, ports: IDF.ports };
+  pathways.add(cabinet);
 
   for (const pen of PENETRATIONS) {
     const axis = sleeveAxis(pen);

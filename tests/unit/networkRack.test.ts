@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { IDF } from '../../src/data/cabling.ts';
 import { RACK_DEVICES, RACK_PLACEMENT, RACK_UNITS } from '../../src/data/networkRack.ts';
 
 describe('network rack data', () => {
@@ -21,7 +22,9 @@ describe('network rack data', () => {
 
   it('matches the budget quantities', () => {
     const count = (kind: string): number => RACK_DEVICES.filter((d) => d.kind === kind).length;
-    expect(count('switch')).toBe(2);
+    // Two switches in the budget: the 48-port one in the rack, the 24-port one in the north IDF.
+    expect(count('switch') + (IDF.switchModel === 'TP-Link SG3428XMPP' ? 1 : 0)).toBe(2);
+    expect(RACK_DEVICES.find((d) => d.kind === 'switch')?.model).toBe('TP-Link SG3452XMPP');
     expect(count('patch')).toBe(2);
     expect(count('organizer')).toBe(4);
     expect(count('pdu')).toBe(2);

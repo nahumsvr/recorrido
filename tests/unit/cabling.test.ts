@@ -1,7 +1,7 @@
 import { DoubleSide, Ray, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { MODEL_ACCESS_POINTS } from '../../src/data/modelAps.ts';
-import { CABLE_DEVICES, DEVICE_ROUTES, FREE_SPANS, HUG_DISTANCE_M, PATHWAYS, PENETRATIONS, cablesOn, pathLength, pathway } from '../../src/data/cabling.ts';
+import { BACKBONE_FIBER_CHAIN, CABLE_DEVICES, DEVICE_ROUTES, FREE_SPANS, HUG_DISTANCE_M, IDF, OM3_MAX_M, backboneFiberM, PATHWAYS, PENETRATIONS, cablesOn, pathLength, pathway } from '../../src/data/cabling.ts';
 import { planDrop } from '../../src/domain/dropRouting.ts';
 import { loadBuildingBvh } from '../helpers/realModel.ts';
 
@@ -60,7 +60,7 @@ const near = (a: P, b: P, r: number) => Math.hypot(a.x - b.x, a.y - b.y, a.h - b
 describe('cabling: pathways vs the real model', () => {
   it('every solid crossed by a pathway is a declared penetration of that pathway', async () => {
     const undeclared: string[] = [];
-    for (const w of PATHWAYS.filter((x) => x.service === 'data')) {
+    for (const w of PATHWAYS.filter((x) => x.service === 'data' && !x.physical)) {
       const mine = PENETRATIONS.filter((p) => p.pathway === w.id);
       for (let i = 1; i < w.points.length; i++) {
         for (const c of await crossings(w.points[i - 1]!, w.points[i]!)) {
@@ -82,7 +82,7 @@ describe('cabling: pathways vs the real model', () => {
   });
 
   it('every declared penetration is really crossed (it needs the hole)', async () => {
-    for (const pen of PENETRATIONS.filter((x) => !['M12'].includes(x.pathway))) {
+    for (const pen of PENETRATIONS) {
       const w = pathway(pen.pathway);
       let crossed = false;
       for (let i = 1; i < w.points.length; i++) {
@@ -118,15 +118,14 @@ describe('cabling: device routes', () => {
     for (const r of DEVICE_ROUTES) expect(r.linkM, r.device.id).toBeLessThanOrEqual(90);
   });
 
-  it('drops never go through a wall (except the declared M12 sleeve) and stay within 10 m', async () => {
+  it('drops never go through a wall and stay within 10 m', async () => {
     cachedBvh = await loadBuildingBvh();
-    const m12 = PENETRATIONS.find((x) => x.pathway === 'M12')!.position;
     for (const r of DEVICE_ROUTES) {
       expect(r.dropM, r.device.id).toBeLessThanOrEqual(10);
       const ceiling = MODEL_ACCESS_POINTS.find((x) => x.id === r.device.id)?.mountHint?.kind === 'ceiling';
       const d = ceiling ? { ...r.device.position, h: r.device.position.h - 0.1 } : r.device.position;
       const count = (a: P, b: P) => {
-        const hits = crossingsSync(a, b).filter((c) => !near(c.at, d, 0.35) && !(r.device.id === 'M12' && near(c.at, m12, 0.7)));
+        const hits = crossingsSync(a, b).filter((c) => !near(c.at, d, 0.35));
         return hits.length;
       };
       expect(planDrop(r.attach, d, count).blocked, r.device.id).toBe(0);
@@ -138,7 +137,7 @@ describe('cabling: containment (TIA-569)', () => {
   const FILL_BASKET = 0.5; // wire basket / tray: 50 %
   const CAT6_AREA_MM2 = Math.PI * (6.2 / 2) ** 2; // 6.2 mm outer diameter
   it('keeps tray fill at or below 50 % with 25 % growth', () => {
-    for (const w of PATHWAYS.filter((x) => x.service === 'data' && x.kind === 'tray')) {
+    for (const w of PATHWAYS.filter((x) => x.service === 'data' && x.kind === 'tray' && !x.physical)) {
       const n = Math.ceil(cablesOn(w.id) * 1.25);
       const fill = (n * CAT6_AREA_MM2) / (w.widthMm * w.depthMm);
       expect(fill, w.id).toBeLessThanOrEqual(FILL_BASKET);
@@ -154,14 +153,14 @@ describe('cabling: containment (TIA-569)', () => {
   });
 
   it('has a pathway for every segment of the chains and nothing orphaned', () => {
-    const used = new Set(DEVICE_ROUTES.flatMap((r) => r.chain));
+    const used = new Set([...DEVICE_ROUTES.flatMap((r) => r.chain), ...BACKBONE_FIBER_CHAIN]);
     for (const w of PATHWAYS.filter((x) => x.service === 'data')) expect(used.has(w.id), w.id).toBe(true);
   });
 
   it('total data tray + conduit length is what the budget uses', () => {
-    const total = PATHWAYS.filter((w) => w.service === 'data').reduce((s, w) => s + pathLength(w.points), 0);
+    const total = PATHWAYS.filter((w) => w.service === 'data' && !w.physical).reduce((s, w) => s + pathLength(w.points), 0);
     expect(total).toBeGreaterThan(150);
-    expect(total).toBeLessThan(260);
+    expect(total).toBeLessThan(280);
   });
 });
 
@@ -184,7 +183,7 @@ describe('cabling: pathways and drops hug the walls', () => {
   const allowed = (id: string, kind: 'pathway' | 'drop') => FREE_SPANS.find((f) => f.id === id && f.kind === kind)?.maxFarM ?? 0;
 
   it('every data tray and conduit stays within 0.35 m of a surface, except the documented stage spans', async () => {
-    for (const w of PATHWAYS) {
+    for (const w of PATHWAYS.filter((x) => !x.physical)) {
       let far = 0;
       for (let i = 1; i < w.points.length; i++) far += await farLength(w.points[i - 1]!, w.points[i]!);
       expect(far, w.id).toBeLessThanOrEqual(allowed(w.id, 'pathway'));
@@ -210,5 +209,63 @@ describe('cabling: pathways and drops hug the walls', () => {
       for (let i = 1; i < w.points.length; i++) far += await farLength(w.points[i - 1]!, w.points[i]!);
       expect(far, f.id).toBeGreaterThan(0.3);
     }
+  });
+});
+
+describe('cabling: topology (restrooms and locker rooms under the stands)', () => {
+  const NETWORK_ROOM = { minX: 12.39, maxX: 16.39, minY: 28.64, maxY: 32.2 };
+  const insideRoom = (p: P) => p.x >= NETWORK_ROOM.minX && p.x <= NETWORK_ROOM.maxX && p.y >= NETWORK_ROOM.minY && p.y <= NETWORK_ROOM.maxY;
+  /** Height of the first surface seen from just under the roof at (x, y). */
+  async function surfaceH(x: number, y: number): Promise<number> {
+    const bvh = await loadBuildingBvh();
+    const hit = bvh.raycastFirst(new Ray(new Vector3(x, 6.4, y), new Vector3(0, -1, 0)) as never, 2 as never) as { point: Vector3 } | null;
+    return hit ? hit.point.y : 0;
+  }
+  const inStands = (p: P) => p.y > 24.7 && p.y < 32.2 && ((p.x > 0.2 && p.x < 17.7) || (p.x > 25.3 && p.x < 42.48));
+
+  it('no data pathway or drop runs below the stand surface (the rooms under the stands are restrooms and locker rooms)', async () => {
+    const below: string[] = [];
+    const sample = async (id: string, a: P, b: P) => {
+      const len = v(a).distanceTo(v(b));
+      for (let t = 0; t <= len; t += 0.25) {
+        const f = len ? t / len : 0;
+        const q = { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, h: a.h + (b.h - a.h) * f };
+        if (!inStands(q) || insideRoom(q)) continue;
+        if (q.h < (await surfaceH(q.x, q.y)) - 0.05) below.push(`${id} (${q.x.toFixed(1)}, ${q.y.toFixed(1)}, ${q.h.toFixed(1)})`);
+      }
+    };
+    for (const w of PATHWAYS.filter((x) => x.service === 'data' && !x.physical)) {
+      for (let i = 1; i < w.points.length; i++) await sample(w.id, w.points[i - 1]!, w.points[i]!);
+    }
+    cachedBvh = await loadBuildingBvh();
+    for (const r of DEVICE_ROUTES) {
+      const plan = planDrop(r.attach, r.device.position, () => 0);
+      for (let i = 1; i < plan.points.length; i++) await sample(r.device.id, plan.points[i - 1]!, plan.points[i]!);
+    }
+    expect(below.slice(0, 5)).toEqual([]);
+  });
+
+  it('no wall or slab hole opens into the stand voids: only the room south wall and the offices north wall', () => {
+    expect(PENETRATIONS.map((x) => x.id)).toEqual(['PEN-3', 'PEN-6']);
+    expect(PENETRATIONS.every((x) => x.kind === 'wall')).toBe(true);
+  });
+
+  it('each device is fed from the hub its list says, and the IDF serves 12 of them', () => {
+    expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'idf')).toHaveLength(IDF.ports);
+    expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'rack')).toHaveLength(22 - IDF.ports);
+    for (const r of DEVICE_ROUTES) expect(r.chain[0], r.device.id).toBe(r.device.hub === 'idf' ? 'IDF_UP' : 'ANNEX_FEED');
+  });
+
+  it('puts the IDF cabinet against the north wall, out of ball reach and below the north tray', async () => {
+    const wall = await crossings({ x: IDF.position.x, y: 0.6, h: IDF.position.h }, { x: IDF.position.x, y: -0.1, h: IDF.position.h });
+    expect(wall.length).toBeGreaterThan(0);
+    expect(Math.abs(wall[0]!.at.y - 0)).toBeLessThan(0.3);
+    expect(IDF.position.h).toBeGreaterThanOrEqual(2.5);
+    expect(IDF.position.h + IDF.size.h / 2).toBeLessThan(5.7);
+  });
+
+  it('the OM3 backbone to the IDF stays within 10GBASE-SR reach', () => {
+    expect(backboneFiberM()).toBeLessThan(OM3_MAX_M);
+    expect(backboneFiberM()).toBeGreaterThan(80);
   });
 });

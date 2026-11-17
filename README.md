@@ -42,7 +42,7 @@ Four JBL EON715 on the front face of the stands (first riser, Y 24.7), two per s
 
 ## Structured cabling
 
-HUD → Cabling draws the data pathways of the plan: wire-basket trays, 4" sleeves, the EMT drops to each AP and camera (axis-aligned, routed around walls) and the 7 wall / slab holes in orange (`src/data/cabling.ts`, `src/world/cabling.ts`, `src/domain/dropRouting.ts`). Unit tests ray-cast every pathway against the real model: the only solids a data pathway crosses are the declared penetrations, audio crosses none, permanent links stay ≤ 90 m, and tray / conduit fill stays within TIA-569 limits. The full chapter (penetration list, per-device runs, compliance matrix, budget) is in `docs/memoria-tecnica-adaptada.md`.
+HUD → Cabling draws the data pathways of the plan: wire-basket trays, 4" sleeves, the north IDF cabinet, the EMT drops to each AP and camera (axis-aligned, routed around walls) and the 2 wall holes in orange. The rooms under the stands are restrooms and locker rooms, so no route goes through them: cables reach the courts through the aisle opening, up its piers and along the back wall (`src/data/cabling.ts`, `src/world/cabling.ts`, `src/domain/dropRouting.ts`). Unit tests ray-cast every pathway against the real model: the only solids a data pathway crosses are the declared penetrations, audio crosses none, permanent links stay ≤ 90 m, and tray / conduit fill stays within TIA-569 limits. The full chapter (penetration list, per-device runs, compliance matrix, budget) is in `docs/memoria-tecnica-adaptada.md`.
 
 ## Where the data lives
 

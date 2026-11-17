@@ -33,6 +33,7 @@ import { createMinimap } from './ui/minimap.ts';
 import { createTeleportMenu } from './ui/teleportMenu.ts';
 import { loadModel } from './world/loadModel.ts';
 import { createAudioSystem, createFohStation } from './world/audio.ts';
+import { PENETRATIONS } from './data/cabling.ts';
 import { createCablingLayer } from './world/cabling.ts';
 import { createNetworkDesk, deskObstacle, monitorPoint, MONITOR_REACH_M } from './world/networkDesk.ts';
 import { createCameraViewer } from './cameras/cameraViewer.ts';
@@ -352,7 +353,7 @@ const hud = createHud(
     { id: 'camEdit', label: 'Edit cameras', initial: false, onChange: setEditing },
     { id: 'cablingShow', label: 'Trays and conduits', initial: true, section: 'Cabling', onChange: (on) => (cabling.pathways.visible = on) },
     { id: 'dropsShow', label: 'Drops to APs and cameras', initial: true, onChange: (on) => (cabling.drops.visible = on) },
-    { id: 'holesShow', label: 'Wall and slab holes (7)', initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
+    { id: 'holesShow', label: `Wall holes (${PENETRATIONS.length})`, initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
     { id: 'audioShow', label: 'Speakers and cables', initial: true, section: 'Audio (4 speakers)', onChange: (on) => (audio.installed.visible = on) },
     { id: 'mixerShow', label: 'Mixer on the table', initial: true, onChange: (on) => (foh.mixer.visible = on) },
   ],

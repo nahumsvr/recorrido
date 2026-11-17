@@ -1,12 +1,16 @@
 import type { PlanPoint } from '../domain/coords.ts';
-import { AUDIO_RUNS, type AudioLine } from './audio.ts';
+import { AUDIO_RUNS } from './audio.ts';
 import { CAMERAS } from './cameras.ts';
 import { MODEL_ACCESS_POINTS } from './modelAps.ts';
 
 /**
  * Structured cabling plan: pathways (trays, conduits), penetrations and the
  * route of every device. Plan coordinates (X east, Y south, h up, meters).
- * Everything the 3D model cannot confirm is marked as an assumption in
+ *
+ * The rooms under the stands are restrooms and locker rooms, so no route goes
+ * through them: everything runs through the annex, the aisle opening, the
+ * back wall, the perimeter walls and the offices north wall. Everything the 3D
+ * model cannot confirm is marked as an assumption in
  * docs/memoria-tecnica-adaptada.md and must be checked in the site survey.
  */
 export type PathwayKind = 'tray' | 'conduit' | 'raceway';
@@ -21,6 +25,12 @@ export interface Pathway {
   readonly widthMm: number;
   readonly depthMm: number;
   readonly points: readonly PlanPoint[];
+  /**
+   * A cable that follows an existing tray in the opposite direction (copper
+   * leaving the north IDF along the tray the fiber came by): not drawn, not
+   * counted in the quantities; `physical` is the tray it shares.
+   */
+  readonly physical?: string;
 }
 
 const p = (x: number, y: number, h: number): PlanPoint => ({ x, y, h });
@@ -28,42 +38,62 @@ const p = (x: number, y: number, h: number): PlanPoint => ({ x, y, h });
 /** Standard sizes. */
 const BASKET = { widthMm: 100, depthMm: 50 } as const;
 const BASKET_WIDE = { widthMm: 200, depthMm: 50 } as const;
-/** Rigid sleeve / EMT through the walls and slab: 100 mm inner diameter (4"). */
+/** Rigid sleeve through a wall: 100 mm inner diameter (4"). */
 const SLEEVE_4IN = { widthMm: 100, depthMm: 100 } as const;
 
-/** Heights: courts trays hang 0.95 m under the roof start (6.85 m) and above the top stand row (3.77 m). */
+/** Courts trays: above the top stand row (3.77 m) and under the roof start (6.85 m). */
 const H_HIGH = 5.7;
-const H_VOID = 2.4;
+const H_ROOM = 2.4;
 /** Just under the annex ceiling / the lintel over the aisle opening (soffit at 3.28 m). */
 const H_ANNEX = 3.1;
-const H_OFFICES = 2.5;
-/** Wall faces: west X 0, north Y 0, east X 54.6, back (south) Y 32.2. Trays sit 0.15 m off the face. */
+/** East side of the offices wall: above the post at X 46.5 (reaches 2.9 m) and the audio run (3.0 m). */
+const H_OFFICES = 3.4;
+/** Wall faces: west X 0, north Y 0, east X 54.6, back (south) Y 32.2. Trays sit 0.15-0.2 m off the face. */
 const X_WEST = 0.2;
 const Y_NORTH = 0.15;
 const X_EAST = 54.45;
 const Y_BACK = 32.05;
+/** Piers of the aisle opening in the south wall (X 16.64-25.84); risers hug their end faces. */
+const X_PIER_W = 16.75;
+const X_PIER_E = 25.7;
+/** North intermediate distribution frame (IDF): wall cabinet on the north wall, fed by fiber. */
+export const IDF = {
+  id: 'IDF-N',
+  position: p(30.0, 0.15, 3.0),
+  /** Wall-mount 6U cabinet, meters. */
+  size: { w: 0.6, h: 0.4, d: 0.4 },
+  /** The 24-port PoE++ switch of the hardware budget, moved here from the rack; 12 of its ports are used. */
+  switchModel: 'TP-Link SG3428XMPP',
+  ports: 12,
+} as const;
+const X_IDF = IDF.position.x;
 
 export const PATHWAYS: readonly Pathway[] = [
-  // -- Data, west branch: network room → west void → slab core → courts west wall / north wall / back wall.
-  { id: 'ROOM_W', kind: 'tray', service: 'data', label: 'Network room, rack to west wall sleeve', ...BASKET_WIDE, points: [p(14.44, 30.1, H_VOID), p(14.44, 31.1, H_VOID), p(12.0, 31.1, H_VOID)] },
-  { id: 'VOID_W', kind: 'tray', service: 'data', label: 'West stand void, back corridor', ...BASKET_WIDE, points: [p(12.0, 31.1, H_VOID), p(X_WEST, 31.1, H_VOID)] },
-  { id: 'RISER_W', kind: 'conduit', service: 'data', label: 'Slab core to the stand top, then riser', ...SLEEVE_4IN, points: [p(X_WEST, 31.1, H_VOID), p(X_WEST, 31.1, H_HIGH)] },
-  { id: 'WEST', kind: 'tray', service: 'data', label: 'West wall, above the stands and courts', ...BASKET, points: [p(X_WEST, 31.1, H_HIGH), p(X_WEST, Y_NORTH, H_HIGH)] },
-  { id: 'NORTH_W', kind: 'tray', service: 'data', label: 'North wall, west half', ...BASKET, points: [p(X_WEST, Y_NORTH, H_HIGH), p(37.9, Y_NORTH, H_HIGH)] },
-  { id: 'BACK', kind: 'tray', service: 'data', label: 'Back wall, above the last stand row', ...BASKET, points: [p(X_WEST, 31.1, H_HIGH), p(X_WEST, Y_BACK, H_HIGH), p(25.8, Y_BACK, H_HIGH)] },
-  // -- Data, annex: room south wall sleeve → annex trunk.
-  { id: 'ANNEX_FEED', kind: 'tray', service: 'data', label: 'Rack to the south wall sleeve', ...BASKET_WIDE, points: [p(14.44, 30.1, H_VOID), p(12.9, 30.1, 2.5), p(12.9, 32.6, 2.5)] },
+  // -- From the rack: network room → south wall sleeve → annex trunk.
+  { id: 'ANNEX_FEED', kind: 'tray', service: 'data', label: 'Rack to the south wall sleeve (PEN-3)', ...BASKET_WIDE, points: [p(14.44, 30.1, H_ROOM), p(12.9, 30.1, 2.5), p(12.9, 32.6, 2.5)] },
   { id: 'ANNEX_W', kind: 'tray', service: 'data', label: 'Annex trunk, west', ...BASKET, points: [p(12.9, 32.6, H_ANNEX), p(5.0, 32.6, H_ANNEX)] },
-  { id: 'ANNEX_E', kind: 'tray', service: 'data', label: 'Annex trunk, east (hung across the aisle opening)', ...BASKET, points: [p(12.9, 32.6, H_ANNEX), p(36.0, 32.6, H_ANNEX)] },
-  // -- Data, east branch: annex → east void → offices → stage.
-  { id: 'PEN4', kind: 'conduit', service: 'data', label: 'South wall sleeve to the east void', ...SLEEVE_4IN, points: [p(36.0, 32.6, H_ANNEX), p(36.0, 32.6, 2.5), p(36.0, 31.6, 2.5)] },
-  { id: 'VOID_E', kind: 'tray', service: 'data', label: 'East stand void, back corridor', ...BASKET, points: [p(36.0, 31.6, 2.5), p(40.5, 31.6, 2.5), p(40.5, 30.0, 2.5)] },
-  { id: 'PEN5', kind: 'conduit', service: 'data', label: 'Offices west wall sleeve', ...SLEEVE_4IN, points: [p(40.5, 30.0, 2.5), p(42.8, 30.0, H_OFFICES)] },
-  { id: 'OFFICES', kind: 'tray', service: 'data', label: 'Offices, west and north walls', ...BASKET, points: [p(42.8, 30.0, H_OFFICES), p(42.8, 24.85, H_OFFICES), p(49.0, 24.85, H_OFFICES)] },
-  { id: 'PEN6', kind: 'conduit', service: 'data', label: 'Offices north wall sleeve to the stage side', ...SLEEVE_4IN, points: [p(49.0, 24.85, H_OFFICES), p(49.0, 24.35, H_OFFICES)] },
-  { id: 'STAGE', kind: 'tray', service: 'data', label: 'Stage south edge and east wall', ...BASKET, points: [p(49.0, 24.35, H_OFFICES), p(X_EAST, 24.35, H_OFFICES), p(X_EAST, 24.35, H_HIGH), p(X_EAST, 4.26, H_HIGH)] },
-  { id: 'STAGE_N', kind: 'tray', service: 'data', label: 'Stage east wall, north end', ...BASKET, points: [p(X_EAST, 4.26, H_HIGH), p(X_EAST, Y_NORTH, H_HIGH)] },
+  { id: 'ANNEX_E1', kind: 'tray', service: 'data', label: 'Annex trunk, to the west pier of the aisle opening', ...BASKET, points: [p(12.9, 32.6, H_ANNEX), p(X_PIER_W, 32.6, H_ANNEX)] },
+  { id: 'ANNEX_E2', kind: 'tray', service: 'data', label: 'Annex trunk, hung across the aisle opening under the lintel', ...BASKET, points: [p(X_PIER_W, 32.6, H_ANNEX), p(X_PIER_E, 32.6, H_ANNEX)] },
+  { id: 'ANNEX_E3', kind: 'tray', service: 'data', label: 'Annex trunk, east', ...BASKET, points: [p(X_PIER_E, 32.6, H_ANNEX), p(37.4, 32.6, H_ANNEX)] },
+  // -- Up the west pier, over the west stand along the back wall, along the west wall and the north wall to the IDF.
+  { id: 'RISER_W', kind: 'tray', service: 'data', label: 'Riser at the west pier, through the opening and up the back wall', ...BASKET_WIDE, points: [p(X_PIER_W, 32.6, H_ANNEX), p(X_PIER_W, Y_BACK, H_ANNEX), p(X_PIER_W, Y_BACK, H_HIGH)] },
+  { id: 'BACK_W', kind: 'tray', service: 'data', label: 'Back wall over the west stand', ...BASKET_WIDE, points: [p(X_PIER_W, Y_BACK, H_HIGH), p(X_WEST, Y_BACK, H_HIGH)] },
+  { id: 'WEST', kind: 'tray', service: 'data', label: 'West wall, above the stand and the courts', ...BASKET_WIDE, points: [p(X_WEST, Y_BACK, H_HIGH), p(X_WEST, Y_NORTH, H_HIGH)] },
+  { id: 'NORTH_A', kind: 'tray', service: 'data', label: 'North wall, west part, up to the IDF', ...BASKET_WIDE, points: [p(X_WEST, Y_NORTH, H_HIGH), p(X_IDF, Y_NORTH, H_HIGH)] },
+  // -- Up the east pier, along the back wall over the east stand and down its end wall to M12.
+  { id: 'RISER_E', kind: 'tray', service: 'data', label: 'Riser at the east pier, through the opening and up the back wall', ...BASKET, points: [p(X_PIER_E, 32.6, H_ANNEX), p(X_PIER_E, Y_BACK, H_ANNEX), p(X_PIER_E, Y_BACK, H_HIGH)] },
+  { id: 'BACK_E', kind: 'tray', service: 'data', label: 'Back wall over the east stand and its end wall', ...BASKET, points: [p(X_PIER_E, Y_BACK, H_HIGH), p(42.35, Y_BACK, H_HIGH), p(42.35, 28.2, H_HIGH)] },
+  // -- North IDF: copper from the IDF to the north wall, west wall, stage and offices.
+  { id: 'IDF_UP', kind: 'tray', service: 'data', label: 'IDF cabinet up to the north wall tray', ...BASKET_WIDE, points: [p(X_IDF, Y_NORTH, IDF.position.h), p(X_IDF, Y_NORTH, H_HIGH)] },
+  { id: 'ID_W', kind: 'tray', service: 'data', label: 'Copper west from the IDF along the north wall tray', ...BASKET_WIDE, physical: 'NORTH_A', points: [p(X_IDF, Y_NORTH, H_HIGH), p(X_WEST, Y_NORTH, H_HIGH)] },
+  { id: 'WEST_R', kind: 'tray', service: 'data', label: 'Copper south along the west wall tray', ...BASKET_WIDE, physical: 'WEST', points: [p(X_WEST, Y_NORTH, H_HIGH), p(X_WEST, Y_BACK, H_HIGH)] },
+  { id: 'NORTH_B', kind: 'tray', service: 'data', label: 'North wall, east part', ...BASKET, points: [p(X_IDF, Y_NORTH, H_HIGH), p(X_EAST, Y_NORTH, H_HIGH)] },
+  { id: 'STAGE_N', kind: 'tray', service: 'data', label: 'Stage east wall, north end', ...BASKET, points: [p(X_EAST, Y_NORTH, H_HIGH), p(X_EAST, 4.26, H_HIGH)] },
   { id: 'BR_M18', kind: 'tray', service: 'data', label: 'Stage branch to M18', ...BASKET, points: [p(X_EAST, 4.26, H_HIGH), p(49.0, 4.26, H_HIGH)] },
+  { id: 'STAGE_S', kind: 'tray', service: 'data', label: 'Stage east wall, south part', ...BASKET, points: [p(X_EAST, 4.26, H_HIGH), p(X_EAST, 24.35, H_HIGH), p(X_EAST, 24.35, H_OFFICES)] },
+  { id: 'STAGE_W', kind: 'tray', service: 'data', label: 'Offices north wall, stage side', ...BASKET, points: [p(X_EAST, 24.35, H_OFFICES), p(49.0, 24.35, H_OFFICES)] },
+  { id: 'PEN6', kind: 'conduit', service: 'data', label: 'Offices north wall sleeve (PEN-6)', ...SLEEVE_4IN, points: [p(49.0, 24.35, H_OFFICES), p(49.0, 24.85, H_OFFICES)] },
+  { id: 'OFFICES', kind: 'tray', service: 'data', label: 'Offices, north and west walls', ...BASKET, points: [p(49.0, 24.85, H_OFFICES), p(42.8, 24.85, H_OFFICES), p(42.8, 30.0, H_OFFICES)] },
   // -- Audio (see src/data/audio.ts for the exact routes).
   ...AUDIO_RUNS.map((r): Pathway => ({
     id: `AUDIO_${r.line}`,
@@ -84,7 +114,7 @@ export interface Penetration {
   /** Sleeve count and inner diameter. */
   readonly sleeves: number;
   readonly diameterMm: number;
-  /** Pathways that go through it. */
+  /** Pathway that goes through it. */
   readonly pathway: string;
   /** Material thickness crossed, meters (from the model). */
   readonly thicknessM: number;
@@ -92,13 +122,8 @@ export interface Penetration {
 
 /** Every hole the plan needs. Everything else is surface-mounted (anchors only). */
 export const PENETRATIONS: readonly Penetration[] = [
-  { id: 'PEN-1', kind: 'wall', description: 'Network room west wall → west stand void', position: p(12.29, 31.1, H_VOID), sleeves: 2, diameterMm: 100, pathway: 'ROOM_W', thicknessM: 0.2 },
-  { id: 'PEN-2', kind: 'slab', description: 'Core through the west stand top slab (void ceiling 2.59 → stand floor 3.77)', position: p(X_WEST, 31.1, 3.2), sleeves: 2, diameterMm: 100, pathway: 'RISER_W', thicknessM: 1.18 },
   { id: 'PEN-3', kind: 'wall', description: 'Network room south wall → annex', position: p(12.9, 32.3, 2.5), sleeves: 2, diameterMm: 100, pathway: 'ANNEX_FEED', thicknessM: 0.2 },
-  { id: 'PEN-4', kind: 'wall', description: 'Annex → east stand void (south wall, beside the door at X 34.5–35.4)', position: p(36.0, 32.3, 2.5), sleeves: 2, diameterMm: 100, pathway: 'PEN4', thicknessM: 0.2 },
-  { id: 'PEN-5', kind: 'wall', description: 'East stand void → offices (offices west wall)', position: p(42.58, 30.0, H_OFFICES), sleeves: 2, diameterMm: 100, pathway: 'PEN5', thicknessM: 0.2 },
-  { id: 'PEN-6', kind: 'wall', description: 'Offices → stage side (offices north wall)', position: p(49.0, 24.6, H_OFFICES), sleeves: 2, diameterMm: 100, pathway: 'PEN6', thicknessM: 0.2 },
-  { id: 'PEN-7', kind: 'wall', description: 'Offices → M12 on the east stand end wall (offices west wall)', position: p(42.58, 28.47, 3.7), sleeves: 1, diameterMm: 50, pathway: 'M12', thicknessM: 0.2 },
+  { id: 'PEN-6', kind: 'wall', description: 'Offices north wall → offices (stage side to inside)', position: p(49.0, 24.6, H_OFFICES), sleeves: 2, diameterMm: 100, pathway: 'PEN6', thicknessM: 0.2 },
 ];
 
 /** Closest a pathway or drop must stay to a wall, ceiling or post along its whole length. */
@@ -116,58 +141,70 @@ export interface FreeSpan {
   readonly support: string;
 }
 export const FREE_SPANS: readonly FreeSpan[] = [
-  { id: 'STAGE', kind: 'pathway', maxFarM: 2, support: 'The offices north wall ends at X 50.7: the tray bridges 1.7 m between a wall bracket and the stage side bracket.' },
   { id: 'BR_M18', kind: 'pathway', maxFarM: 5.5, support: 'M18 sits on a free-standing post 6 m from the east wall: tray hung from the stage roof (8.2 m) with threaded rod every 1.5 m.' },
   { id: 'M17', kind: 'drop', maxFarM: 2.5, support: 'M17 is on a free-standing post: rigid conduit from the offices wall to the post, supported every 1.5 m at most.' },
   { id: 'M18', kind: 'drop', maxFarM: 3.2, support: 'Rigid conduit down the post from the hung tray to the AP.' },
 ];
 
-/** Devices fed by data cable, with the pathway chain that serves each (cable order, starting at the rack). */
+/** Where a device's copper starts: the rack, or the north IDF. */
+export type Hub = 'rack' | 'idf';
+
 export interface CableDevice {
   readonly id: string;
   readonly kind: 'AP' | 'camera';
   readonly position: PlanPoint;
+  readonly hub: Hub;
+  /** Pathway chain serving the device (cable order from its hub); the last pathway is where the drop leaves the tray. */
   readonly chain: readonly string[];
 }
 
-const W_CHAIN = ['ROOM_W', 'VOID_W', 'RISER_W'] as const;
-const E_CHAIN = ['ANNEX_FEED', 'ANNEX_E', 'PEN4', 'VOID_E', 'PEN5', 'OFFICES'] as const;
-/** Chain by device id; the last pathway is where the drop leaves the tray. */
-const CHAIN_BY_ID: Readonly<Record<string, readonly string[]>> = {
-  M01: [...W_CHAIN, 'WEST', 'NORTH_W'],
-  M02: [...W_CHAIN, 'WEST', 'NORTH_W'],
-  M03: [...W_CHAIN, 'WEST', 'NORTH_W'],
-  M04: [...W_CHAIN, 'WEST', 'NORTH_W'],
-  CAM02: [...W_CHAIN, 'WEST', 'NORTH_W'],
-  M06: [...W_CHAIN, 'WEST'],
-  M07: [...W_CHAIN, 'WEST'],
-  CAM10: [...W_CHAIN, 'BACK'],
-  M09: [...W_CHAIN, 'BACK'],
-  M10: [...W_CHAIN, 'BACK'],
-  M13: ['ANNEX_FEED', 'ANNEX_W'],
-  CAM11: ['ANNEX_FEED', 'ANNEX_W'],
-  M14: ['ANNEX_FEED', 'ANNEX_E'],
-  M15: ['ANNEX_FEED', 'ANNEX_E'],
-  CAM12: ['ANNEX_FEED', 'ANNEX_E'],
-  M12: [...E_CHAIN],
-  M16: [...E_CHAIN],
-  CAM07: [...E_CHAIN],
-  M17: [...E_CHAIN, 'PEN6', 'STAGE'],
-  CAM05: [...E_CHAIN, 'PEN6', 'STAGE'],
-  M18: [...E_CHAIN, 'PEN6', 'STAGE', 'BR_M18'],
-  CAM04: [...E_CHAIN, 'PEN6', 'STAGE', 'STAGE_N'],
+const FROM_RACK_W = ['ANNEX_FEED', 'ANNEX_E1', 'RISER_W'] as const;
+const FROM_RACK_E = ['ANNEX_FEED', 'ANNEX_E1', 'ANNEX_E2', 'RISER_E'] as const;
+const ANNEX_E = ['ANNEX_FEED', 'ANNEX_E1', 'ANNEX_E2', 'ANNEX_E3'] as const;
+const FROM_IDF_STAGE = ['IDF_UP', 'NORTH_B', 'STAGE_N', 'STAGE_S'] as const;
+/** Chain and hub by device id. */
+const ROUTE_BY_ID: Readonly<Record<string, { hub: Hub; chain: readonly string[] }>> = {
+  // Rack: annex, back wall and the east stand end wall.
+  M13: { hub: 'rack', chain: ['ANNEX_FEED', 'ANNEX_W'] },
+  CAM11: { hub: 'rack', chain: ['ANNEX_FEED', 'ANNEX_W'] },
+  M14: { hub: 'rack', chain: ['ANNEX_FEED', 'ANNEX_E1', 'ANNEX_E2'] },
+  M15: { hub: 'rack', chain: [...ANNEX_E] },
+  CAM12: { hub: 'rack', chain: [...ANNEX_E] },
+  M09: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W'] },
+  CAM10: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W'] },
+  M07: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'WEST'] },
+  M10: { hub: 'rack', chain: [...FROM_RACK_E, 'BACK_E'] },
+  M12: { hub: 'rack', chain: [...FROM_RACK_E, 'BACK_E'] },
+  // North IDF: north wall, west wall, stage and offices.
+  M01: { hub: 'idf', chain: ['IDF_UP', 'ID_W'] },
+  M02: { hub: 'idf', chain: ['IDF_UP', 'ID_W'] },
+  M03: { hub: 'idf', chain: ['IDF_UP', 'ID_W'] },
+  CAM02: { hub: 'idf', chain: ['IDF_UP', 'ID_W'] },
+  M04: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B'] },
+  M06: { hub: 'idf', chain: ['IDF_UP', 'ID_W', 'WEST_R'] },
+  CAM04: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B', 'STAGE_N'] },
+  M18: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B', 'STAGE_N', 'BR_M18'] },
+  CAM05: { hub: 'idf', chain: [...FROM_IDF_STAGE] },
+  M17: { hub: 'idf', chain: [...FROM_IDF_STAGE, 'STAGE_W'] },
+  M16: { hub: 'idf', chain: [...FROM_IDF_STAGE, 'STAGE_W', 'PEN6', 'OFFICES'] },
+  CAM07: { hub: 'idf', chain: [...FROM_IDF_STAGE, 'STAGE_W', 'PEN6', 'OFFICES'] },
 };
 
-const chainOf = (id: string): readonly string[] => {
-  const c = CHAIN_BY_ID[id];
-  if (!c) throw new Error(`no cabling chain for ${id}`);
-  return c;
+const routeOf = (id: string) => {
+  const r = ROUTE_BY_ID[id];
+  if (!r) throw new Error(`no cabling route for ${id}`);
+  return r;
 };
 
 export const CABLE_DEVICES: readonly CableDevice[] = [
-  ...MODEL_ACCESS_POINTS.map((a): CableDevice => ({ id: a.id, kind: 'AP', position: a.position, chain: chainOf(a.id) })),
-  ...CAMERAS.filter((c) => !c.hidden).map((c): CableDevice => ({ id: c.id, kind: 'camera', position: c.position, chain: chainOf(c.id) })),
+  ...MODEL_ACCESS_POINTS.map((a): CableDevice => ({ id: a.id, kind: 'AP', position: a.position, ...routeOf(a.id) })),
+  ...CAMERAS.filter((c) => !c.hidden).map((c): CableDevice => ({ id: c.id, kind: 'camera', position: c.position, ...routeOf(c.id) })),
 ];
+
+/** Fiber backbone rack → IDF (OM3, 10GBASE-SR): same pathways as the copper to the north wall. */
+export const BACKBONE_FIBER_CHAIN: readonly string[] = ['ANNEX_FEED', 'ANNEX_E1', 'RISER_W', 'BACK_W', 'WEST', 'NORTH_A', 'IDF_UP'];
+/** 10GBASE-SR over OM3 reaches 300 m (TIA-568.3). */
+export const OM3_MAX_M = 300;
 
 // ---------- geometry helpers ----------
 
@@ -213,7 +250,7 @@ export const SERVICE_LOOP_M = 5;
 export interface DeviceRoute {
   readonly device: CableDevice;
   readonly chain: readonly string[];
-  /** Cable length from the rack to the attach point along the pathways, meters. */
+  /** Copper length from its hub to the attach point along the pathways, meters. */
   readonly trayM: number;
   readonly dropM: number;
   readonly attach: PlanPoint;
@@ -221,8 +258,6 @@ export interface DeviceRoute {
   readonly linkM: number;
   /** Cut length with slack and service loops. */
   readonly cutM: number;
-  /** Pathways the cable travels, in order. */
-  readonly pathways: readonly string[];
 }
 
 export function routeDevice(device: CableDevice): DeviceRoute {
@@ -230,14 +265,18 @@ export function routeDevice(device: CableDevice): DeviceRoute {
   const before = device.chain.slice(0, -1).reduce((sum, id) => sum + pathLength(pathway(id).points), 0);
   const a = attachPoint(last, device.position);
   const linkM = before + a.along + a.offset;
-  return { device, chain: device.chain, trayM: before + a.along, dropM: a.offset, attach: a.at, linkM, cutM: linkM * SLACK_FACTOR + SERVICE_LOOP_M, pathways: device.chain };
+  return { device, chain: device.chain, trayM: before + a.along, dropM: a.offset, attach: a.at, linkM, cutM: linkM * SLACK_FACTOR + SERVICE_LOOP_M };
 }
 
 export const DEVICE_ROUTES: readonly DeviceRoute[] = CABLE_DEVICES.map(routeDevice);
 
-/** Data cables carried by each pathway (those whose chain includes it; the last pathway only up to the attach point). */
-export function cablesOn(id: string): number {
-  return DEVICE_ROUTES.filter((r) => r.chain.includes(id)).length;
+/** Length of the OM3 backbone, with a service loop at each end. */
+export function backboneFiberM(): number {
+  return BACKBONE_FIBER_CHAIN.reduce((sum, id) => sum + pathLength(pathway(id).points), 0) * SLACK_FACTOR + SERVICE_LOOP_M;
 }
 
-export const AUDIO_LINES: readonly AudioLine[] = ['L', 'R'];
+/** Copper cables carried by a physical pathway (counting the copper that reuses it in the other direction). */
+export function cablesOn(id: string): number {
+  const twins = PATHWAYS.filter((w) => w.physical === id).map((w) => w.id);
+  return DEVICE_ROUTES.filter((r) => r.chain.some((c) => c === id || twins.includes(c))).length;
+}
