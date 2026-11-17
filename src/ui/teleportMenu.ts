@@ -4,9 +4,9 @@ import type { Teleport } from '../data/teleports.ts';
 export function createTeleportMenu(teleports: readonly Teleport[], onSelect: (t: Teleport) => void): HTMLElement {
   const root = document.createElement('nav');
   root.className = 'teleport-menu';
-  root.setAttribute('aria-label', 'Teleport');
+  root.setAttribute('aria-label', 'Teletransporte');
   const title = document.createElement('h2');
-  title.textContent = 'Go to';
+  title.textContent = 'Ir a';
   root.append(title);
 
   const list = document.createElement('div');

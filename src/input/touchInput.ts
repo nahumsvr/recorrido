@@ -51,8 +51,8 @@ export function createTouchInput(camera: Camera, element: HTMLElement, options: 
   const jump = document.createElement('button');
   jump.type = 'button';
   jump.className = 'jump-button';
-  jump.textContent = 'Jump';
-  jump.setAttribute('aria-label', 'Jump');
+  jump.textContent = 'Saltar';
+  jump.setAttribute('aria-label', 'Saltar');
   jump.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     jumpQueued = true;

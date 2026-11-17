@@ -4,6 +4,7 @@ import {
   CatmullRomCurve3,
   CylinderGeometry,
   Group,
+  Material,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -13,7 +14,6 @@ import {
   Vector3,
 } from 'three';
 import {
-  AUDIO_RUNS,
   FLOOR_RUN_H,
   FLOOR_RUN_Y,
   FOH,
@@ -23,6 +23,7 @@ import {
   type AudioLine,
   type Speaker,
 } from '../data/audio.ts';
+import { EMT_OD_MM, PATHWAYS, RMC_OD_MM } from '../data/cabling.ts';
 import { planToThree, type PlanPoint } from '../domain/coords.ts';
 import type { Obstacle } from '../player/obstacles.ts';
 
@@ -31,9 +32,10 @@ const SPK_W = 0.43;
 const SPK_H = 0.7;
 const SPK_D = 0.37;
 const CABLE_R = 0.012;
+/** Invisible, fatter cylinder around each cable segment so it can be clicked. */
+const PICK_R = 0.08;
+const pickMaterial = new MeshBasicMaterial({ visible: false });
 const LINE_COLOR: Record<AudioLine, number> = { L: 0x4aa3ff, R: 0xff6b6b };
-/** Parallel runs are offset so the two lines do not overlap. */
-const LINE_OFFSET: Record<AudioLine, Vector3> = { R: new Vector3(0, 0, 0), L: new Vector3(0.04, 0.03, 0.03) };
 const TABLE_TOP_T = 0.03;
 const TABLE_LEG = 0.045;
 const MIXER = { w: 0.31, h: 0.1, d: 0.4 } as const;
@@ -43,11 +45,17 @@ const TABLE_SOLID_TOP_M = 0.8;
 const vec = (p: PlanPoint): Vector3 => new Vector3(...planToThree(p));
 
 /** Thin cylinder between two points. */
-function segment(a: Vector3, b: Vector3, radius: number, material: MeshStandardMaterial): Mesh {
+function segment(a: Vector3, b: Vector3, radius: number, material: Material): Mesh {
   const length = a.distanceTo(b);
   const mesh = new Mesh(new CylinderGeometry(radius, radius, length, 6), material);
   mesh.position.copy(a).add(b).multiplyScalar(0.5);
   mesh.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), b.clone().sub(a).normalize());
+  return mesh;
+}
+
+/** Tags a mesh as clickable: the info card shows `info`. */
+function pickable<T extends Mesh>(mesh: T, info: object): T {
+  mesh.userData = { info };
   return mesh;
 }
 
@@ -67,7 +75,7 @@ function labelTexture(draw: (ctx: CanvasRenderingContext2D, w: number, h: number
 function buildSpeaker(spk: Speaker): Group {
   const root = new Group();
   root.name = spk.id;
-  root.userData = { id: spk.id, model: spk.model, stand: spk.stand, line: spk.line };
+  root.userData = { id: spk.id, model: spk.model, stand: spk.stand, line: spk.line, info: { type: 'speaker', id: spk.id } };
   const [x, h, z] = planToThree(spk.position);
 
   const body = new MeshStandardMaterial({ color: 0x141517, roughness: 0.75 });
@@ -106,7 +114,7 @@ function buildSpeaker(spk: Speaker): Group {
 }
 
 export interface AudioSystem {
-  /** Speakers and the cable tray, always installed. */
+  /** Speakers and the audio conduit, always installed. */
   readonly installed: Group;
 }
 
@@ -116,19 +124,22 @@ export function createAudioSystem(): AudioSystem {
   installed.name = 'audioSystem';
   for (const spk of SPEAKERS) installed.add(buildSpeaker(spk));
 
-  for (const run of AUDIO_RUNS) {
-    const mat = new MeshStandardMaterial({ color: LINE_COLOR[run.line], roughness: 0.6 });
-    const offset = LINE_OFFSET[run.line];
-    const pts = run.points.map((p) => vec(p).add(offset));
-    pts.slice(1).forEach((b, i) => installed.add(segment(pts[i]!, b, CABLE_R, mat)));
+  // Each line lies in its own steel conduit: EMT up high, rigid conduit (RMC) near the floor; straps are in the support layer.
+  for (const w of PATHWAYS.filter((x) => x.service === 'audio')) {
+    const line: AudioLine = w.id.startsWith('AUDIO_L') ? 'L' : 'R';
+    const mat = new MeshStandardMaterial({ color: LINE_COLOR[line], roughness: 0.45, metalness: 0.6 });
+    const od = ((w.kind === 'rmc' ? RMC_OD_MM : EMT_OD_MM)[w.trade ?? ''] ?? 23.4) / 1000;
+    const pts = w.points.map(vec);
+    pts.slice(1).forEach((b, i) => {
+      installed.add(segment(pts[i]!, b, od / 2, mat), pickable(segment(pts[i]!, b, PICK_R, pickMaterial), { type: 'audio', line }));
+    });
   }
-  // Short drops from the floor raceway to the connector panel of each cabinet.
+  // Short drops from the floor conduit box to the connector panel of each cabinet.
   for (const spk of SPEAKERS) {
     const mat = new MeshStandardMaterial({ color: LINE_COLOR[spk.line], roughness: 0.6 });
-    const off = LINE_OFFSET[spk.line];
-    const run = new Vector3(spk.position.x, FLOOR_RUN_H, FLOOR_RUN_Y).add(off);
-    const rear = new Vector3(spk.position.x, spk.position.h - 0.3, spk.position.y - 0.1).add(off);
-    installed.add(segment(run, rear, CABLE_R, mat));
+    const run = new Vector3(spk.position.x, FLOOR_RUN_H, FLOOR_RUN_Y);
+    const rear = new Vector3(spk.position.x, spk.position.h - 0.3, spk.position.y - 0.1);
+    installed.add(segment(run, rear, CABLE_R, mat), pickable(segment(run, rear, PICK_R, pickMaterial), { type: 'audio', line: spk.line }));
   }
   return { installed };
 }

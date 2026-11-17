@@ -74,45 +74,80 @@ export const FOH = {
 } as const;
 
 /**
- * Audio cable runs, plan coordinates. Both leave the panel along the offices
- * wall at h 3.0 m (above the lintel of the opening and the post at X 46.5, which reaches h 2.9 m) to the front
- * corner of the east stand. Nothing crosses the central aisle mouth on the
- * floor, so it cannot be stepped on:
- * - R (east stand): comes down at the corner and follows the foot of the stand
- *   in a floor raceway to its two speakers (≈ 12 m).
- * - L (west stand): climbs the corner to h 6.6 m, follows the east end wall and
- *   the back wall above the aisle gap to the west end, runs along the west end
- *   wall, comes down at its front corner and follows the foot of the stand to
- *   its two speakers.
- * Separate from the data trays (≥ 0.3 m) and from power.
+ * Audio cable runs, plan coordinates. Each line runs in its own steel conduit that lies on the wall, held by
+ * straps (the same rules as the data conduit). Both leave the panel along the offices wall at h 3.0 m (above the
+ * lintel of the opening and the post at X 46.5, which reaches h 2.9 m) to the front corner of the east stand.
+ * Nothing crosses the central aisle mouth on the floor, so it cannot be stepped on:
+ * - R (east stand): comes down at the corner and follows the foot of the stand to its two speakers (≈ 12 m).
+ * - L (west stand): climbs the offices wall to h 6.6 m, follows the east end wall and the back wall above the
+ *   aisle gap to the west end, runs along the west end wall, comes down at its front corner and follows the foot
+ *   of the stand to its two speakers.
+ * Separate from the data conduit (≥ 0.3 m, except for the right-angle crossings) and from power.
  */
 export const AUDIO_TRAY_H = 6.6;
 const WALL_RUN_H = 3.0;
-export const FLOOR_RUN_H = 0.08;
-export const FLOOR_RUN_Y = STAND_FRONT_Y - 0.15;
-const BACK_TRAY_Y = 32.12;
-/** 0.32 m off the west wall: clear of the data tray (X 0.15-0.25) the riser crosses at right angles. */
-const WEST_END_X = 0.32;
-const EAST_END_X = 42.4;
-const RISER = { x: 42.3, y: 24.48 } as const;
-const toCorner = (): PlanPoint[] => [
-  { x: FOH.panel.x, y: FOH.panel.y - 0.02, h: FOH.panel.h },
-  { x: FOH.panel.x, y: FOH.panel.y - 0.02, h: WALL_RUN_H },
-  { x: RISER.x, y: RISER.y, h: WALL_RUN_H },
+/**
+ * Floor-level stretch along the foot of the stands (balls, feet, mops, carts) and every vertical stretch within
+ * `protectedHeightM` of the floor: rigid steel conduit (RMC, thick wall), fixed to the riser face with its axis 0.16 m
+ * above the floor (clear of mop water). Everything above that is EMT.
+ */
+export const FLOOR_RUN_H = 0.16;
+export const FLOOR_CONDUIT = { trade: '¾"', protectedHeightM: 2 } as const;
+/** Conduit axis to the wall face: ¾" EMT (23.4 mm) or RMC (26.7 mm) with its strap. */
+export const AUDIO_WALL_OFF_M = 0.025;
+export const FLOOR_RUN_Y = STAND_FRONT_Y - 0.02;
+/** Faces the audio conduit lies on: offices north wall (Y 24.5), east end wall (X 42.48), back wall (Y 32.2), west wall (X 0). */
+const NORTH_FACE_Y = 24.5;
+const END_WALL_X = 42.48;
+const BACK_WALL_Y = 32.2;
+const Y_WALL = NORTH_FACE_Y - AUDIO_WALL_OFF_M;
+/** Line L lies 3.5 cm further out than R where both run side by side, so L can climb across R without touching it. */
+const L_OUT_M = 0.035;
+const BACK_TRAY_Y = BACK_WALL_Y - AUDIO_WALL_OFF_M;
+const WEST_END_X = AUDIO_WALL_OFF_M;
+const EAST_END_X = END_WALL_X - AUDIO_WALL_OFF_M;
+/** Where each line comes down to the court, on the open side of the walls (south of the offices wall tip, Y 24.5). */
+const DESCENT_Y = 24.6;
+/** The panel's two outputs: L on the left, R in the middle (see the panel label). */
+const PANEL_L_X = FOH.panel.x - 0.1;
+const PANEL_R_X = FOH.panel.x;
+/**
+ * Line L climbs on the offices north face, east of the wall tip, so the stage-side data conduit that wraps the
+ * tip does not have to cross it twice.
+ */
+const L_CLIMB_X = 42.9;
+/** Data conduit lies on the west wall at h 5.7: L comes down in front of it with an offset bend (two 30 degree bends). */
+const DATA_WEST_H = 5.7;
+const KICK_M = 0.1;
+const KICK_RUN_M = KICK_M / Math.tan(Math.PI / 6);
+const KICK_HALF_PLATEAU_M = 0.07;
+/** Vertical run down the west wall from `top` to `bottom` with an offset bend in front of the data conduit. */
+const westDrop = (y: number, top: number, bottom: number): PlanPoint[] => [
+  { x: WEST_END_X, y, h: top },
+  { x: WEST_END_X, y, h: DATA_WEST_H + KICK_HALF_PLATEAU_M + KICK_RUN_M },
+  { x: WEST_END_X + KICK_M, y, h: DATA_WEST_H + KICK_HALF_PLATEAU_M },
+  { x: WEST_END_X + KICK_M, y, h: DATA_WEST_H - KICK_HALF_PLATEAU_M },
+  { x: WEST_END_X, y, h: DATA_WEST_H - KICK_HALF_PLATEAU_M - KICK_RUN_M },
+  { x: WEST_END_X, y, h: bottom },
 ];
 const eastFoot = (x: number): PlanPoint[] => [
-  ...toCorner(),
-  { x: RISER.x, y: RISER.y, h: FLOOR_RUN_H },
-  { x: RISER.x, y: FLOOR_RUN_Y, h: FLOOR_RUN_H },
+  { x: PANEL_R_X, y: Y_WALL, h: FOH.panel.h },
+  { x: PANEL_R_X, y: Y_WALL, h: WALL_RUN_H },
+  { x: EAST_END_X, y: Y_WALL, h: WALL_RUN_H },
+  { x: EAST_END_X, y: DESCENT_Y, h: WALL_RUN_H },
+  { x: EAST_END_X, y: DESCENT_Y, h: FLOOR_RUN_H },
+  { x: EAST_END_X, y: FLOOR_RUN_Y, h: FLOOR_RUN_H },
   { x, y: FLOOR_RUN_Y, h: FLOOR_RUN_H },
 ];
 const overTheTop = (x: number): PlanPoint[] => [
-  ...toCorner(),
-  { x: RISER.x, y: RISER.y, h: AUDIO_TRAY_H },
+  { x: PANEL_L_X, y: Y_WALL - L_OUT_M, h: FOH.panel.h },
+  { x: PANEL_L_X, y: Y_WALL - L_OUT_M, h: WALL_RUN_H },
+  { x: L_CLIMB_X, y: Y_WALL - L_OUT_M, h: WALL_RUN_H },
+  { x: L_CLIMB_X, y: Y_WALL - L_OUT_M, h: AUDIO_TRAY_H },
+  { x: EAST_END_X, y: Y_WALL - L_OUT_M, h: AUDIO_TRAY_H },
   { x: EAST_END_X, y: BACK_TRAY_Y, h: AUDIO_TRAY_H },
   { x: WEST_END_X, y: BACK_TRAY_Y, h: AUDIO_TRAY_H },
-  { x: WEST_END_X, y: RISER.y, h: AUDIO_TRAY_H },
-  { x: WEST_END_X, y: RISER.y, h: FLOOR_RUN_H },
+  ...westDrop(DESCENT_Y, AUDIO_TRAY_H, FLOOR_RUN_H),
   { x: WEST_END_X, y: FLOOR_RUN_Y, h: FLOOR_RUN_H },
   { x, y: FLOOR_RUN_Y, h: FLOOR_RUN_H },
 ];
@@ -120,3 +155,16 @@ export const AUDIO_RUNS: readonly { readonly line: AudioLine; readonly points: r
   { line: 'R', points: eastFoot(30.0) },
   { line: 'L', points: overTheTop(13.0) },
 ];
+
+/** Meters of each line that run at floor level, inside the protected raceway. */
+export function floorRunLengthM(line: AudioLine): number {
+  const run = AUDIO_RUNS.find((r) => r.line === line);
+  if (!run) return 0;
+  let total = 0;
+  for (let i = 1; i < run.points.length; i++) {
+    const a = run.points[i - 1]!;
+    const b = run.points[i]!;
+    if (a.h === FLOOR_RUN_H && b.h === FLOOR_RUN_H) total += Math.hypot(a.x - b.x, a.y - b.y);
+  }
+  return total;
+}

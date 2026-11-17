@@ -4,8 +4,8 @@ import { MOUNT_TOLERANCE_M } from './apLayer.ts';
 import type { ApItem } from './apLayer.ts';
 
 const GROUP_LABEL: Record<ApGroupId, string> = {
-  table: 'Design table',
-  model: 'SketchUp model',
+  table: 'Tabla de diseño',
+  model: 'Modelo SketchUp',
 };
 
 export interface ApPanel {
@@ -46,7 +46,7 @@ export function createApPanel(): ApPanel {
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'ap-panel__close';
-        close.setAttribute('aria-label', 'Close');
+        close.setAttribute('aria-label', 'Cerrar');
         close.textContent = '×';
         close.addEventListener('click', () => closeCb?.());
         header.append(close);
@@ -62,13 +62,13 @@ export function createApPanel(): ApPanel {
         dl.append(dt, dd);
         return dd;
       };
-      row('Group', GROUP_LABEL[ap.group]);
-      row('Model', ap.model);
-      row('Zone', ap.zone);
-      row('Mount height', `${ap.position.h.toFixed(1)} m`);
-      row('Position (plan)', `X ${ap.position.x.toFixed(1)} · Y ${ap.position.y.toFixed(1)} m`);
-      row('Mount', item.mountKind === 'ceiling' ? 'Ceiling' : item.mountKind === 'wall' ? 'Wall' : 'Wall (not found in model)');
-      distanceEl = row('Distance', '');
+      row('Grupo', GROUP_LABEL[ap.group]);
+      row('Modelo', ap.model);
+      row('Zona', ap.zone);
+      row('Altura de montaje', `${ap.position.h.toFixed(1)} m`);
+      row('Posición (plano)', `X ${ap.position.x.toFixed(1)} · Y ${ap.position.y.toFixed(1)} m`);
+      row('Montaje', item.mountKind === 'ceiling' ? 'Techo' : item.mountKind === 'wall' ? 'Muro' : 'Muro (no encontrado en el modelo)');
+      distanceEl = row('Distancia', '');
       root.append(dl);
 
       if (!item.mounted) {
@@ -76,13 +76,13 @@ export function createApPanel(): ApPanel {
         warn.className = 'ap-panel__warn';
         warn.textContent =
           item.wallDistance === null
-            ? 'No wall within 3 m of these coordinates in the 3D model. Check the mounting spot.'
-            : `Nearest wall in the 3D model is ${item.wallDistance.toFixed(2)} m away (> ${MOUNT_TOLERANCE_M} m). Check the mounting spot.`;
+            ? 'No hay muro a menos de 3 m de estas coordenadas en el modelo 3D. Revisa el punto de montaje.'
+            : `El muro más cercano en el modelo 3D está a ${item.wallDistance.toFixed(2)} m (> ${MOUNT_TOLERANCE_M} m). Revisa el punto de montaje.`;
         root.append(warn);
       }
     },
     updateDistance(eye) {
-      if (current && distanceEl) distanceEl.textContent = `${current.position.distanceTo(eye).toFixed(1)} m from you`;
+      if (current && distanceEl) distanceEl.textContent = `${current.position.distanceTo(eye).toFixed(1)} m de ti`;
     },
     onClose(cb) {
       closeCb = cb;

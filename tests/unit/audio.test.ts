@@ -1,6 +1,7 @@
 import { Ray, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
-import { AUDIO_RUNS, AUDIO_TRAY_H, BACK_ROW_EAR, FOH, FRONT_ROW_EAR, SPEAKERS, STANDS_MIRROR_X, STAND_FRONT_Y } from '../../src/data/audio.ts';
+import { AUDIO_RUNS, AUDIO_TRAY_H, BACK_ROW_EAR, FLOOR_CONDUIT, FLOOR_RUN_H, FOH, FRONT_ROW_EAR, SPEAKERS, STANDS_MIRROR_X, STAND_FRONT_Y, floorRunLengthM } from '../../src/data/audio.ts';
+import { infoCardFor } from '../../src/data/infoCards.ts';
 import { MODEL_ACCESS_POINTS } from '../../src/data/modelAps.ts';
 import { loadBuildingBvh } from '../helpers/realModel.ts';
 
@@ -136,5 +137,22 @@ describe('audio: cable runs', () => {
     expect(len(run('L'))).toBeLessThan(92);
     expect(len(run('R'))).toBeGreaterThan(17);
     expect(len(run('R'))).toBeLessThan(23);
+  });
+});
+
+describe('audio: floor-level protection', () => {
+  it('keeps the floor conduit 15-20 cm above the floor, clear of mop water', () => {
+    expect(FLOOR_RUN_H).toBeGreaterThanOrEqual(0.15);
+    expect(FLOOR_RUN_H).toBeLessThanOrEqual(0.2);
+    expect(FLOOR_CONDUIT.protectedHeightM).toBe(2);
+  });
+
+  it('has a protected floor stretch on both lines and says so on the card', () => {
+    for (const line of ['L', 'R'] as const) {
+      expect(floorRunLengthM(line), line).toBeGreaterThan(5);
+      const card = infoCardFor({ type: 'audio', line });
+      expect(card?.specs.some(([k]) => k === 'Tramo de piso'), line).toBe(true);
+      expect(card?.checks.some((c) => c.standard.includes('protección mecánica')), line).toBe(true);
+    }
   });
 });

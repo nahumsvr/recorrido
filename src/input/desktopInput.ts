@@ -42,7 +42,9 @@ export function createDesktopInput(camera: Camera, element: HTMLElement): Deskto
   let lastX = 0;
   let lastY = 0;
 
-  const isActive = () => controls.isLocked || dragMode;
+  // controls.isLocked flips AFTER the "lock" event fires, so read the document state instead.
+  const isLocked = () => element.ownerDocument.pointerLockElement === element;
+  const isActive = () => isLocked() || dragMode;
   const notify = () => listeners.forEach((cb) => cb(isActive()));
 
   const enterDragMode = () => {
@@ -118,10 +120,10 @@ export function createDesktopInput(camera: Camera, element: HTMLElement): Deskto
     },
     deactivate() {
       exitDragMode();
-      if (controls.isLocked) controls.unlock();
+      if (isLocked()) controls.unlock();
     },
     isActive,
-    isPointerLocked: () => controls.isLocked,
+    isPointerLocked: isLocked,
     onActiveChange(cb) {
       listeners.push(cb);
     },

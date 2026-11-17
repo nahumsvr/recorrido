@@ -72,10 +72,10 @@ export function createCameraViewer(items: readonly CameraItem[]): CameraViewer {
   const controls = el('div', 'cctv__controls');
   const prevBtn = el('button', 'cctv__btn', '◀');
   prevBtn.type = 'button';
-  prevBtn.setAttribute('aria-label', 'Previous camera');
+  prevBtn.setAttribute('aria-label', 'Cámara anterior');
   const nextBtn = el('button', 'cctv__btn', '▶');
   nextBtn.type = 'button';
-  nextBtn.setAttribute('aria-label', 'Next camera');
+  nextBtn.setAttribute('aria-label', 'Cámara siguiente');
   const chips = el('div', 'cctv__chips');
   const chipButtons = items.map((item, i) => {
     const b = el('button', 'cctv__chip', item.camera.id.replace('CAM', ''));
@@ -85,7 +85,7 @@ export function createCameraViewer(items: readonly CameraItem[]): CameraViewer {
     chips.append(b);
     return b;
   });
-  const exit = el('button', 'cctv__btn cctv__btn--exit', 'Exit (Esc)');
+  const exit = el('button', 'cctv__btn cctv__btn--exit', 'Salir (Esc)');
   exit.type = 'button';
   controls.append(prevBtn, chips, nextBtn, exit);
   root.append(frame, controls);
@@ -125,7 +125,7 @@ export function createCameraViewer(items: readonly CameraItem[]): CameraViewer {
     info.innerHTML = '';
     info.append(
       el('div', '', `${spec.name} · ${cam.lens.mm} mm`),
-      el('div', '', `HFOV ${cam.lens.hfov}° (datasheet)`),
+      el('div', '', `HFOV ${cam.lens.hfov}° (ficha técnica)`),
     );
     stream.innerHTML = '';
     stream.append(

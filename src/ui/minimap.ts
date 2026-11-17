@@ -36,7 +36,7 @@ export function createMinimap(bounds: MapBounds, markers: readonly MinimapMarker
   canvas.style.width = `${CSS_WIDTH}px`;
   canvas.style.height = `${cssHeight}px`;
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', 'Minimap: your position, view direction and access points');
+  canvas.setAttribute('aria-label', 'Minimapa: tu posición, dirección de vista y access points');
   document.body.append(canvas);
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D canvas unavailable');

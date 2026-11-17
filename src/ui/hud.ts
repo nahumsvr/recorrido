@@ -34,7 +34,7 @@ export function createHud(title: string, toggles: readonly HudToggle[], options:
   menu.type = 'button';
   menu.className = 'hud__menu';
   menu.textContent = '☰';
-  menu.setAttribute('aria-label', 'Show or hide options');
+  menu.setAttribute('aria-label', 'Mostrar u ocultar opciones');
   menu.setAttribute('aria-expanded', String(!options.collapsed));
   menu.addEventListener('click', () => {
     const collapsed = root.classList.toggle('hud--collapsed');

@@ -1,8 +1,10 @@
-import { Clock, Euler, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer } from 'three';
+import { Clock, Euler, type Object3D, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { createApGroups } from './aps/apGroups.ts';
 import { createApPanel } from './aps/apPanel.ts';
+import { infoCardFor, type InfoTarget } from './data/infoCards.ts';
+import { createInfoCard } from './ui/infoCard.ts';
 import { CAMERA_COLOR, createCameraLayer } from './cameras/cameraLayer.ts';
 import { createCameraEditor, type CameraPatch } from './cameras/cameraEditor.ts';
 import {
@@ -35,6 +37,7 @@ import { loadModel } from './world/loadModel.ts';
 import { createAudioSystem, createFohStation } from './world/audio.ts';
 import { PENETRATIONS } from './data/cabling.ts';
 import { createCablingLayer } from './world/cabling.ts';
+import { createSupportLayer } from './world/supports.ts';
 import { createNetworkDesk, deskObstacle, monitorPoint, MONITOR_REACH_M } from './world/networkDesk.ts';
 import { createCameraViewer } from './cameras/cameraViewer.ts';
 import { createNetworkRack, rackObstacle } from './world/networkRack.ts';
@@ -104,7 +107,8 @@ const desk = createNetworkDesk();
 world.scene.add(desk);
 const monitor = monitorPoint();
 const cabling = createCablingLayer(world.bvh);
-world.scene.add(cabling.pathways, cabling.penetrations, cabling.drops);
+const supports = createSupportLayer(world.bvh);
+world.scene.add(cabling.pathways, cabling.penetrations, cabling.drops, supports.group);
 const audio = createAudioSystem();
 world.scene.add(audio.installed);
 const foh = createFohStation();
@@ -122,9 +126,9 @@ function setDoorSolid(solid: boolean): void {
 /** One press of the interaction key/tap on the network room door. */
 function useDoor(): void {
   const event = door.interact();
-  if (event === 'rattle') toast.show('Locked — authorized personnel only. Press E again to use your access badge.', 'warn', 3500);
-  else if (event === 'unlock') toast.show('Access granted — door unlocked.', 'ok');
-  else toast.show('Door closed and locked.', 'info', 1800);
+  if (event === 'rattle') toast.show('Cerrada: solo personal autorizado. Presiona E otra vez para usar tu gafete.', 'warn', 3500);
+  else if (event === 'unlock') toast.show('Acceso concedido: puerta abierta.', 'ok');
+  else toast.show('Puerta cerrada con llave.', 'info', 1800);
   setDoorSolid(!door.isOpen());
 }
 
@@ -169,7 +173,7 @@ let editing = false;
 let selectedIndex = 0;
 const currentCameras = () => cameras.items.map((i) => i.camera);
 const mountText = (i: (typeof cameras.items)[number]): string =>
-  i.mounted ? `Mounted on a wall (${((i.wallDistance ?? 0) * 100).toFixed(0)} cm)` : '⚠ No wall within 1 m: floating';
+  i.mounted ? `Montada en muro (${((i.wallDistance ?? 0) * 100).toFixed(0)} cm)` : '⚠ Sin muro a menos de 1 m: flotando';
 function persistLocal(): void {
   localOverrides = diffOverrides(baseCameras, currentCameras());
   saveLocalOverrides(localOverrides);
@@ -212,19 +216,19 @@ async function saveToProject(): Promise<void> {
     baseCameras = currentCameras();
     persistLocal();
     refreshEditor();
-    toast.show('Saved to src/data/cameraOverrides.json', 'ok', 3200);
+    toast.show('Guardado en src/data/cameraOverrides.json', 'ok', 3200);
   } catch {
-    toast.show('Could not save: it only works with `npm run dev`. Use Export JSON instead.', 'warn', 4200);
+    toast.show('No se pudo guardar: solo funciona con `npm run dev`. Usa Exportar JSON.', 'warn', 4200);
   }
 }
 async function exportOverrides(): Promise<void> {
   const text = JSON.stringify(diffOverrides(CAMERAS, currentCameras()), null, 2);
   try {
     await navigator.clipboard.writeText(text);
-    toast.show('Camera JSON copied to the clipboard.', 'ok');
+    toast.show('JSON de cámaras copiado al portapapeles.', 'ok');
   } catch {
     console.info(text);
-    toast.show('Clipboard blocked: the JSON is in the browser console.', 'warn', 3500);
+    toast.show('Portapapeles bloqueado: el JSON está en la consola del navegador.', 'warn', 3500);
   }
 }
 const editor = createCameraEditor(
@@ -242,7 +246,7 @@ const editor = createCameraEditor(
       cameras.items.forEach((_, i) => resetToBase(i));
       persistLocal();
       refreshEditor();
-      toast.show('All cameras reset.', 'info');
+      toast.show('Todas las cámaras restablecidas.', 'info');
     },
     onSaveProject: () => void saveToProject(),
     onExport: () => void exportOverrides(),
@@ -279,6 +283,8 @@ function setPanelState(next: PanelState): void {
   aps.setHighlighted(id);
 }
 apPanel.onClose(() => setPanelState({ ...panelState, pinned: null }));
+const infoCard = createInfoCard();
+infoCard.onClose(() => infoCard.show(null));
 
 // ---- Player ----
 const player = new PlayerController(world.bvh, { spawn: SPAWN.feet, safetyFloor: 0, obstacles });
@@ -321,41 +327,42 @@ function apGroupToggles(group: ApGroupId, title: string) {
   const sync = () =>
     aps.setCoverage(group, { sphere: hud.isOn(`${group}Sphere`), floor: hud.isOn(`${group}Floor`) });
   return [
-    { id: `${group}Show`, label: 'Show', initial: true, section: title, onChange: (on: boolean) => {
+    { id: `${group}Show`, label: 'Mostrar', initial: true, section: title, onChange: (on: boolean) => {
       aps.setVisible(group, on);
       // A hidden AP cannot stay selected.
       const shown = panelApId(panelState);
       if (!on && shown && aps.get(shown)?.ap.group === group) setPanelState({ pinned: null, nearby: null });
     } },
-    { id: `${group}Sphere`, label: 'Coverage (spheres)', initial: false, onChange: sync },
-    { id: `${group}Floor`, label: 'Coverage (on floor)', initial: false, onChange: sync },
+    { id: `${group}Sphere`, label: 'Cobertura (esferas)', initial: false, onChange: sync },
+    { id: `${group}Floor`, label: 'Cobertura (en piso)', initial: false, onChange: sync },
   ];
 }
 
 const hud = createHud(
-  'Auditorium walkthrough',
+  'Recorrido del auditorio',
   [
-    { id: 'inspect', label: 'Inspection view', initial: false, section: 'View', onChange: (on) => setMode(on ? 'orbit' : 'walk') },
+    { id: 'inspect', label: 'Vista de inspección', initial: false, section: 'Vista', onChange: (on) => setMode(on ? 'orbit' : 'walk') },
     {
       id: 'roof',
-      label: 'Cut roof',
+      label: 'Cortar techo',
       initial: false,
       onChange: (on) => {
         world.setRoofCut(on);
         aps.setOccluderCeiling(on ? world.roofCut.constant : null);
       },
     },
-    { id: 'edges', label: 'Edges', initial: !touchMode, onChange: (on) => (world.edges.visible = on) },
-    { id: 'align', label: 'Plan grid', initial: debugAlign, onChange: (on) => (overlay.visible = on) },
-    ...apGroupToggles('model', `Model APs (${MODEL_ACCESS_POINTS.length})`),
-    { id: 'camShow', label: 'Show', initial: true, section: `Cameras (${CAMERAS.length})`, onChange: (on) => (cameras.group.visible = on) },
-    { id: 'camFov', label: 'View cones', initial: false, onChange: (on) => cameras.setFov(on) },
-    { id: 'camEdit', label: 'Edit cameras', initial: false, onChange: setEditing },
-    { id: 'cablingShow', label: 'Trays and conduits', initial: true, section: 'Cabling', onChange: (on) => (cabling.pathways.visible = on) },
-    { id: 'dropsShow', label: 'Drops to APs and cameras', initial: true, onChange: (on) => (cabling.drops.visible = on) },
-    { id: 'holesShow', label: `Wall holes (${PENETRATIONS.length})`, initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
-    { id: 'audioShow', label: 'Speakers and cables', initial: true, section: 'Audio (4 speakers)', onChange: (on) => (audio.installed.visible = on) },
-    { id: 'mixerShow', label: 'Mixer on the table', initial: true, onChange: (on) => (foh.mixer.visible = on) },
+    { id: 'edges', label: 'Aristas', initial: !touchMode, onChange: (on) => (world.edges.visible = on) },
+    { id: 'align', label: 'Cuadrícula del plano', initial: debugAlign, onChange: (on) => (overlay.visible = on) },
+    ...apGroupToggles('model', `APs del modelo (${MODEL_ACCESS_POINTS.length})`),
+    { id: 'camShow', label: 'Mostrar', initial: true, section: `Cámaras (${CAMERAS.length})`, onChange: (on) => (cameras.group.visible = on) },
+    { id: 'camFov', label: 'Conos de visión', initial: false, onChange: (on) => cameras.setFov(on) },
+    { id: 'camEdit', label: 'Editar cámaras', initial: false, onChange: setEditing },
+    { id: 'cablingShow', label: 'Bandejas y tubos', initial: true, section: 'Cableado', onChange: (on) => (cabling.pathways.visible = on) },
+    { id: 'supportsShow', label: 'Soportes (ménsulas, varillas y abrazaderas)', initial: true, onChange: (on) => (supports.group.visible = on) },
+    { id: 'dropsShow', label: 'Bajadas a APs y cámaras', initial: true, onChange: (on) => (cabling.drops.visible = on) },
+    { id: 'holesShow', label: `Hoyos en muros (${PENETRATIONS.length})`, initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
+    { id: 'audioShow', label: 'Bocinas y cables', initial: true, section: 'Audio (4 bocinas)', onChange: (on) => (audio.installed.visible = on) },
+    { id: 'mixerShow', label: 'Consola en la mesa', initial: true, onChange: (on) => (foh.mixer.visible = on) },
   ],
   { collapsed: innerWidth < 700 },
 );
@@ -412,8 +419,8 @@ const viewEuler = new Euler(0, 0, 0, 'YXZ');
 const startHint = document.createElement('button');
 startHint.className = 'start-hint';
 startHint.innerHTML = touchMode
-  ? '<strong>Left thumb: move · Right thumb: look</strong><span>Tap an AP for details · Jump button to climb the stands</span>'
-  : '<strong>Click to walk</strong><span>WASD move · Shift run · Space jump · mouse look · E AP info · M map · Esc release</span>';
+  ? '<strong>Pulgar izquierdo: moverte · Pulgar derecho: mirar</strong><span>Toca un AP para ver detalles · Botón de salto para subir a las gradas</span>'
+  : '<strong>Haz clic para caminar</strong><span>WASD moverte · Shift correr · Espacio saltar · mouse para mirar · E info del AP · M mapa · Esc soltar</span>';
 document.body.append(startHint);
 if (touchMode) {
   renderer.domElement.addEventListener('pointerdown', () => (startHint.hidden = true), { once: true });
@@ -423,7 +430,7 @@ if (touchMode) {
 }
 desktop.onActiveChange((active) => {
   startHint.hidden = active || mode !== 'walk';
-  crosshair.hidden = !(active && desktop.isPointerLocked());
+  crosshair.hidden = !active;
 });
 
 // ---- Picking APs: click/tap (pointer position, or screen center with pointer lock) or E ----
@@ -437,8 +444,37 @@ function pickAt(clientX: number, clientY: number, center: boolean, clearOnMiss: 
   if (door.pick(pickRaycaster) && door.reachable(camera.position)) return useDoor();
   if (monitorReachable() && pickRaycaster.intersectObject(desk, true).length > 0) return openViewer();
   const item = aps.pick(pickRaycaster);
-  if (item) setPanelState({ ...panelState, pinned: item.ap.id });
-  else if (clearOnMiss && panelState.pinned) setPanelState({ ...panelState, pinned: null });
+  if (item) {
+    infoCard.show(null);
+    return setPanelState({ ...panelState, pinned: item.ap.id });
+  }
+  const target = pickInfra();
+  const card = target && infoCardFor(target, supports.stats);
+  if (card) {
+    if (panelState.pinned) setPanelState({ ...panelState, pinned: null });
+    return infoCard.show(card);
+  }
+  if (clearOnMiss) {
+    infoCard.show(null);
+    if (panelState.pinned) setPanelState({ ...panelState, pinned: null });
+  }
+}
+/** Cabling and audio hardware under the pick ray (visible layers only, nearest first, not behind a wall). */
+function pickInfra(): InfoTarget | null {
+  const shown = (o: Object3D | null): boolean => {
+    for (let n = o; n; n = n.parent) if (!n.visible) return false;
+    return true;
+  };
+  const roots = [cabling.pathways, cabling.penetrations, cabling.drops, audio.installed];
+  for (const hit of pickRaycaster.intersectObjects(roots, true)) {
+    if (!shown(hit.object)) continue;
+    for (let n: Object3D | null = hit.object; n; n = n.parent) {
+      if (!n.userData.info) continue;
+      const wall = pickRaycaster.intersectObject(world.building, true)[0];
+      return wall && wall.distance < hit.distance - 0.05 ? null : (n.userData.info as InfoTarget);
+    }
+  }
+  return null;
 }
 /** Edit mode: a click selects a camera, or moves the selected one onto the wall that was hit. */
 function editPick(): boolean {
@@ -452,7 +488,7 @@ function editPick(): boolean {
   if (!hit?.face) return false;
   const n = hit.face.normal.clone();
   if (Math.abs(n.y) > 0.35) {
-    toast.show('Click a wall to place the camera.', 'warn', 1800);
+    toast.show('Haz clic en un muro para colocar la cámara.', 'warn', 1800);
     return true;
   }
   n.setY(0).normalize();
@@ -474,7 +510,7 @@ renderer.domElement.addEventListener('click', (e) => {
   const wasActive = desktop.isActive();
   if (mode === 'walk' && !touchMode) desktop.activate();
   if (Math.hypot(e.clientX - downX, e.clientY - downY) > CLICK_MAX_MOVE_PX) return;
-  pickAt(e.clientX, e.clientY, desktop.isPointerLocked(), wasActive || mode === 'orbit', wasActive || mode === 'orbit');
+  pickAt(e.clientX, e.clientY, desktop.isActive() && mode === 'walk', wasActive || mode === 'orbit', wasActive || mode === 'orbit');
 });
 const touch = touchMode
   ? createTouchInput(camera, renderer.domElement, {
@@ -532,7 +568,7 @@ renderer.setAnimationLoop(() => {
     for (let i = 0; i < steps; i++) player.step(touch ? touch.read() : desktop.read(), PHYSICS_STEP);
     player.eyePosition(camera.position);
     const p = threeToPlan(player.position.x, player.position.y, player.position.z);
-    hud.setReadout(`X ${p.x.toFixed(1)}  Y ${p.y.toFixed(1)}  floor h ${p.h.toFixed(2)} m`);
+    hud.setReadout(`X ${p.x.toFixed(1)}  Y ${p.y.toFixed(1)}  altura piso ${p.h.toFixed(2)} m`);
     door.update(dt);
     const key = touchMode ? 'Tap' : 'E';
     toast.setHint(

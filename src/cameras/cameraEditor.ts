@@ -87,17 +87,17 @@ export function createCameraEditor(
   document.body.append(pip);
 
   const title = document.createElement('h2');
-  title.textContent = 'Edit cameras';
+  title.textContent = 'Editar cámaras';
   const hint = document.createElement('p');
   hint.className = 'cam-editor__hint';
-  hint.textContent = 'Click a camera to select it, then click a wall to move it there (or type X / Y / H). Changes save in this browser.';
+  hint.textContent = 'Haz clic en una cámara para seleccionarla y luego en un muro para moverla ahí (o escribe X / Y / H). Los cambios se guardan en este navegador.';
 
   const select = document.createElement('select');
   for (const id of ids) select.append(new Option(id, id));
   select.addEventListener('change', () => handlers.onSelect(select.selectedIndex));
 
   const kind = document.createElement('select');
-  kind.append(new Option('Dome (VIGI C240I)', 'dome'), new Option('Bullet (VIGI C340I)', 'bullet'));
+  kind.append(new Option('Domo (VIGI C240I)', 'dome'), new Option('Bullet (VIGI C340I)', 'bullet'));
   const lens = document.createElement('select');
   const x = numberInput(...LIMITS.x, 0.05);
   const y = numberInput(...LIMITS.y, 0.05);
@@ -141,29 +141,29 @@ export function createCameraEditor(
     d.append(a, b);
     return d;
   };
-  const resetOne = button('Reset camera', handlers.onResetOne);
+  const resetOne = button('Restablecer cámara', handlers.onResetOne);
   const buttons = [
-    row(button('View through camera', handlers.onPreview), resetOne),
+    row(button('Ver a través de la cámara', handlers.onPreview), resetOne),
     row(
-      button('Export JSON', handlers.onExport),
+      button('Exportar JSON', handlers.onExport),
       options.canSaveToProject
-        ? button('Save to project', handlers.onSaveProject, 'cam-editor__btn--primary')
-        : button('Reset all', handlers.onResetAll),
+        ? button('Guardar en el proyecto', handlers.onSaveProject, 'cam-editor__btn--primary')
+        : button('Restablecer todas', handlers.onResetAll),
     ),
   ];
-  if (options.canSaveToProject) buttons.push(row(button('Reset all', handlers.onResetAll), document.createElement('span')));
+  if (options.canSaveToProject) buttons.push(row(button('Restablecer todas', handlers.onResetAll), document.createElement('span')));
 
   root.append(
     title,
     hint,
-    field('Camera', select),
-    field('Type', kind),
-    field('Lens', lens),
-    field('Hide', hidden),
+    field('Cámara', select),
+    field('Tipo', kind),
+    field('Lente', lens),
+    field('Ocultar', hidden),
     position,
-    field('Pan', pan),
+    field('Giro', pan),
     panOut,
-    field('Tilt', tilt),
+    field('Inclinación', tilt),
     tiltOut,
     status,
     ...buttons,
@@ -193,10 +193,10 @@ export function createCameraEditor(
       hidden.checked = camera.hidden;
       pan.value = String(camera.panDeg);
       tilt.value = String(camera.tiltDeg);
-      panOut.textContent = `Pan ${camera.panDeg}° from the wall normal`;
-      tiltOut.textContent = `Tilt ${camera.tiltDeg}° down · HFOV ${camera.lens.hfov}°`;
-      pipLabel.textContent = `${camera.id} · ${camera.lens.mm} mm · HFOV ${camera.lens.hfov}° · live`;
-      status.textContent = `${mountText}${edited ? ' · edited' : ''}`;
+      panOut.textContent = `Giro ${camera.panDeg}° desde la normal del muro`;
+      tiltOut.textContent = `Inclinación ${camera.tiltDeg}° hacia abajo · HFOV ${camera.lens.hfov}°`;
+      pipLabel.textContent = `${camera.id} · ${camera.lens.mm} mm · HFOV ${camera.lens.hfov}° · en vivo`;
+      status.textContent = `${mountText}${edited ? ' · editada' : ''}`;
       status.dataset.warn = String(mountText.startsWith('⚠'));
       resetOne.disabled = !edited;
     },

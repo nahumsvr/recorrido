@@ -1,4 +1,13 @@
 {
+  "CAM02": {
+    "kind": "bullet",
+    "lensMm": 4,
+    "x": 0.25,
+    "y": 0.3,
+    "h": 3.5,
+    "panDeg": -37,
+    "tiltDeg": 14
+  },
   "CAM04": {
     "kind": "dome",
     "lensMm": 2.8,

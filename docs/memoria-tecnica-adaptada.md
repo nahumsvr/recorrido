@@ -10,15 +10,15 @@ Auditorio de la Facultad de Informática, UAQ · Dream Team Networks
 | Concepto | Versión anterior | Esta versión (modelo) |
 |---|---|---|
 | Access points TP-Link EAP773 | 14 | **15** (M01–M18; faltan M05, M08, M11 y M19, excluidos) |
-| Cámaras VIGI C240I (domo) | 10 | **5** |
-| Cámaras VIGI C340I (bullet) | 4 | **2** |
+| Cámaras VIGI C240I (domo) | 10 | **6** |
+| Cámaras VIGI C340I (bullet) | 4 | **3** |
 | Bocinas JBL EON715 | 4 (sin ubicación) | **4**, 2 por grada, ubicadas |
-| Canalización | 500 m (estimación) | **370 m** (calculada sobre rutas) |
-| Cable UTP Cat6 | 9 cajas (2 745 m) | **4 cajas** (1 220 m; ≈ 890 m calculados) |
-| Puntos de red (salidas) | 28 | **23** (15 AP + 7 cámaras + 1 escritorio) |
-| Perforaciones (muros) | 0 (no estimadas) | **3 puntos, 6 mangas** (§5.3) |
-| IDF-N en el muro norte | no existía | **1** (usa el switch de 24 puertos que estaba en el rack) + fibra OM3 ≈ 106 m |
-| Precio total al cliente (con IVA) | $1,322,718.15 | **$1,261,419.50** |
+| Canalización | 500 m (estimación) | **390 m** (calculada sobre rutas) |
+| Cable UTP Cat6 | 9 cajas (2 745 m) | **4 cajas** (1 220 m; ≈ 902 m calculados) |
+| Puntos de red (salidas) | 28 | **25** (15 AP + 9 cámaras + 1 escritorio) |
+| Perforaciones (muros) | 0 (no estimadas) | **4 puntos, 6 mangas** (§5.3) |
+| IDF-N en el muro norte | no existía | **1** (usa el switch de 24 puertos que estaba en el rack) + fibra OM3 ≈ 104 m |
+| Precio total al cliente (con IVA) | $1,322,718.15 | **$1,270,534.79** |
 
 Textos del documento que deben corregirse: "incremento de 12 a 14 access points" → 15; "ampliación puntual de cámaras" pasa a ser una decisión abierta (ver §8); los pies de las tablas 14/14 AP-cámaras.
 
@@ -46,17 +46,19 @@ Coordenadas del plano: X al este, Y al sur, h hacia arriba; origen en la esquina
 | M17 | Stage | 48.2 | 20.4 | 2.88 | Muro |
 | M18 | Stage | 48.3 | 4.3 | 2.84 | Muro |
 
-### 2.2 Cámaras de seguridad (7)
+### 2.2 Cámaras de seguridad (9)
 
 | ID | Tipo | Lente | Zona | X | Y | h | Pan / tilt |
 |---|---|---|---|---:|---:|---:|---|
-| CAM02 | Domo C240I | 4 mm | Courts - NW corner | 0.25 | 0.3 | 3.5 | -35° / 14° |
-| CAM04 | Domo C240I | 2.8 mm | Stage - NE corner | 54.4 | 0.25 | 4 | 33° / 41° |
+| CAM02 | Bullet C340I | 4 mm | Courts - NW corner | 0.25 | 0.3 | 3.5 | -37° / 14° |
+| CAM04 | Domo C240I | 2.8 mm | Stage - NE corner | 54.4 | 0.25 | 5.2 | 33° / 49° |
 | CAM05 | Domo C240I | 2.8 mm | Stage - SE corner | 54.15 | 24.8 | 4 | -29° / 36° |
 | CAM07 | Domo C240I | 2.8 mm | Offices - west side | 42.7 | 30.7 | 3 | 44° / 32° |
 | CAM10 | Domo C240I | 4 mm | Stands - west end | 0.2 | 32.2 | 5.5 | -36° / 13° |
 | CAM11 | Bullet C340I | 4 mm | Pasillo - NW | 4.8 | 32.55 | 2.8 | -25° / 18° |
 | CAM12 | Bullet C340I | 4 mm | Pasillo - NE | 37.4 | 32.7 | 2.8 | -57° / 23° |
+| CAM15 | Domo C240I | 2.8 mm | Exterior - NW corner | -0.25 | 0.8 | 6.2 | 45° / 25° |
+| CAM16 | Domo C240I | 2.8 mm | Exterior - SW corner | 1 | 32.45 | 6.2 | 45° / 25° |
 
 Retiradas el 16/11 tras evaluar su necesidad: CAM01, 03, 06, 08, 09, 13 y 14. No se renumeran los ids.
 
@@ -100,19 +102,22 @@ Las posiciones este son el espejo de las oeste respecto a X = 21.5.
 - Consola Yamaha MG12XU **portátil**, en un puesto de operación (FOH) sobre el escenario (piso h 1.18 m), en su borde sur: mesa de 1.2 × 0.6 m con centro en **(47.6, 24.2)**, contra la cara norte del bloque de oficinas. El borde suroeste del escenario es diagonal (pie de la escalera), por eso la mesa arranca en X 47.0.
 - Tablero de pared fijo a **(47.6, 24.5), h 2.23 m** (1.05 m sobre el piso del escenario), con 2 salidas XLR (L / R) y un contacto protegido. La consola solo se conecta con 2 cables XLR de parcheo al tablero: se desconecta y se guarda sin tocar la instalación. Los cables fijos (canaleta, bajadas y bocinas) se quedan instalados.
 - Salida principal **L → grada oeste**, **R → grada este**, con línea balanceada XLR; cada bocina lleva el *thru* a la segunda de su grada.
-- Ambas líneas salen del tablero por el muro de oficinas a h 3.0 m (sobre el poste de X 46.5 y el vano) hasta la esquina de la grada este. **Nada cruza en el piso la boca del pasillo central**, para que nadie pise ni se tropiece con el cable.
-- **Línea R (grada este):** baja en la esquina y sigue la canaleta de piso al pie de la grada hasta E1 y E2 (≈ 21 m en total).
-- **Línea L (grada oeste):** sube la esquina hasta h 6.6 m, sigue el muro este y el muro trasero por arriba de las gradas y del vano del pasillo hasta el muro oeste, recorre ese muro hasta su esquina frontal, baja y sigue la canaleta de piso al pie de la grada hasta W1 y W2 (≈ 86 m en total).
+- Cada línea va en su **propio tubo conduit de acero** de ¾", pegado al muro (eje a ≈ 2.5 cm de la cara) y sujeto con abrazaderas, igual que el tubo de datos. Ambas salen del tablero (L a la izquierda, R al centro) por el muro de oficinas a h 3.0 m (sobre el poste de X 46.5 y el vano) hasta la esquina de la grada este; en ese tramo L va 3.5 cm más afuera que R para poder subir cruzando sobre R sin tocarla. **Nada cruza en el piso la boca del pasillo central**, para que nadie pise ni se tropiece con el cable.
+- **Línea R (grada este):** baja por la cara oeste del muro lateral de la grada este, en la esquina, y sigue el tubo de piso al pie de la grada hasta E1 y E2 (≈ 21 m en total).
+- **Línea L (grada oeste):** sube por la cara norte del muro de oficinas (X 42.9, para no cruzar la canalización de datos del lado del escenario) hasta h 6.6 m, rodea la esquina, sigue el muro este y el muro trasero por arriba de las gradas y del vano del pasillo hasta el muro oeste, recorre ese muro hasta su esquina frontal y baja pegada a él; al pasar frente al tubo de datos del muro oeste (h 5.7 m) hace una curva de desvío de 10 cm (dos curvas de 30°) para no tocarlo. Sigue el tubo de piso al pie de la grada hasta W1 y W2 (≈ 87 m en total).
 - Total de XLR: ≈ 107 m más holgura. **Verificar el lote de cableado XLR** ($12,000 en la versión anterior, calculado para ≈ 77 m): no se modificó porque no hay precio unitario en el documento.
 - La L pasa a ≈ 3.8 m sobre la última fila (h 3.77): fuera del alcance de público.
-- Alimentación: 4 tomas protegidas, una por bocina, en el pie de las gradas (canaleta de potencia separada de la de audio) (circuito de audio, **no** del UPS del rack, igual que en la versión anterior).
+- **Tubo y protección del tramo de piso (≈ 14 m por lado):** el cable al pie de las gradas está expuesto a balonazos, pies, carritos y trapeadoras, así que todo lo que queda a menos de 2 m del piso va en **tubo rígido de acero (RMC) de ¾"**, de pared gruesa, pegado a la contrahuella con su eje a **16 cm del piso** (libre del agua del trapeado) y sujeto con abrazaderas; arriba de 2 m va en EMT de ¾". Se quitó la canaleta de 50 × 40 mm con ángulo de guarda: el tubo rígido ya es la protección. Va a ≈ 2 cm de la contrahuella. Es criterio de proyecto: no encontré el artículo de la NOM que lo exija, y falta confirmar con el cliente el tipo de uso del piso (carritos, limpiadora) y que la contrahuella admita los anclajes.
+- **Abrazaderas y cajas del audio:** solo las que pide la norma (NEC 358.30 y 344.30, fuente secundaria): una a ≤ 0.9 m de cada caja o extremo y una cada ≤ 3 m. Son **47 abrazaderas** (R 11, L 36) y **11 cajas de registro** (entrada en el tablero, una por bocina en el tubo de piso, y de paso cada ≤ 30 m o cada 360° de curvas).
+- **El audio no comparte canalización con los datos.** Sigue en sus propios tubos, a ≥ 0.3 m de la canalización de Cat6; solo se cruzan en ángulo recto: en el lado del escenario el tubo de datos pasa por delante del de audio con una curva de desvío (§5.2) y L pasa por delante del tubo de datos del muro oeste. Los Cat6 de los AP y las cámaras llevan PoE (circuito Clase 2) y el NEC 725.139(F) separa los circuitos de audio de los Clase 2/3; que esa regla aplique a XLR de línea hacia bocinas amplificadas no está confirmado, y las fuentes consultadas no tratan audio en bandeja con datos. Compartirla exigiría separador metálico y confirmar el texto vigente de la NOM-001-SEDE.
+- Alimentación: 4 tomas protegidas, una por bocina, en el pie de las gradas (canalización de potencia separada de la de audio) (circuito de audio, **no** del UPS del rack, igual que en la versión anterior).
 
 ### 4.4 Límites a tener claros
 
 - Las 4 bocinas refuerzan **solo las gradas**. Canchas y escenario no tienen refuerzo en este diseño. Si el evento tiene público de pie en canchas, hace falta decidirlo (el presupuesto tiene margen).
 - **Nivel desigual por filas:** la primera fila queda a ≈ 1.7 m de la bocina y la última a ≈ 8 m (≈ 13 dB de diferencia). Es el costo de poner las bocinas al frente; se compensa con el nivel de la consola y se debe validar en sitio.
 - **Huecos laterales en las primeras filas:** a 1.7 m la cobertura horizontal de cada bocina es de ± 1.7 m. Los asientos de las primeras filas, entre bocinas, quedan peor cubiertos que los de atrás.
-- **Exposición a golpes:** el frente de la grada es el borde de la cancha. Hay que protegerlas (rejilla o guarda) o aceptar el riesgo de balonazos.
+- **Exposición a golpes:** el frente de la grada es el borde de la cancha. Hay que proteger las bocinas (rejilla o guarda) o aceptar el riesgo de balonazos; el cable de piso ya va en tubo rígido (§4.3).
 - El MG12XU no tiene retardo: sin DSP externo no se alinean tiempos con el escenario.
 
 ## 5. Cableado estructurado (capítulo 7 — nuevo)
@@ -121,42 +126,58 @@ Las posiciones este son el espejo de las oeste respecto a X = 21.5.
 
 **Debajo de las gradas hay baños y vestidores, así que ninguna ruta pasa por ahí:** no se usa el vacío bajo las gradas ni se perfora la losa.
 
-- **Hoyos que atraviesan muros: solo 3 puntos, 6 mangas de Ø100.** PEN-3 (muro sur del cuarto de redes → anexo), PEN-6 (muro norte de oficinas) y PEN-7 (muro oeste de oficinas, desde la grada este). Están en §5.3.
-- **Todo lo demás va en superficie, sin atravesar nada:** bandeja de malla (charola) sobre soportes de pared, bajadas en EMT de ¾" y canaleta de piso para el audio. Solo requiere taquetes de anclaje (no cuentan como perforaciones).
+- **Hoyos que atraviesan muros: solo 4 puntos, 6 mangas (4 de Ø100 y 2 de Ø50).** PEN-3 (muro sur del cuarto de redes → anexo) y PEN-7 (muro oeste de oficinas, desde la grada este). PEN-8 y PEN-9 (muro oeste y muro sur, a 5.7 m) llevan el cable a las cámaras exteriores CAM15 y CAM16. Están en §5.3. El lado del escenario (CAM05, M17) se alimenta por fuera de las oficinas y no perfora nada.
+- **Todo lo demás va en superficie, sin atravesar nada, con tres tipos de canalización de datos (§5.2):** tubo conduit metálico EMT en todo lo que queda a la vista de las gradas y las canchas (muro trasero, subidas, muros oeste y norte, escenario: 163.1 m), bandeja de malla solo dentro del anexo, donde el público no entra (16.8 m), y canaleta plástica superficial en interiores secos de oficinas y anexo (29 m). Además, bajadas en EMT de ¾" y tubos de audio (EMT ¾" y rígido ¾" al pie de las gradas, §4.3). Solo requiere taquetes de anclaje (no cuentan como perforaciones).
 - **Cómo se llega a las canchas:** el cable sale del cuarto de redes por PEN-3 al anexo, cruza el **vano del pasillo central** (que ya existe, bajo el dintel) y sube por las **pilas del vano** hasta el muro trasero, por arriba de la última fila de las gradas; de ahí recorre los muros perimetrales a 5.7 m.
-- **Un IDF en el muro norte (IDF-N)** alimenta el lado norte (muro norte, esquina del escenario y muro de M18), conectado al rack con **fibra OM3 de ≈ 106 m**. Sin el IDF, el AP M04 quedaría a 99.5 m del rack (más de los 90 m permitidos).
+- **Un IDF en el muro norte (IDF-N)** alimenta el lado norte (muro norte, esquina del escenario y muro de M18), conectado al rack con **fibra OM3 de ≈ 104 m**. Sin el IDF, con cobre desde el rack por el muro oeste (no hay otra ruta modelada), pasarían de los 90 m permitidos M04 (99.7 m), M18 (113.4 m) y CAM04 (115.8 m); M03 quedaría en 88.7 m, al límite; M01 (66.9 m), M02 (77.8 m) y CAM02 (62.2 m) cumplirían. Además, el cobre de esos 7 dispositivos pasaría de ≈ 195 m a ≈ 722 m de corte.
 
 ### 5.2 Trayectorias
 
-Alturas: bandejas de las canchas a **5.7 m** (sobre la última fila, 3.77 m, y bajo el techo, 6.85 m); anexo a 3.1 m (bajo el dintel del vano, 3.28 m); entrada a oficinas a 3.8 m (sobre la última fila y bajo el techo de oficinas, 3.9 m); oficinas y escenario sur a 3.4 m (sobre el poste de X 46.5 y la canaleta de audio a 3.0 m).
+Alturas: canalización de las canchas a **5.7 m** (sobre la última fila, 3.77 m, y bajo el techo, 6.85 m); anexo a 3.1 m (bajo el dintel del vano, 3.28 m); entrada a oficinas a 3.8 m (sobre la última fila y bajo el techo de oficinas, 3.9 m); oficinas a 3.4 m (sobre el poste de X 46.5 y la canaleta de audio a 3.0 m). **Lado del escenario:** tubo troncal a 5.7 m pegado a la cara norte del muro de oficinas; una bajada a X 45.9 lo lleva a 2.6 m y de ahí un ramal sigue la cara del muro de 0.2 m que carga a M17, a 3 cm bajo el remate del muro (2.98 m), con la bajada al AP (2.88 m) a unos 0.5 m del final del tubo. Lo mismo en el muro de M18 (AP a 2.84 m). **Todo el EMT va pegado al muro** (eje a ≈ 3 cm de la cara, sujeto con abrazaderas, sin ménsulas ni patas). Los dos tubos de audio cruzan ese tubo en ángulo recto (la línea L sube a X 42.9 y las dos corren a 3.0 m): el tubo de datos pasa 10 cm por delante de cada uno con una curva de desvío (dos curvas de 30°, hechas en obra), así que nunca se tocan.
 
 | ID | Tipo | Tamaño | Recorrido | Largo (m) | Cables |
 |---|---|---|---|---:|---:|
-| ANNEX_FEED | Bandeja | 200×50 | Rack → manga PEN-3 (muro sur del cuarto) | 4.0 | 15 |
-| ANNEX_W | Bandeja | 100×50 | Anexo, hacia el oeste | 7.9 | 2 |
-| ANNEX_E1 | Bandeja | 100×50 | Anexo, hasta la pila oeste del vano | 3.8 | 13 |
-| ANNEX_E2 | Bandeja | 100×50 | Cruza el vano del pasillo colgada bajo el dintel | 8.9 | 9 |
-| ANNEX_E3 | Bandeja | 100×50 | Anexo, hacia el este | 11.7 | 2 |
-| RISER_W | Bandeja | 200×50 | Subida por la pila oeste del vano hasta el muro trasero | 3.2 | 4 |
-| BACK_W | Bandeja | 200×50 | Muro trasero sobre la grada oeste | 16.6 | 4 |
-| WEST | Bandeja | 200×50 | Muro oeste, sobre la grada y las canchas | 31.9 | 2 |
-| NORTH_A | Bandeja | 200×50 | Muro norte hasta el IDF (X 30) | 29.8 | 4 |
-| RISER_E | Bandeja | 100×50 | Subida por la pila este del vano | 3.2 | 6 |
-| BACK_E | Bandeja | 100×50 | Muro trasero sobre la grada este y su muro lateral | 20.5 | 6 |
-| OFFICES_IN | Bandeja | 100×50 | Muro lateral de la grada este, bajando hasta la manga PEN-7 (h 3.8 m) | 1.9 | 4 |
-| PEN7 | Manga | Ø100 | Muro oeste de oficinas, sobre la última fila de la grada | 0.5 | 4 |
-| OFF_IN | Bandeja | 100×50 | Dentro de oficinas, baja a las bandejas de pared | 0.4 | 4 |
-| OFF_S | Bandeja | 100×50 | Oficinas, muro oeste, tramo sur | 1.8 | 1 |
-| OFF_N | Bandeja | 100×50 | Oficinas, muros oeste y norte | 9.5 | 3 |
-| PEN6 | Manga | Ø100 | Muro norte de oficinas | 0.5 | 2 |
-| STAGE_W | Bandeja | 100×50 | Cara norte del muro de oficinas, lado escenario | 5.5 | 2 |
-| IDF_UP | Bandeja | 200×50 | Del gabinete IDF a la bandeja del muro norte | 2.7 | 7 |
-| NORTH_B | Bandeja | 100×50 | Muro norte, hasta el muro de M18 | 16.3 | 3 |
-| BR_M18 | Bandeja | 100×50 | Ramal que baja por el muro norte y sigue pegado a la cara del muro de M18 (h 2.5 m) | 7.8 | 1 |
-| NORTH_C | Bandeja | 100×50 | Muro norte, esquina del escenario (CAM04) | 8.2 | 1 |
-| AUDIO_L / AUDIO_R | Canaleta | 30×30 | Ver §4.3 | 86.3 / 21.4 | — |
+| ANNEX_FEED | Bandeja | 200×50 | Rack → manga PEN-3 (muro sur del cuarto) | 4.0 | 17 |
+| ANNEX_W | Canaleta plástica | 40×25 | Anexo, rama oeste, pegada al muro (4 cm) | 7.9 | 2 |
+| ANNEX_E1 | Bandeja | 100×50 | Anexo, hasta la pila oeste del vano | 3.8 | 15 |
+| ANNEX_E2 | Bandeja | 100×50 | Cruza el vano del pasillo colgada bajo el dintel | 9.1 | 9 |
+| ANNEX_E3 | Canaleta plástica | 40×25 | Anexo, rama este, pegada al muro (4 cm) | 11.6 | 2 |
+| RISER_W | EMT | 1¼" | Subida por la pila oeste del vano hasta el muro trasero | 2.9 | 6 |
+| BACK_W | EMT | 1¼" | Muro trasero sobre la grada oeste | 16.6 | 6 |
+| WEST | EMT | 1" | Muro oeste, sobre la grada y las canchas (3 Cat6 + fibra OM3) | 32.1 | 3 |
+| NORTH_A | EMT | 1¼" | Muro norte hasta el IDF (X 30) | 30.0 | 4 |
+| RISER_E | EMT | 1¼" | Subida por la pila este del vano | 2.9 | 6 |
+| BACK_E | EMT | 1¼" | Muro trasero sobre la grada este y su muro lateral | 20.6 | 6 |
+| OFFICES_IN | EMT | ¾" | Muro lateral de la grada este, bajando hasta la manga PEN-7 (h 3.8 m) | 1.9 | 2 |
+| PEN7 | Manga | Ø100 | Muro oeste de oficinas, sobre la última fila de la grada | 0.4 | 2 |
+| PEN8 | Manga | Ø50 | Muro oeste, esquina noroeste, a 5.7 m, hacia la cámara exterior CAM15 (§5.3) | 0.3 | 1 |
+| PEN9 | Manga | Ø50 | Muro sur, esquina suroeste, a 5.7 m, hacia la cámara exterior CAM16 (§5.3) | 0.3 | 1 |
+| OFF_IN | Canaleta plástica | 40×25 | Dentro de oficinas, baja a las canaletas de pared | 0.4 | 2 |
+| OFF_S | Canaleta plástica | 40×25 | Oficinas, muro oeste, tramo sur | 1.8 | 1 |
+| OFF_N | Canaleta plástica | 40×25 | Oficinas, muros oeste y norte (hasta M16) | 7.2 | 1 |
+| STAGE_A | EMT | ¾" | Remate del muro de la grada este, rodea la esquina de oficinas y sigue por su cara norte (lado escenario) hasta X 45.9, h 5.7 m | 7.2 | 2 |
+| STAGE_B | EMT | ½" | Cara norte del muro de oficinas, hasta la esquina del escenario (CAM05) | 8.7 | 1 |
+| STAGE_R | EMT | ½" | Bajada por la cara norte del muro de oficinas, de 5.7 a 2.6 m | 3.2 | 1 |
+| STAGE_M | EMT | ½" | Ramal pegado a la cara del muro que carga a M17 (sube a 2.95 m en la esquina; termina 0.35 m antes del AP) | 5.0 | 1 |
+| IDF_UP | EMT | 1½" | Del gabinete IDF (tapa a 5.6 m) al tubo del muro norte (5.7 m) | 0.3 | 7 |
+| NORTH_B | EMT | 1" | Muro norte, hasta el muro de M18 | 16.4 | 3 |
+| BR_M18 | EMT | ½" | Ramal que baja por el muro norte y sigue pegado a la cara del muro de M18 (h 2.95 m, termina 0.35 m antes del AP) | 7.1 | 1 |
+| NORTH_C | EMT | ½" | Muro norte, esquina del escenario (CAM04) | 8.2 | 1 |
+| AUDIO_R | EMT | ¾" | Tablero → cara oeste del muro lateral de la grada este, hasta 2 m del piso (§4.3) | 7.0 | — |
+| AUDIO_R_LOW | RMC | ¾" | Bajada a menos de 2 m del piso y tramo al pie de la grada este (E1, E2) | 14.4 | — |
+| AUDIO_L | EMT | ¾" | Tablero → muro oficinas, muro lateral y trasero a 6.6 m → muro oeste, hasta 2 m del piso | 71.8 | — |
+| AUDIO_L_LOW | RMC | ¾" | Bajada a menos de 2 m del piso y tramo al pie de la grada oeste (W1, W2) | 14.9 | — |
 
-Totales: **196.5 m de bandeja y manga de datos, ≈ 34 m de bajadas EMT y ≈ 102 m de canaleta de audio** (≈ 333 m); con 10% de reserva, **370 m**.
+Totales: **210 m de canalización de datos (17.0 m de malla, 163.1 m de EMT, 29 m de canaleta plástica y 1.0 m de manga), ≈ 31 m de bajadas EMT y ≈ 108 m de tubo de audio (79 m de EMT ¾" y 29 m de RMC ¾")** (≈ 350 m); con 10% de reserva, **390 m**. (En la versión anterior el audio se sumaba como 102 m; los cuatro tubos de la tabla suman 108.1 m.)
+
+**Qué va en cada tipo y por qué.** Las gradas están al alcance del público y las canchas se usan para voleibol y tenis, así que todo el recorrido a la vista (muro trasero, subidas, muros oeste y norte, IDF y escenario) va en **tubo EMT**: cerrado, metálico y atornillado, no se abre ni se desconecta a mano como una malla. La malla se queda solo en el anexo (ANNEX_FEED 17 cables, ANNEX_E1 15, ANNEX_E2 9), donde no entra el público. Tamaños con 40 % de relleno y 25 % de crecimiento, contando la fibra donde pasa: ½" para 1 cable, ¾" para 2, 1" para WEST (3 Cat6 + fibra) y NORTH_B (3 cables), **1¼" para RISER_W, BACK_W, NORTH_A, RISER_E y BACK_E** (4 a 6 cables) y **1½" para IDF_UP** (7 cables + fibra).
+
+**Lo que cuesta pasar los troncos a tubo:** cada dispositivo necesita una caja de registro donde sale su bajada, y sumar cables después exige abrir cajas y volver a jalar; en malla bastaba con colocar el cable encima. La fibra OM3 debe ir en subducto dentro del mismo tubo (no suelta junto al cobre).
+
+- **EMT en canchas y escenario**, donde hay balones y personas: va **pegado al muro con abrazaderas de conduit** (banda alrededor del tubo y oreja atornillada al muro). Solo las que pide la norma (NOM-001-SEDE art. 358.30, fuente secundaria: confirmar): una a ≤ 0.9 m de cada caja o extremo (se colocan a 0.3 m) y una cada ≤ 3 m entre ellas. Son **89 abrazaderas** en todo el EMT, sin ménsulas ni varillas; la malla del anexo y la canaleta plástica conservan sus soportes. Los ramales de M17 y M18 van a 2.95 m, pegados al remate de sus muros (2.98 m), fuera del alcance; solo la bajada de STAGE_M a 2.6 m (≈ 0.9 m de tubo) queda al alcance de personas: si se considera daño físico severo, cambiar a tubo rígido.
+- **Canaleta plástica solo en interiores secos** (oficinas y anexo, hasta 3.8 m), pegada al muro a 4 cm y fijada cada ≈ 0.6 m. No se usa en canchas ni en el escenario.
+- **Cajas de registro: 41** (20 de entrada y 21 de bajada, una por dispositivo). Ninguna corrida pasa de 30 m ni de dos curvas de 90° entre cajas, así que no hacen falta cajas de paso.
+- **Menos soportes:** el EMT se soporta cada ≤ 3 m; la malla pedía ménsulas cada ≤ 1.5 m.
 
 ### 5.3 Perforaciones (los "hoyos")
 
@@ -165,17 +186,18 @@ Cada una se validó con el modelo: la trayectoria atraviesa realmente ese muro y
 | ID | Dónde | Posición (X, Y, h) | Mangas | Espesor |
 |---|---|---|---|---|
 | PEN-3 | Muro sur del cuarto de redes → anexo | (12.9, 32.3, 2.5) | 2 × Ø100 | 0.20 m |
-| PEN-6 | Muro norte de oficinas (lado escenario → interior) | (49.0, 24.6, 3.4) | 2 × Ø100 | 0.20 m |
 | PEN-7 | Muro oeste de oficinas (lado grada este → interior), sobre la última fila | (42.58, 28.2, 3.8) | 2 × Ø100 | 0.20 m |
+| PEN-8 | Muro oeste, esquina noroeste → cámara exterior CAM15 | (-0.1, 0.8, 5.7) | 1 × Ø50 | 0.20 m |
+| PEN-9 | Muro sur, esquina suroeste → cámara exterior CAM16 | (1.0, 32.3, 5.7) | 1 × Ø50 | 0.20 m |
 
 Para cada una: manga de acero rígido con 2 cm de sobresalida por lado y **sellado cortafuego** del espacio anular y de la manga vacía (TIA-569, NOM-001-SEDE art. 300-21). Una de las dos mangas de cada punto queda de reserva.
 
 ### 5.4 IDF-N (gabinete del muro norte)
 
-- **Dónde:** muro norte, X 30.0, centro a h 3.0 m (fuera del alcance de los balones), gabinete de pared de 6U (≈ 0.6 × 0.4 × 0.4 m) pegado al muro, por debajo de la bandeja de h 5.7 m.
-- **Alimentación de datos:** fibra OM3 de ≈ 106 m desde el rack, por las mismas bandejas que el cobre (rack → anexo → pila oeste → muro trasero → muro oeste → muro norte). 10GBASE-SR sobre OM3 llega a 300 m (TIA-568.3).
+- **Dónde:** muro norte, X 30.0, centro a h 5.4 m, gabinete de pared de 6U (≈ 0.6 × 0.4 × 0.4 m) pegado al muro. La tapa queda a 5.6 m, justo bajo el tubo de datos del muro norte (5.7 m), que pasa por encima; de ahí un tubo de 0.3 m baja hasta el gabinete. Queda fuera del alcance de balones y público y casi no se ve desde las gradas. **Por verificar:** dar servicio a 5.4 m exige escalera alta o plataforma elevadora (el espacio de trabajo frente al equipo energizado, NOM-001-SEDE 110-26, no se revisó).
+- **Alimentación de datos:** fibra OM3 de ≈ 104 m desde el rack, por la misma canalización que el cobre (en subducto, dentro del EMT) (rack → anexo → pila oeste → muro trasero → muro oeste → muro norte). 10GBASE-SR sobre OM3 llega a 300 m (TIA-568.3).
 - **Equipo:** se mueve el **switch PoE++ de 24 puertos (TP-Link SG3428XMPP)** del rack al IDF; en el rack queda el de 48 puertos. No se compra ningún switch nuevo. Se usan 2 de los 4 transceptores SFP+ del presupuesto (los otros 2 quedan de reserva).
-- **Atiende 7 dispositivos:** M01–M04, M18, CAM02, CAM04. Rack: los otros 15 (M06, M07, M09, M10, M12, M13, M14, M15, M16, M17, CAM05, CAM07, CAM10, CAM11, CAM12) más el escritorio. Oficinas y escenario sur se alimentan desde el rack por el muro lateral de la grada este (PEN-7), así que ningún cable da la vuelta al auditorio y no hay bandeja en el muro este del escenario.
+- **Atiende 7 dispositivos:** M01–M04, M18, CAM02, CAM04. Rack: los otros 17 (M06, M07, M09, M10, M12, M13, M14, M15, M16, M17, CAM05, CAM07, CAM10, CAM11, CAM12, CAM15, CAM16) más el escritorio. Las oficinas se alimentan desde el rack por el muro lateral de la grada este (PEN-7) y el escenario sur (CAM05, M17) por fuera, siguiendo el remate de ese muro y la cara norte del muro de oficinas, sin perforar: ningún cable da la vuelta al auditorio y no hay bandeja en el muro este del escenario.
 - **Falta presupuestar (sin precio en este documento):** gabinete de pared de 6U, circuito de 127 V dedicado, y un UPS pequeño para el IDF (el UPS de 3000 VA del rack no llega hasta ahí). Verificar el presupuesto PoE del SG3428XMPP contra las ≈ 145 W de sus 7 dispositivos (estimado).
 
 ### 5.5 Cableado por dispositivo
@@ -184,54 +206,55 @@ Charola = distancia por las trayectorias desde su origen hasta la bajada; enlace
 
 | ID | Tipo | Origen | Última trayectoria | Charola (m) | Bajada (m) | Enlace (m) | Corte (m) |
 |---|---|---|---|---:|---:|---:|---:|
-| M01 | AP | IDF-N | ID_W | 28.0 | 2.6 | 30.6 | 38.7 |
-| M02 | AP | IDF-N | ID_W | 17.0 | 2.5 | 19.5 | 26.5 |
-| M03 | AP | IDF-N | ID_W | 5.9 | 2.5 | 8.4 | 14.2 |
-| M04 | AP | IDF-N | NORTH_B | 10.4 | 2.5 | 13.0 | 19.3 |
-| M06 | AP | Rack | WEST | 40.2 | 2.5 | 42.7 | 51.9 |
-| M07 | AP | Rack | WEST | 30.4 | 0.8 | 31.2 | 39.3 |
-| M09 | AP | Rack | BACK_W | 11.4 | 0.6 | 12.0 | 18.2 |
-| M10 | AP | Rack | BACK_E | 20.0 | 0.9 | 20.9 | 27.9 |
-| M12 | AP | Rack | BACK_E | 40.2 | 1.7 | 42.0 | 51.1 |
-| M13 | AP | Rack | ANNEX_W | 5.3 | 0.9 | 6.3 | 11.9 |
-| M14 | AP | Rack | ANNEX_E2 | 12.4 | 1.8 | 14.2 | 20.6 |
-| M15 | AP | Rack | ANNEX_E3 | 21.9 | 0.9 | 22.9 | 30.2 |
-| M16 | AP | Rack | OFF_N | 50.2 | 0.6 | 50.8 | 60.9 |
-| M17 | AP | Rack | STAGE_W | 53.3 | 5.2 | 58.5 | 69.4 |
-| M18 | AP | IDF-N | BR_M18 | 26.7 | 0.5 | 27.2 | 34.9 |
-| CAM02 | Domo | IDF-N | ID_W | 32.5 | 2.4 | 34.8 | 43.3 |
-| CAM04 | Domo | IDF-N | NORTH_C | 27.1 | 1.8 | 28.9 | 36.8 |
-| CAM05 | Domo | Rack | STAGE_W | 58.4 | 1.1 | 59.5 | 70.4 |
-| CAM07 | Domo | Rack | OFF_S | 45.0 | 1.3 | 46.3 | 56.0 |
-| CAM10 | Domo | Rack | BACK_W | 27.5 | 0.4 | 27.9 | 35.7 |
-| CAM11 | Bullet | Rack | ANNEX_W | 11.9 | 0.6 | 12.5 | 18.7 |
-| CAM12 | Bullet | Rack | ANNEX_E3 | 28.5 | 0.4 | 28.9 | 36.8 |
+| M01 | AP | IDF-N | ID_W | 25.6 | 2.8 | 28.4 | 36.2 |
+| M02 | AP | IDF-N | ID_W | 14.6 | 2.6 | 17.2 | 24.0 |
+| M03 | AP | IDF-N | ID_W | 3.5 | 2.5 | 6.0 | 11.6 |
+| M04 | AP | IDF-N | NORTH_B | 8.0 | 2.5 | 10.5 | 16.6 |
+| M06 | AP | Rack | WEST | 40.1 | 2.5 | 42.5 | 51.8 |
+| M07 | AP | Rack | WEST | 30.2 | 0.6 | 30.9 | 39.0 |
+| M09 | AP | Rack | BACK_W | 11.0 | 0.5 | 11.5 | 17.7 |
+| M10 | AP | Rack | BACK_E | 19.8 | 0.8 | 20.7 | 27.7 |
+| M12 | AP | Rack | BACK_E | 40.2 | 1.6 | 41.8 | 50.9 |
+| M13 | AP | Rack | ANNEX_W | 5.3 | 0.8 | 6.2 | 11.8 |
+| M14 | AP | Rack | ANNEX_E2 | 12.4 | 1.8 | 14.1 | 20.6 |
+| M15 | AP | Rack | ANNEX_E3 | 22.0 | 0.8 | 22.8 | 30.1 |
+| M16 | AP | Rack | OFF_N | 50.4 | 0.6 | 50.9 | 61.0 |
+| M17 | AP | Rack | STAGE_M | 55.8 | 0.5 | 56.3 | 66.9 |
+| M18 | AP | IDF-N | BR_M18 | 23.8 | 0.5 | 24.3 | 31.7 |
+| CAM02 | Domo | IDF-N | ID_W | 30.1 | 2.5 | 32.5 | 40.8 |
+| CAM04 | Domo | IDF-N | NORTH_C | 24.7 | 0.7 | 25.4 | 33.0 |
+| CAM05 | Domo | Rack | STAGE_B | 55.9 | 2.0 | 58.0 | 68.8 |
+| CAM07 | Domo | Rack | OFF_S | 44.9 | 1.2 | 46.1 | 55.7 |
+| CAM10 | Domo | Rack | BACK_W | 27.1 | 0.2 | 27.4 | 35.1 |
+| CAM11 | Bullet | Rack | ANNEX_W | 11.9 | 0.6 | 12.6 | 18.8 |
+| CAM12 | Bullet | Rack | ANNEX_E3 | 28.5 | 0.6 | 29.1 | 37.0 |
+| CAM15 | Domo | Rack | PEN8 | 59.7 | 0.5 | 60.3 | 71.3 |
+| CAM16 | Domo | Rack | PEN9 | 27.6 | 0.5 | 28.1 | 35.9 |
 
-Se suma 1 salida para el escritorio de operación (≈ 8 m). **Corte total ≈ 820 m → 4 cajas de 305 m (1 220 m)**; la cuarta caja es reserva por tendido y reterminado. El enlace más largo es CAM05 con 59.5 m (antes 72.2 m); los de oficinas y escenario sur bajaron de 54–72 m a 46–60 m.
+Se suma 1 salida para el escritorio de operación (≈ 8 m). **Corte total ≈ 902 m → 4 cajas de 305 m (1 220 m)**; la cuarta caja es reserva por tendido y reterminado. El enlace más largo es CAM15 con 60.3 m (antes 72.2 m); los de oficinas y escenario sur bajaron de 54–72 m a 46–59 m.
 
 ### 5.6 Pegado a paredes
 
-Cada bandeja, manga y bajada queda a **≤ 0.35 m de un muro, techo o poste** en todo su largo (la prueba mide la distancia al modelo cada 10 cm). El cruce del vano va pegado al dintel (h 3.1 m; el dintel está a 3.28 m) y las subidas van pegadas a las pilas del vano. El ramal a M18 baja por el muro norte y sigue pegado a la cara del muro de M18 (h 2.5 m, bajo el AP), sin cruzar el aire. El escenario tiene un poste suelto y su techo está a 8.2 m, así que **1 tramo no puede pegarse** y lleva soporte propio:
-
-| Tramo | Largo libre | Soporte |
-|---|---:|---|
-| Bajada a M17 (poste suelto) | ≈ 2.4 m | Tubo rígido entre el muro de oficinas y el poste, con soporte cada ≤ 1.5 m |
+El EMT queda a **≈ 3 cm del muro** (eje del tubo; las subidas bajo el dintel, a 3 cm del techo). Cada bandeja, manga y bajada queda a **≤ 0.35 m de un muro, techo o poste** en todo su largo (la prueba mide la distancia al modelo cada 10 cm). El cruce del vano va pegado al dintel (h 3.1 m; el dintel está a 3.28 m) y las subidas van pegadas a las pilas del vano. El ramal a M18 baja por el muro norte y sigue pegado a la cara del muro de M18 (h 2.95 m, 3 cm bajo el remate), sin cruzar el aire. El lado del escenario no tiene tramos sin pegar: el tronco va pegado a la cara norte del muro de oficinas (salvo las dos curvas de desvío frente al audio, a ≈ 13 cm del muro) y el ramal a M17 sigue la cara del muro que lo carga, así que la bajada a M17 mide 0.5 m (antes ≈ 5 m, con un tramo libre hasta un poste). La excepción documentada del poste suelto desaparece.
 
 ### 5.7 Cumplimiento
 
 | Requisito | Criterio | Resultado |
 |---|---|---|
-| ANSI/TIA-568.2 (enlace permanente) | ≤ 90 m | **Cumple con holgura.** Máximo 59.5 m (CAM05); M17 58.5 m, M16 50.8 m |
-| ANSI/TIA-568.3 (fibra) | OM3, 10GBASE-SR ≤ 300 m | ≈ 106 m al IDF |
-| ANSI/TIA-569 (llenado de charola) | ≤ 50% con 25% de crecimiento | Cumple en todas (la más cargada, 200 mm con 15 cables, usa ≈ 6%) |
-| ANSI/TIA-569 (llenado de ducto) | ≤ 40% con 25% de crecimiento | Cumple: mangas Ø100 con ≤ 4 cables usan ≈ 2% |
-| ANSI/TIA-569 (cortafuego) | Sellar toda perforación | 3 puntos, 6 mangas (§5.3) |
-| ANSI/TIA-569 (curvas) | Radio ≥ 4× Ø del cable (≈ 25 mm); curvas de EMT ≥ 6× Ø | Se define en el procedimiento de tendido |
-| ANSI/TIA-607 (puesta a tierra) | Unir cada tramo de bandeja, el rack y el IDF a la barra de tierra | Cada bandeja lleva puente de unión; el IDF recibe un conductor de tierra desde la barra del rack por la misma bandeja |
+| ANSI/TIA-568.2 (enlace permanente) | ≤ 90 m | **Cumple con holgura.** Máximo 60.3 m (CAM15); CAM05 ≈ 58 m, M17 56.3 m, M16 50.9 m |
+| ANSI/TIA-568.3 (fibra) | OM3, 10GBASE-SR ≤ 300 m | ≈ 104 m al IDF |
+| ANSI/TIA-569 (llenado de charola) | ≤ 50% con 25% de crecimiento | Cumple en las 3 bandejas del anexo (la más cargada, 200 mm con 17 cables, usa ≈ 6%) |
+| ANSI/TIA-569 (llenado de ducto) | ≤ 40% con 25% de crecimiento (53 / 31 / 40 % para 1 / 2 / 3+ cables) | Cumple: mangas Ø100 con ≤ 2 cables usan ≈ 1%; los EMT de ½", ¾", 1", 1¼" y 1½" cumplen contando la fibra donde pasa |
+| ANSI/TIA-569 (registros) | ≤ 30 m y ≤ 2 curvas de 90° entre cajas | Cumple con 41 cajas (entrada y una por bajada) |
+| NOM-001-SEDE art. 358 (EMT) | Soporte cada ≤ 3 m y a ≤ 0.9 m de cada caja; no usar donde haya daño físico severo | 89 abrazaderas: a 0.3 m de cada caja o extremo y cada ≤ 3 m. **Por verificar:** el tramo de STAGE_M a 2.6 m (≈ 0.9 m) queda al alcance de personas; las subidas RISER_W y RISER_E bajan hasta 3.1 m en las pilas del vano |
+| NOM-001-SEDE art. 388 (canaleta no metálica) | Solo interior seco y a la vista, sin riesgo de golpes | **Por verificar** (anexo y oficinas): confirmar en la NOM y la clasificación de fuego del cable |
+| ANSI/TIA-569 (cortafuego) | Sellar toda perforación | 4 puntos, 6 mangas (§5.3) |
+| ANSI/TIA-569 (curvas) | Radio ≥ 4× Ø del cable (≈ 25 mm); curvas de EMT ≥ 6× Ø; ≤ 360° de curvas entre cajas (NEC 358.26) | Se define en el procedimiento de tendido; la corrida con más curvas (STAGE_A, esquina más dos desvíos) suma 210° |
+| ANSI/TIA-607 (puesta a tierra) | Unir cada tramo de bandeja o EMT, el rack y el IDF a la barra de tierra | Cada bandeja lleva puente de unión y el EMT va con conectores metálicos continuos; el IDF recibe un conductor de tierra desde la barra del rack por la misma canalización |
 | ANSI/TIA-606 (etiquetado) | Identificador único por salida y por trayectoria | Se usan los ids de esta memoria (M01…, CAM02…, PEN-3…, IDF-N) |
 | NOM-001-SEDE (potencia vs datos) | Separar datos de potencia | Mínimo 30 cm en paralelo o división metálica (criterio de este proyecto) |
-| IEEE 802.3at (PoE) | 30 W en el puerto, ≈ 25.5 W en el AP | 15 AP ≈ 381 W; 7 cámaras ≈ 60–70 W (estimado); rack ≈ 300 W, IDF ≈ 145 W (estimado) |
-| TIA TSB-184 (calentamiento de haz) | Haces PoE de muchos cables | El haz mayor lleva 15 cables Cat6; verificar con la ficha del fabricante |
+| IEEE 802.3at (PoE) | 30 W en el puerto, ≈ 25.5 W en el AP | 15 AP ≈ 381 W; 9 cámaras ≈ 80–90 W (estimado); rack ≈ 320 W, IDF ≈ 145 W (estimado) |
+| TIA TSB-184 (calentamiento de haz) | Haces PoE de muchos cables | El haz mayor lleva 17 cables Cat6; verificar con la ficha del fabricante |
 
 ### 5.8 Supuestos (confirmar en el levantamiento de obra)
 
@@ -239,6 +262,7 @@ Cada bandeja, manga y bajada queda a **≤ 0.35 m de un muro, techo o poste** en
 - La bandeja ANNEX_E2 cruza colgada el vano del pasillo central (≈ 9 m) y necesita colgantes anclados al techo del anexo; las subidas van pegadas a las pilas del vano (X 16.75 y X 25.7), que están libres.
 - El anexo (pasillo) está disponible para la bandeja a 3.1 m a lo largo de su muro norte.
 - El poste en X ≈ 46.5 del borde del escenario (h hasta 2.9 m) limita la altura de la línea de audio y de la bandeja de oficinas.
+- Los muros aceptan taquetes para las abrazaderas (el modelo los muestra de 0.2 m; confirmar el material en obra).
 - Las bajadas son EMT de ¾" en el orden de ejes que evita atravesar muros; la ruta exacta la define el instalador.
 - Los baños y vestidores bajo las gradas no se tocan: no hay cable, manga ni perforación bajo la superficie de las gradas (salvo el cuarto de redes).
 
@@ -247,52 +271,54 @@ Cada bandeja, manga y bajada queda a **≤ 0.35 m de un muro, techo o poste** en
 | Concepto | Modelo | Antes | Ahora | Unitario s/IVA | Total s/IVA |
 |---|---|---:|---:|---:|---:|
 | Access point Wi-Fi 7 | TP-Link EAP773 | 14 | **15** | $5,117.24 | $76,758.60 |
-| Cámara domo 4 MP | VIGI C240I | 10 | **5** | $762.93 | $3,814.65 |
-| Cámara bullet 4 MP | VIGI C340I | 4 | **2** | $1,098.28 | $2,196.56 |
+| Cámara domo 4 MP | VIGI C240I | 10 | **6** | $762.93 | $4,577.58 |
+| Cámara bullet 4 MP | VIGI C340I | 4 | **3** | $1,098.28 | $3,294.84 |
 
-Subtotal hardware: **$290,616.15** (antes $291,510.12). Resto de equipos, sin cambios.
+Subtotal hardware: **$292,477.36** (antes $291,510.12). Resto de equipos, sin cambios.
 
-Observación abierta: con 7 cámaras el NVR de 32 canales y los 4 discos de 8 TB quedan sobredimensionados (≈ 28 Mbps a 4 Mbps/cámara → ≈ 9 TB a 30 días). Se mantienen por ahora para no tocar el diseño sin tu decisión.
+Observación abierta: con 9 cámaras el NVR de 32 canales y los 4 discos de 8 TB quedan sobredimensionados (≈ 28 Mbps a 4 Mbps/cámara → ≈ 9 TB a 30 días). Se mantienen por ahora para no tocar el diseño sin tu decisión.
 
 ## 7. Materiales (capítulo 8 — cambios)
 
 | Material | Antes | Ahora | Total s/IVA |
 |---|---:|---:|---:|
 | Cable UTP Cat6, caja 305 m | 9 | **4** | $18,595.56 |
-| Jack RJ45 Cat6 (2 por salida + 4 de reserva) | 40 | **50** | $15,017.24 |
+| Jack RJ45 Cat6 (2 por salida + 4 de reserva) | 40 | **54** | $16,218.62 |
 | Faceplate 2 puertos | 20 | **12** | $547.55 |
 | Caja superficial y accesorios | 20 | **23** | $1,586.21 |
-| Canalización y accesorios (PVC/charola) | 500 m | **370 m** | $57,413.80 |
+| Canalización y accesorios (PVC/charola) | 500 m | **390 m** | $60,517.25 |
 
 Sin cambios: patch panels, 48 patch cords, 4 organizadores, etiquetado, tierra, fibra OM3, cableado XLR (lote), soportes de bocinas y micrófono, distribución eléctrica de audio.
 
-Subtotal materiales: **$165,011.65** (antes $205,583.20).
+Subtotal materiales: **$169,316.48** (antes $205,583.20).
 
 ## 8. Resumen de costos
 
-Mano de obra, cargas sociales y costos operativos **no se modificaron** (*supuesto*: se revisan con el nuevo número de salidas y rutas en una siguiente pasada).
+Mano de obra, cargas sociales y costos operativos **no se modificaron** (*supuesto*: se revisan con el nuevo número de salidas y rutas en una siguiente pasada). Con CAM15 y CAM16 (y con CAM02 como bullet, según los ajustes guardados del proyecto) solo se actualizó el hardware (+1 domo, +1 bullet). **No se recalcularon** los faceplates, la canalización (+≈ 5 m de bajadas), el NVR ni la mano de obra. Los jacks sí (25 salidas × 2 + 4 de reserva = 54).
 
 | Concepto | Importe MXN |
 |---|---:|
-| Hardware | $290,616.15 |
-| Materiales y consumibles | $165,011.65 |
+| Hardware | $292,477.36 |
+| Materiales y consumibles | $169,316.48 |
 | Mano de obra directa | $241,850.00 |
 | Cargas sociales e ISN | $79,810.50 |
 | Seguros, herramientas y operación | $76,000.00 |
-| **Costo directo** | **$853,288.30** |
-| Contingencia 8% | $68,263.06 |
-| Costo interno del proyecto | $921,551.36 |
-| Utilidad Dream Team Networks 18% | $165,879.24 |
-| Precio de venta antes de IVA | $1,087,430.60 |
-| IVA 16% | $173,988.90 |
-| **PRECIO TOTAL AL CLIENTE** | **$1,261,419.50** |
+| **Costo directo** | **$859,454.34** |
+| Contingencia 8% | $68,756.35 |
+| Costo interno del proyecto | $928,210.69 |
+| Utilidad Dream Team Networks 18% | $167,077.92 |
+| Precio de venta antes de IVA | $1,095,288.61 |
+| IVA 16% | $175,246.18 |
+| **PRECIO TOTAL AL CLIENTE** | **$1,270,534.79** |
 
-Presupuesto máximo $1,600,000.00 → se usa **78.84%**; margen **$338,580.50** (21.16%).
+Presupuesto máximo $1,600,000.00 → se usa **79.41%**; margen **$329,465.21** (20.59%).
 
 ## 9. Supuestos y pendientes
 
-1. **Perforaciones:** PEN-3, PEN-6 y PEN-7 (§5.3) salen de las trayectorias que el modelo muestra libres; confirmar en obra que el muro sea el esperado y no haya instalaciones dentro. **Obra civil no presupuestada:** 6 mangas y el sellado cortafuego no tienen partida en la lista de precios del documento; falta cotizarlos.
+1. **Perforaciones:** PEN-3, PEN-7, PEN-8 y PEN-9 (§5.3) salen de las trayectorias que el modelo muestra libres; confirmar en obra que el muro sea el esperado y no haya instalaciones dentro. PEN-8 y PEN-9 dan a la intemperie: sellar contra el agua y usar cable Cat6 de exterior (cubierta UV) o tubo hasta la cámara en los ≈ 0.5 m de afuera. **Obra civil no presupuestada:** 6 mangas y el sellado cortafuego no tienen partida en la lista de precios del documento; falta cotizarlos.
 1b. **IDF-N (§5.4):** faltan por presupuestar el gabinete de pared de 6U, el circuito dedicado y un UPS pequeño; el switch PoE++ de 24 puertos sale del rack. Verificar el presupuesto PoE del SG3428XMPP contra los ≈ 145 W de sus 7 dispositivos (estimado), y que el muro norte permita el montaje (no hay datos de su material).
+1d. **Canalización híbrida (§5.2):** falta cotizar el tubo EMT (½", ¾", 1", 1¼" y 1½", 163.1 m), sus abrazaderas y soportes, el subducto para la fibra, las 41 cajas de registro, 17.0 m de malla y 29 m de canaleta plástica; el presupuesto sigue con la partida mezclada "PVC/charola". Las reglas de registros, de relleno por número de cables y del art. 388 salen de fuentes secundarias (no del texto de la TIA-569 ni de la NOM): confirmarlas, y la clasificación de fuego del cable (plenum o LSZH) dentro de canaleta plástica.
+1c. **Audio (§4.3):** falta cotizar ≈ 79 m de EMT ¾" y ≈ 29 m de tubo rígido (RMC) ¾", sus 47 abrazaderas, 11 cajas de registro y los codos y conectores (sin partida en la lista de precios del documento). Ya no hay canaleta de acero de 50 × 40 mm ni ángulo de guarda.
 2. Posición del puesto FOH (mesa sobre el escenario en 47.6, 24.2; mesa y tablero a 0.4 m de la cabecera de la escalera sur) y cable de audio L por la parte alta del muro trasero (≈ 86 m de XLR) y lote de XLR por verificar.
 3. Cobertura de canchas y escenario sin refuerzo de audio: decisión del cliente. Protección de las bocinas contra balonazos.
 4. Mano de obra: sin ajustar por menos cámaras y nuevas rutas.
