@@ -9,7 +9,14 @@ const report = JSON.parse(readFileSync('src/assets/model-report.json', 'utf8')) 
   glbBytes: number;
   stageEdgeX: number;
   wallPlanes: Record<string, number>;
+  apWallDistance: Record<string, number | null>;
 };
+
+/**
+ * APs whose table coordinates are not next to a wall in the model (2026-11-16).
+ * Pending confirmation of the real mounting spot; remove from this list once fixed.
+ */
+const KNOWN_UNMOUNTED = ['AP06', 'AP07', 'AP14'];
 
 function hasWallPlane(axis: 'X' | 'Y', value: number, tolerance = 0.15): boolean {
   return Object.keys(report.wallPlanes).some((key) => {
@@ -31,6 +38,13 @@ describe('prepared model', () => {
 
   it('places the stage edge near X = courtWidth (model is 0.17 m short of the plan)', () => {
     expect(Math.abs(report.stageEdgeX - LAYOUT.courtWidth)).toBeLessThanOrEqual(0.25);
+  });
+
+  it('mounts every AP within 0.6 m of a wall, except the known unmounted ones', () => {
+    const far = Object.entries(report.apWallDistance)
+      .filter(([, d]) => d === null || d > 0.6)
+      .map(([id]) => id);
+    expect(far).toEqual(KNOWN_UNMOUNTED);
   });
 
   it('keeps the model light enough for mobile', () => {

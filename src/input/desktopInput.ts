@@ -8,6 +8,8 @@ export interface DesktopInput {
   /** Stops looking and moving (Esc does the same). */
   deactivate(): void;
   isActive(): boolean;
+  /** True with real pointer lock (look = screen center), false in drag mode. */
+  isPointerLocked(): boolean;
   /** Called whenever the active state changes. */
   onActiveChange(cb: (active: boolean) => void): void;
   /** Current movement intent; `jump` is true once per key press. */
@@ -119,6 +121,7 @@ export function createDesktopInput(camera: Camera, element: HTMLElement): Deskto
       if (controls.isLocked) controls.unlock();
     },
     isActive,
+    isPointerLocked: () => controls.isLocked,
     onActiveChange(cb) {
       listeners.push(cb);
     },

@@ -19,7 +19,7 @@ Branch: `feat/phase-1-model-viewer` (one branch per phase) · Delivery: ask-on-r
 |---|---|---|---|---|
 | T1 Phase 1: model loads and is readable, `?debug=align` | S1, S2, S7 | inline | done | 20 unit tests green; build OK; browser: loads, no console errors, readout exact at (22.90, 12.35) and (45.50, 10.00) |
 | T2 Phase 2: first-person walk + collisions | S3 | inline | done | 34 unit tests (wall, 0.30/0.50 steps, 30°/45° ramps, stairs down, hole respawn, safety floor, roof-safe teleport); browser: north wall stop Y 0.30, stage edge stop X 45.33, stands climbed by jumping to h 3.77, W held 1 s = 1.40 m |
-| T3 Phase 3: APs, labels, panel, coverage | S4 | inline | pending | |
+| T3 Phase 3: APs, labels, panel, coverage | S4 | inline | done | 41 unit tests (wall mounting, selection, AP table, report AP-wall distances); browser: proximity panel at AP01 (3.7 m), click pins AP06 with warning, floor + sphere coverage clipped to building |
 | T4 Phase 4: minimap + teleports | S5, S6 | inline | pending | |
 | T5 Phase 5: mobile controls + optimization + single-file build | S3, S7 | inline | pending | |
 
@@ -31,3 +31,5 @@ Branch: `feat/phase-1-model-viewer` (one branch per phase) · Delivery: ask-on-r
 - L4 Offices block found at X 42.5–50.7, Y 24.7–31.0, h 0–3.9 (contains AP14). Gym not identified as a floor slab yet.
 - Open questions: stage props keep/remove; D05 and network room coordinates; stand aisles/stairs modeled?; gym floor height and access.
 - L5 (phase 2) Controller = raised capsule (walls, bottom at feet + maxStep 0.35) + 5 downward probe rays (ground, step snap, slopes > 40° rejected). Real model: central aisle through the stands at X 19–23.5 opens to the south annex (likely main entrance); stand risers are 0.8 m (first) then 0.5 m, so stands are climbed by jumping (jump 3.6 m/s); stage (h 1.2) has no modeled stairs, so it is not reachable yet — teleport in phase 4. Embedded browsers deny pointer lock: drag-to-look fallback added.
+- L6 (2026-11-16) User: "el escenario si tiene escaleras, continúa con lo demás". Verified: two stair runs at X 45.7–47, north (Y 1.0→3.0) and south (Y 23.5→21.5), risers 0.131 m, both walkable to h 1.18. South foot has only ~0.5 m clearance to the offices wall (Y 24.5).
+- L7 (phase 3) AP wall distances in the model: AP01–05 0.40 m, AP08–11 0.20 m, AP12 0.00 m, AP13 0.19 m (oblique surface); AP06 and AP07 have no wall within 3 m, AP14 is 1.18 m away. Markers snap to the wall within 0.6 m; the other three are drawn at the table position with a warning in label and panel. Pending user confirmation of real mounting spots (test KNOWN_UNMOUNTED).

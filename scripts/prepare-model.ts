@@ -10,7 +10,10 @@ import { Document, NodeIO } from '@gltf-transform/core';
 import { EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions';
 import { meshopt, weld as weldTransform } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
-import { Color } from 'three';
+import { BufferAttribute, BufferGeometry, Color, Vector3 } from 'three';
+import { MeshBVH } from 'three-mesh-bvh';
+import { findMountingWall } from '../src/aps/mounting.ts';
+import { ACCESS_POINTS } from '../src/data/aps.ts';
 import { ALIGNMENT, LAYOUT, STAGE_PROPS_BOX_STL } from '../src/config/alignment.ts';
 import { stlToThree } from '../src/domain/coords.ts';
 import { classifyFace, type FaceClass } from '../src/domain/faceClassifier.ts';
@@ -139,6 +142,17 @@ for (let i = 0; i < buildingPos.length; i += 3) {
   }
 }
 const round = (n: number) => Math.round(n * 1000) / 1000;
+
+// Distance from each AP in the design table to the nearest wall of the model.
+const collider = new BufferGeometry();
+collider.setAttribute('position', new BufferAttribute(new Float32Array(buildingPos), 3));
+const colliderBvh = new MeshBVH(collider);
+const apWallDistance = Object.fromEntries(
+  ACCESS_POINTS.map((ap) => {
+    const mount = findMountingWall(colliderBvh, new Vector3(ap.position.x, ap.position.h, ap.position.y), 3);
+    return [ap.id, mount ? round(mount.distance) : null];
+  }),
+);
 const report = {
   source: SRC,
   alignment: ALIGNMENT,
@@ -155,6 +169,8 @@ const report = {
     h: [round(bbox.min[1]!), round(bbox.max[1]!)],
   },
   stageEdgeX: round(stageMinX),
+  /** Meters to the nearest wall within 3 m; null = none. */
+  apWallDistance,
   areaByClass: Object.fromEntries(Object.entries(classArea).map(([k, v]) => [k, round(v)])),
   wallPlanes: Object.fromEntries(
     [...wallPlanes.entries()]
@@ -165,3 +181,5 @@ const report = {
 };
 writeFileSync(`${OUT_DIR}/model-report.json`, `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify({ ...report, areaByClass: undefined, wallPlanes: undefined }, null, 2));
+const unmounted = Object.entries(apWallDistance).filter(([, d]) => d === null || d > 0.6);
+if (unmounted.length) console.warn(`APs not within 0.6 m of a wall: ${unmounted.map(([id, d]) => `${id} (${d ?? '>3'} m)`).join(', ')}`);
