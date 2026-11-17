@@ -101,10 +101,10 @@ describe('cabling: pathways vs the real model', () => {
 });
 
 describe('cabling: device routes', () => {
-  it('covers the 15 APs and 9 cameras, once each', () => {
+  it('covers the 15 APs and 11 cameras, once each', () => {
     expect(CABLE_DEVICES.filter((d) => d.kind === 'AP')).toHaveLength(15);
-    expect(CABLE_DEVICES.filter((d) => d.kind === 'camera')).toHaveLength(9);
-    expect(new Set(CABLE_DEVICES.map((d) => d.id)).size).toBe(24);
+    expect(CABLE_DEVICES.filter((d) => d.kind === 'camera')).toHaveLength(11);
+    expect(new Set(CABLE_DEVICES.map((d) => d.id)).size).toBe(26);
   });
 
   it('chains are connected: each pathway starts where the previous one ends', () => {
@@ -258,7 +258,7 @@ describe('cabling: topology (restrooms and locker rooms under the stands)', () =
 
   it('each device is fed from the hub its list says, and the IDF serves 7 of them', () => {
     expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'idf')).toHaveLength(IDF.ports);
-    expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'rack')).toHaveLength(24 - IDF.ports);
+    expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'rack')).toHaveLength(26 - IDF.ports);
     for (const r of DEVICE_ROUTES) expect(r.chain[0], r.device.id).toBe(r.device.hub === 'idf' ? 'IDF_UP' : 'ANNEX_FEED');
   });
 

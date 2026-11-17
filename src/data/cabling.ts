@@ -196,13 +196,13 @@ export const PATHWAYS: readonly Pathway[] = [
   { id: 'OFF_S', kind: 'plastic', service: 'data', label: 'Offices west wall, south end', ...PLASTIC, points: [p(X_OFFICES_FLUSH, 28.2, H_OFFICES), p(X_OFFICES_FLUSH, 30.0, H_OFFICES)] },
   { id: 'OFF_N', kind: 'plastic', service: 'data', label: 'Offices west and north walls', ...PLASTIC, points: [p(X_OFFICES_FLUSH, 28.2, H_OFFICES), p(X_OFFICES_FLUSH, Y_OFFICES_N_FLUSH, H_OFFICES), p(46.5, Y_OFFICES_N_FLUSH, H_OFFICES)] },
   // -- Stage side (CAM05, M17): outside the offices, on the face of the offices north wall, fed from the top of the east stand end wall.
-  { id: 'STAGE_A', kind: 'emt', service: 'data', label: 'East stand end wall, around the corner and along the offices north wall', ...EMT_THREE_QUARTER, points: [p(X_ENDWALL, 28.2, H_HIGH), p(X_ENDWALL, Y_STAGE_FACE, H_HIGH), ...kickOut(X_AUDIO_CLIMB, H_HIGH), p(X_STAGE_RISER, Y_STAGE_FACE, H_HIGH)] },
-  { id: 'STAGE_B', kind: 'emt', service: 'data', label: 'Offices north wall, stage side, to the stage corner (CAM05)', ...EMT_HALF, points: [p(X_STAGE_RISER, Y_STAGE_FACE, H_HIGH), p(X_EAST, Y_STAGE_FACE, H_HIGH)] },
+  { id: 'STAGE_A', kind: 'emt', service: 'data', label: 'East stand end wall, around the corner and along the offices north wall', ...EMT_ONE, points: [p(X_ENDWALL, 28.2, H_HIGH), p(X_ENDWALL, Y_STAGE_FACE, H_HIGH), ...kickOut(X_AUDIO_CLIMB, H_HIGH), p(X_STAGE_RISER, Y_STAGE_FACE, H_HIGH)] },
+  { id: 'STAGE_B', kind: 'emt', service: 'data', label: 'Offices north wall, stage side, to the stage corner (CAM05, CAM15)', ...EMT_THREE_QUARTER, points: [p(X_STAGE_RISER, Y_STAGE_FACE, H_HIGH), p(X_EAST, Y_STAGE_FACE, H_HIGH)] },
   { id: 'STAGE_R', kind: 'emt', service: 'data', label: 'Down the offices north wall to the M17 branch', ...EMT_HALF, points: dropOver(X_STAGE_RISER, H_HIGH, H_M17) },
   { id: 'STAGE_M', kind: 'emt', service: 'data', label: 'Branch along the face of the wall that carries M17', ...EMT_HALF, points: [p(X_STAGE_RISER, Y_AUDIO_CLEAR, H_M17), p(46.395, Y_AUDIO_CLEAR, H_M17), p(46.395, Y_AUDIO_CLEAR, H_M17_TOP), p(48.066, 20.67, H_M17_TOP)] },
-  // -- Exterior cameras at the west corners (CAM15, CAM16): a sleeve through the outer wall at the height of the conduit, then a short drop up the outside face.
-  { id: 'PEN8', kind: 'conduit', service: 'data', label: 'West wall sleeve at the north-west corner (PEN-8), to CAM15', ...SLEEVE_2IN, points: [p(X_WEST, 0.8, H_HIGH), p(-0.25, 0.8, H_HIGH)] },
-  { id: 'PEN9', kind: 'conduit', service: 'data', label: 'South wall sleeve at the south-west corner (PEN-9), to CAM16', ...SLEEVE_2IN, points: [p(1.0, Y_BACK, H_HIGH), p(1.0, 32.45, H_HIGH)] },
+  // -- Exterior cameras at the west corners (CAM17, CAM18): a sleeve through the outer wall at the height of the conduit, then a short drop up the outside face.
+  { id: 'PEN8', kind: 'conduit', service: 'data', label: 'West wall sleeve at the north-west corner (PEN-8), to CAM17', ...SLEEVE_2IN, points: [p(X_WEST, 0.8, H_HIGH), p(-0.25, 0.8, H_HIGH)] },
+  { id: 'PEN9', kind: 'conduit', service: 'data', label: 'South wall sleeve at the south-west corner (PEN-9), to CAM18', ...SLEEVE_2IN, points: [p(1.0, Y_BACK, H_HIGH), p(1.0, 32.45, H_HIGH)] },
   // -- Audio (see src/data/audio.ts for the exact routes): EMT above 2 m, rigid conduit below it.
   ...AUDIO_RUNS.flatMap((r): Pathway[] => audioPathways(r.line, r.points)),
 ];
@@ -224,8 +224,8 @@ export interface Penetration {
 /** Every hole the plan needs. Everything else is surface-mounted (anchors only). */
 export const PENETRATIONS: readonly Penetration[] = [
   { id: 'PEN-3', kind: 'wall', description: 'Network room south wall → annex', position: p(12.9, 32.3, 2.5), sleeves: 2, diameterMm: 100, pathway: 'ANNEX_FEED', thicknessM: 0.2 },
-  { id: 'PEN-8', kind: 'wall', description: 'West wall, north-west corner → exterior camera CAM15', position: p(-0.1, 0.8, H_HIGH), sleeves: 1, diameterMm: 50, pathway: 'PEN8', thicknessM: 0.2 },
-  { id: 'PEN-9', kind: 'wall', description: 'South wall, south-west corner → exterior camera CAM16', position: p(1.0, 32.3, H_HIGH), sleeves: 1, diameterMm: 50, pathway: 'PEN9', thicknessM: 0.2 },
+  { id: 'PEN-8', kind: 'wall', description: 'West wall, north-west corner → exterior camera CAM17', position: p(-0.1, 0.8, H_HIGH), sleeves: 1, diameterMm: 50, pathway: 'PEN8', thicknessM: 0.2 },
+  { id: 'PEN-9', kind: 'wall', description: 'South wall, south-west corner → exterior camera CAM18', position: p(1.0, 32.3, H_HIGH), sleeves: 1, diameterMm: 50, pathway: 'PEN9', thicknessM: 0.2 },
   { id: 'PEN-7', kind: 'wall', description: 'Offices west wall (east stand end wall side) → offices', position: p(42.58, 28.2, H_PEN7), sleeves: 2, diameterMm: 100, pathway: 'PEN7', thicknessM: 0.2 },
 ];
 
@@ -244,6 +244,8 @@ export interface FreeSpan {
   readonly support: string;
 }
 export const FREE_SPANS: readonly FreeSpan[] = [
+  // CAM16 hangs at 2.05 m on the east wall of the network room (locked, nobody walks under it): the cable crosses the room from the top of the rack.
+  { id: 'CAM16', kind: 'drop', maxFarM: 2.0, support: 'Locked network room: the cable crosses the room from the rack top to the camera, held by cable ties on a ladder rack to be set on site.' },
 ];
 
 /** Where a device's copper starts: the rack, or the north IDF. */
@@ -288,9 +290,13 @@ const ROUTE_BY_ID: Readonly<Record<string, { hub: Hub; chain: readonly string[] 
   M18: { hub: 'idf', chain: ['IDF_UP', 'NORTH_B', 'BR_M18'] },
   // Rack: offices and stage south, through the east stand end wall.
   CAM05: { hub: 'rack', chain: [...FROM_RACK_STAGE, 'STAGE_A', 'STAGE_B'] },
-  // Exterior cameras at the west corners: along the back wall conduit (and the west wall conduit for CAM15), then through a sleeve.
-  CAM15: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'WEST', 'PEN8'] },
-  CAM16: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'PEN9'] },
+  // Stage east end (watches the mixer): shares the CAM05 conduit.
+  CAM15: { hub: 'rack', chain: [...FROM_RACK_STAGE, 'STAGE_A', 'STAGE_B'] },
+  // Inside the network room: the cable leaves the rack by the room tray.
+  CAM16: { hub: 'rack', chain: ['ANNEX_FEED'] },
+  // Exterior cameras at the west corners: along the back wall conduit (and the west wall conduit for CAM17), then through a sleeve.
+  CAM17: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'WEST', 'PEN8'] },
+  CAM18: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'PEN9'] },
   M17: { hub: 'rack', chain: [...FROM_RACK_STAGE, 'STAGE_A', 'STAGE_R', 'STAGE_M'] },
   M16: { hub: 'rack', chain: [...FROM_RACK_OFFICES, 'OFF_N'] },
   CAM07: { hub: 'rack', chain: [...FROM_RACK_OFFICES, 'OFF_S'] },

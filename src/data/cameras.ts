@@ -124,9 +124,13 @@ export const CAMERAS: readonly SecurityCamera[] = [
   cam('CAM10', 'dome', 0.2, 32.2, H_STANDS_TOP, 'Stands - west end', 4, { panDeg: -36, tiltDeg: 13 }),
   cam('CAM11', 'bullet', 4.8, 32.55, H_PASILLO, 'Pasillo - NW', 4, { panDeg: -25, tiltDeg: 18 }),
   cam('CAM12', 'bullet', 37.4, 32.7, H_PASILLO, 'Pasillo - NE', 4, { panDeg: -57, tiltDeg: 23 }),
+  // Watches the audio mixer (47.6, 24.2, about 2.05 m): stage face of the offices wall at its east end, next to CAM05 (which is on the offices face).
+  cam('CAM15', 'dome', 54.0, 24.45, H_STAGE, 'Stage - audio mixer', 4, { panDeg: 62, tiltDeg: 29, note: 'Looks at the audio mixer on the operator table' }),
+  // Inside the network room (X 12.44-16.44, Y 28.64-32.2): east wall by the door corner, looking at the rack front and the work area.
+  cam('CAM16', 'dome', 16.38, 31.6, 2.05, 'Network room', 2.8, { panDeg: -37, tiltDeg: 31, note: 'Shows what is done inside the network room' }),
   // Exterior, at the top of the west corners (outside face of the wall, 0.7 m under the wall top at 6.9 m): they watch the west and south facades.
-  cam('CAM15', 'dome', -0.25, 0.8, H_EXTERIOR, 'Exterior - NW corner', 2.8, { panDeg: 45, tiltDeg: 25, note: 'Exterior camera on the west wall' }),
-  cam('CAM16', 'dome', 1.0, 32.45, H_EXTERIOR, 'Exterior - SW corner', 2.8, { panDeg: 45, tiltDeg: 25, note: 'Exterior camera on the south wall' }),
+  cam('CAM17', 'dome', -0.25, 0.8, H_EXTERIOR, 'Exterior - NW corner', 2.8, { panDeg: 45, tiltDeg: 25, note: 'Exterior camera on the west wall' }),
+  cam('CAM18', 'dome', 1.0, 32.45, H_EXTERIOR, 'Exterior - SW corner', 2.8, { panDeg: 45, tiltDeg: 25, note: 'Exterior camera on the south wall' }),
 ];
 
 /*
@@ -139,8 +143,4 @@ export const CAMERAS: readonly SecurityCamera[] = [
  *   CAM09 dome   4 mm   (42.0, 32.2, 5.5)  Stands east end, pan 39, tilt 14
  *   CAM13 bullet 4 mm   (4.85, 36.2, 2.8)  Pasillo SW (D05)
  *   CAM14 dome   2.8 mm (37.3, 36.2, 2.8)  Pasillo SE (D05), pan 36, tilt 17
- *
- * Interior placements of CAM15 and CAM16 (saved to the project on 2026-11-17, then moved outside the building):
- *   CAM15 dome   4 mm   (54.0, 24.45, 4.0)   Stage east end, looking at the audio mixer, pan 62, tilt 29
- *   CAM16 dome   2.8 mm (16.38, 31.6, 2.05)  Network room, east wall, looking at the rack, pan -37, tilt 31
  */
