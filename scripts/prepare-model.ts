@@ -72,6 +72,17 @@ const apParts = stats.filter((s) => matchesSignature(s, AP_BRACKET_SIGNATURE) ||
 const isDevice = new Uint8Array(cleanMesh.indices.length / 3);
 for (const s of apParts) for (const t of s.triangles) isDevice[t] = 1;
 
+// Devices excluded as APs are deleted from the model too (body and its bracket next to it).
+const BRACKET_REACH_M = 0.15;
+const removedParts = apParts.filter((s) =>
+  EXCLUDED_MODEL_APS.some(
+    (e) =>
+      Math.hypot(s.center[0] - e.x, s.center[2] - e.y, s.center[1] - e.h) <= EXCLUSION_TOLERANCE_M + BRACKET_REACH_M,
+  ),
+);
+const isRemoved = new Uint8Array(cleanMesh.indices.length / 3);
+for (const s of removedParts) for (const t of s.triangles) isRemoved[t] = 1;
+
 // ---- Building: non-indexed, flat normals, vertex color per face class ----
 const P = mesh.vertices;
 const buildingPos: number[] = [];
@@ -90,6 +101,7 @@ for (let t = 0; t < triCount; t++) {
   const a = cleanMesh.indices[t * 3]!;
   const b = cleanMesh.indices[t * 3 + 1]!;
   const c = cleanMesh.indices[t * 3 + 2]!;
+  if (isRemoved[t]) continue;
   if (isProp[t]) {
     propIdx.push(a, b, c);
     continue;
@@ -234,6 +246,8 @@ const report = {
   apWallDistance,
   modelApCount: modelAps.length,
   modelApsDetected: apBodies.length,
+  /** Device parts (bodies + brackets) deleted from the model because they are excluded. */
+  removedDeviceParts: removedParts.length,
   areaByClass: Object.fromEntries(Object.entries(classArea).map(([k, v]) => [k, round(v)])),
   wallPlanes: Object.fromEntries(
     [...wallPlanes.entries()]

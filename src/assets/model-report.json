@@ -7,10 +7,10 @@
   "sourceTriangles": 523583,
   "removedDegenerate": 4718,
   "removedDuplicates": 1157,
-  "buildingTriangles": 26893,
+  "buildingTriangles": 23809,
   "propsTrianglesBefore": 490815,
   "propsTrianglesAfter": 11690,
-  "glbBytes": 329532,
+  "glbBytes": 304244,
   "boundsPlan": {
     "x": [
       -0.202,
@@ -44,14 +44,15 @@
   },
   "modelApCount": 15,
   "modelApsDetected": 19,
+  "removedDeviceParts": 8,
   "areaByClass": {
     "stage": 217.08,
-    "wallEW": 1687.864,
-    "platform": 39.57,
-    "wallNS": 1201.848,
-    "ceiling": 421.095,
+    "wallEW": 1687.829,
+    "platform": 39.532,
+    "wallNS": 1201.769,
+    "ceiling": 420.991,
     "floor": 569.188,
-    "stands": 426.922,
+    "stands": 426.859,
     "roof": 3894.131,
     "courtFloor": 1126.778
   },

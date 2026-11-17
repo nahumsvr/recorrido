@@ -10,6 +10,7 @@ const report = JSON.parse(readFileSync('src/assets/model-report.json', 'utf8')) 
   stageEdgeX: number;
   wallPlanes: Record<string, number>;
   apWallDistance: Record<string, number | null>;
+  removedDeviceParts: number;
 };
 
 /**
@@ -53,6 +54,10 @@ describe('prepared model', () => {
     // M05, M08, M11 and M19 were removed by the user; the rest keep their numbers.
     expect(modelAps.map((a) => a.id)).toEqual(all.filter((id) => !['M05', 'M08', 'M11', 'M19'].includes(id)));
     expect(modelAps.filter((a) => a.mount === null)).toEqual([]);
+  });
+
+  it('deletes the excluded devices from the model (4 bodies + 4 brackets)', () => {
+    expect(report.removedDeviceParts).toBe(8);
   });
 
   it('keeps the model light enough for mobile', () => {
