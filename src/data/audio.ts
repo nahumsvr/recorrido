@@ -75,7 +75,7 @@ export const FOH = {
 
 /**
  * Audio cable runs, plan coordinates. Both leave the panel along the offices
- * wall at h 2.7 m (above the lintel of the opening, under M16) to the front
+ * wall at h 3.0 m (above the lintel of the opening and the post at X 46.5, which reaches h 2.9 m) to the front
  * corner of the east stand. Nothing crosses the central aisle mouth on the
  * floor, so it cannot be stepped on:
  * - R (east stand): comes down at the corner and follows the foot of the stand
@@ -87,7 +87,7 @@ export const FOH = {
  * Separate from the data trays (≥ 0.3 m) and from power.
  */
 export const AUDIO_TRAY_H = 6.6;
-const WALL_RUN_H = 2.7;
+const WALL_RUN_H = 3.0;
 export const FLOOR_RUN_H = 0.08;
 export const FLOOR_RUN_Y = STAND_FRONT_Y - 0.15;
 const BACK_TRAY_Y = 32.12;

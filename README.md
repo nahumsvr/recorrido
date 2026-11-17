@@ -40,12 +40,17 @@ HUD → Cameras → **Edit cameras** opens a panel. Click a camera (or pick it i
 
 Four JBL EON715 on the front face of the stands (first riser, Y 24.7), two per stand (west X 4.5 / 13.0 on line L, east X 30.0 / 38.5 on line R), facing the seated audience and tilted 42° up. The colored XLR runs leave the panel along the offices wall at h 2.7 m to the east stand corner. R (red, east stand) comes down and follows the foot of that stand; L (blue, west stand) climbs to h 6.6 m, crosses over the back wall and the aisle gap, and comes down at the west end to the foot of the west stand, so nothing crosses the aisle mouth on the floor (`src/data/audio.ts`, `src/world/audio.ts`). The operator table on the stage (floor h 1.18, centered at X 47.6, Y 24.2, against the offices wall) has a fixed wall panel (2 XLR + outlet); the Yamaha MG12XU is portable and plugs into it with two patch cables. HUD → Audio: "Speakers and cables" and "Mixer on the table" (untick it to see the panel with the mixer stored away).
 
+## Structured cabling
+
+HUD → Cabling draws the data pathways of the plan: wire-basket trays, 4" sleeves, the EMT drops to each AP and camera (axis-aligned, routed around walls) and the 7 wall / slab holes in orange (`src/data/cabling.ts`, `src/world/cabling.ts`, `src/domain/dropRouting.ts`). Unit tests ray-cast every pathway against the real model: the only solids a data pathway crosses are the declared penetrations, audio crosses none, permanent links stay ≤ 90 m, and tray / conduit fill stays within TIA-569 limits. The full chapter (penetration list, per-device runs, compliance matrix, budget) is in `docs/memoria-tecnica-adaptada.md`.
+
 ## Where the data lives
 
 - `src/config/alignment.ts`: STL → plan alignment (origin = inner north-west corner of the courts) and reference dimensions.
 - `src/data/aps.ts`: AP table (plan X east, Y south, mounting height h, zone).
 - `src/assets/model-aps.json`: generated list of model APs (position, wall or ceiling mount, zone). Do not edit by hand; move the devices in SketchUp, re-export and run `npm run prepare-model`.
 - `src/data/cameras.ts` / `src/data/cameraOverrides.json`: camera defaults and the saved edits.
+- `src/data/cabling.ts`: pathways, penetrations and the route of every AP / camera.
 - `src/data/audio.ts`: speakers, operator table, wall panel and audio cable runs.
 - `src/data/teleports.ts`: teleport destinations; `position: null` shows the button disabled.
 

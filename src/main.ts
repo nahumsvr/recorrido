@@ -33,6 +33,7 @@ import { createMinimap } from './ui/minimap.ts';
 import { createTeleportMenu } from './ui/teleportMenu.ts';
 import { loadModel } from './world/loadModel.ts';
 import { createAudioSystem, createFohStation } from './world/audio.ts';
+import { createCablingLayer } from './world/cabling.ts';
 import { createNetworkDesk, deskObstacle, monitorPoint, MONITOR_REACH_M } from './world/networkDesk.ts';
 import { createCameraViewer } from './cameras/cameraViewer.ts';
 import { createNetworkRack, rackObstacle } from './world/networkRack.ts';
@@ -101,6 +102,8 @@ world.scene.add(createNetworkRack());
 const desk = createNetworkDesk();
 world.scene.add(desk);
 const monitor = monitorPoint();
+const cabling = createCablingLayer(world.bvh);
+world.scene.add(cabling.pathways, cabling.penetrations, cabling.drops);
 const audio = createAudioSystem();
 world.scene.add(audio.installed);
 const foh = createFohStation();
@@ -347,6 +350,9 @@ const hud = createHud(
     { id: 'camShow', label: 'Show', initial: true, section: `Cameras (${CAMERAS.length})`, onChange: (on) => (cameras.group.visible = on) },
     { id: 'camFov', label: 'View cones', initial: false, onChange: (on) => cameras.setFov(on) },
     { id: 'camEdit', label: 'Edit cameras', initial: false, onChange: setEditing },
+    { id: 'cablingShow', label: 'Trays and conduits', initial: true, section: 'Cabling', onChange: (on) => (cabling.pathways.visible = on) },
+    { id: 'dropsShow', label: 'Drops to APs and cameras', initial: true, onChange: (on) => (cabling.drops.visible = on) },
+    { id: 'holesShow', label: 'Wall and slab holes (7)', initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
     { id: 'audioShow', label: 'Speakers and cables', initial: true, section: 'Audio (4 speakers)', onChange: (on) => (audio.installed.visible = on) },
     { id: 'mixerShow', label: 'Mixer on the table', initial: true, onChange: (on) => (foh.mixer.visible = on) },
   ],
