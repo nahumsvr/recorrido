@@ -69,3 +69,34 @@ body {
 .readout:empty {
   display: none;
 }
+
+.start-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 4px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.start-hint strong {
+  font-size: 15px;
+}
+
+.start-hint span {
+  color: var(--muted);
+}
+
+.start-hint[hidden] {
+  display: none;
+}

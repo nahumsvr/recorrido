@@ -12,9 +12,8 @@ import {
   Plane,
   Scene,
   Vector3,
-  type BufferGeometry,
 } from 'three';
-import { computeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+import { acceleratedRaycast, MeshBVH } from 'three-mesh-bvh';
 import { LAYOUT } from '../config/alignment.ts';
 import type { AuditoriumModel } from './loadModel.ts';
 import { PROPS_COLOR } from './palette.ts';
@@ -26,6 +25,8 @@ import { createCourtLines } from './courtLines.ts';
 export interface World {
   readonly scene: Scene;
   readonly building: Mesh;
+  /** Collision structure of the building (props never collide). */
+  readonly bvh: MeshBVH;
   readonly edges: LineSegments;
   /** Clips everything above it; toggled by "cut roof". */
   readonly roofCut: Plane;
@@ -51,9 +52,9 @@ export function createWorld(model: AuditoriumModel): World {
   });
   const building = new Mesh(model.building, buildingMat);
   building.name = 'building';
-  (model.building as BufferGeometry & { computeBoundsTree: typeof computeBoundsTree }).computeBoundsTree =
-    computeBoundsTree;
-  (model.building as BufferGeometry & { computeBoundsTree: typeof computeBoundsTree }).computeBoundsTree();
+  // One BVH serves both accelerated raycasts (picking) and player collisions.
+  const bvh = new MeshBVH(model.building);
+  model.building.boundsTree = bvh;
   scene.add(building);
 
   const edges = new LineSegments(
@@ -72,7 +73,8 @@ export function createWorld(model: AuditoriumModel): World {
   scene.add(createCourtLines());
 
   // Soft sky/ground fill plus one directional key light; no shadow maps (mobile budget).
-  scene.add(new HemisphereLight(0xf4f1ea, 0x5a5348, 1.6));
+  // Ground color is kept fairly bright: it is the only light the roof underside gets.
+  scene.add(new HemisphereLight(0xf4f1ea, 0x9a9184, 1.6));
   const sun = new DirectionalLight(0xffffff, 1.4);
   sun.position.set(-20, 40, -15);
   scene.add(sun);
@@ -80,6 +82,7 @@ export function createWorld(model: AuditoriumModel): World {
   return {
     scene,
     building,
+    bvh,
     edges,
     roofCut,
     setRoofCut(enabled) {

@@ -7,6 +7,9 @@ export interface HudToggle {
 
 export interface Hud {
   setReadout(text: string): void;
+  /** Sets a toggle and fires its onChange. */
+  setToggle(id: string, enabled: boolean): void;
+  isOn(id: string): boolean;
 }
 
 export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
@@ -16,6 +19,7 @@ export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
   h1.textContent = title;
   root.append(h1);
 
+  const inputs = new Map<string, { input: HTMLInputElement; toggle: HudToggle }>();
   for (const t of toggles) {
     const label = document.createElement('label');
     const input = document.createElement('input');
@@ -25,6 +29,7 @@ export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
     input.addEventListener('change', () => t.onChange(input.checked));
     label.append(input, document.createTextNode(t.label));
     root.append(label);
+    inputs.set(t.id, { input, toggle: t });
   }
 
   const readout = document.createElement('div');
@@ -35,7 +40,16 @@ export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
 
   return {
     setReadout(text) {
-      readout.textContent = text;
+      if (readout.textContent !== text) readout.textContent = text;
+    },
+    setToggle(id, enabled) {
+      const entry = inputs.get(id);
+      if (!entry) return;
+      entry.input.checked = enabled;
+      entry.toggle.onChange(enabled);
+    },
+    isOn(id) {
+      return inputs.get(id)?.input.checked ?? false;
     },
   };
 }
