@@ -1,11 +1,12 @@
 import { Clock, Euler, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { createApLayer } from './aps/apLayer.ts';
+import { createApGroups } from './aps/apGroups.ts';
 import { createApPanel } from './aps/apPanel.ts';
-import { nearestAp, panelApId, type PanelState } from './aps/selection.ts';
+import { panelApId, type PanelState } from './aps/selection.ts';
 import modelUrl from './assets/auditorio.glb?url';
-import { ACCESS_POINTS } from './data/aps.ts';
+import { ACCESS_POINTS, type ApGroupId } from './data/aps.ts';
+import { MODEL_ACCESS_POINTS } from './data/modelAps.ts';
 import { TELEPORTS, type Teleport } from './data/teleports.ts';
 import { LAYOUT } from './config/alignment.ts';
 import { threeToPlan } from './domain/coords.ts';
@@ -58,22 +59,30 @@ world.scene.add(overlay);
 
 // ---- Access points ----
 const bounds = model.building.boundingBox!;
-const apLayer = createApLayer(ACCESS_POINTS, world.bvh, {
-  minX: bounds.min.x,
-  maxX: bounds.max.x,
-  minY: bounds.min.z,
-  maxY: bounds.max.z,
-  maxH: bounds.max.y,
-});
-world.scene.add(apLayer.group);
+const aps = createApGroups(
+  [
+    {
+      id: 'table',
+      aps: ACCESS_POINTS,
+      style: { name: 'tableAps', color: 0x36c2d6, floorLift: 0 },
+    },
+    {
+      id: 'model',
+      aps: MODEL_ACCESS_POINTS,
+      style: { name: 'modelAps', color: 0xb07cff, labelClass: 'ap-label--model', floorLift: 0.05 },
+    },
+  ],
+  world.bvh,
+  { minX: bounds.min.x, maxX: bounds.max.x, minY: bounds.min.z, maxY: bounds.max.z, maxH: bounds.max.y },
+);
+world.scene.add(aps.root);
 const apPanel = createApPanel();
-const apById = new Map(apLayer.items.map((i) => [i.ap.id, i]));
 let panelState: PanelState = { pinned: null, nearby: null };
 function setPanelState(next: PanelState): void {
   panelState = next;
   const id = panelApId(next);
-  apPanel.show(id ? (apById.get(id) ?? null) : null, next.pinned !== null);
-  apLayer.setHighlighted(id);
+  apPanel.show(id ? aps.get(id) : null, next.pinned !== null);
+  aps.setHighlighted(id);
 }
 apPanel.onClose(() => setPanelState({ ...panelState, pinned: null }));
 
@@ -113,26 +122,43 @@ function setMode(next: 'walk' | 'orbit'): void {
 }
 document.body.dataset.mode = mode;
 
-const hud = createHud('Auditorium walkthrough', [
-  { id: 'inspect', label: 'Inspection view', initial: false, onChange: (on) => setMode(on ? 'orbit' : 'walk') },
-  {
-    id: 'roof',
-    label: 'Cut roof',
-    initial: false,
-    onChange: (on) => {
-      world.setRoofCut(on);
-      apLayer.setOccluderCeiling(on ? world.roofCut.constant : null);
-    },
-  },
-  { id: 'edges', label: 'Edges', initial: !touchMode, onChange: (on) => (world.edges.visible = on) },
-  { id: 'coverageSphere', label: 'AP coverage (spheres)', initial: false, onChange: () => syncCoverage() },
-  { id: 'coverageFloor', label: 'AP coverage (on floor)', initial: false, onChange: () => syncCoverage() },
-  { id: 'align', label: 'Plan grid', initial: debugAlign, onChange: (on) => (overlay.visible = on) },
-], { collapsed: innerWidth < 700 });
-world.edges.visible = hud.isOn('edges');
-function syncCoverage(): void {
-  apLayer.setCoverage({ sphere: hud.isOn('coverageSphere'), floor: hud.isOn('coverageFloor') });
+/** Show / coverage toggles for one AP group, all independent of the other group. */
+function apGroupToggles(group: ApGroupId, title: string) {
+  const sync = () =>
+    aps.setCoverage(group, { sphere: hud.isOn(`${group}Sphere`), floor: hud.isOn(`${group}Floor`) });
+  return [
+    { id: `${group}Show`, label: 'Show', initial: true, section: title, onChange: (on: boolean) => {
+      aps.setVisible(group, on);
+      // A hidden AP cannot stay selected.
+      const shown = panelApId(panelState);
+      if (!on && shown && aps.get(shown)?.ap.group === group) setPanelState({ pinned: null, nearby: null });
+    } },
+    { id: `${group}Sphere`, label: 'Coverage (spheres)', initial: false, onChange: sync },
+    { id: `${group}Floor`, label: 'Coverage (on floor)', initial: false, onChange: sync },
+  ];
 }
+
+const hud = createHud(
+  'Auditorium walkthrough',
+  [
+    { id: 'inspect', label: 'Inspection view', initial: false, section: 'View', onChange: (on) => setMode(on ? 'orbit' : 'walk') },
+    {
+      id: 'roof',
+      label: 'Cut roof',
+      initial: false,
+      onChange: (on) => {
+        world.setRoofCut(on);
+        aps.setOccluderCeiling(on ? world.roofCut.constant : null);
+      },
+    },
+    { id: 'edges', label: 'Edges', initial: !touchMode, onChange: (on) => (world.edges.visible = on) },
+    { id: 'align', label: 'Plan grid', initial: debugAlign, onChange: (on) => (overlay.visible = on) },
+    ...apGroupToggles('table', `Table APs (${ACCESS_POINTS.length})`),
+    ...apGroupToggles('model', `Model APs (${MODEL_ACCESS_POINTS.length})`),
+  ],
+  { collapsed: innerWidth < 700 },
+);
+world.edges.visible = hud.isOn('edges');
 
 const crosshair = document.createElement('div');
 crosshair.className = 'crosshair';
@@ -153,18 +179,25 @@ hud.append(createTeleportMenu(TELEPORTS, goTo));
 // ---- Minimap (background baked once from a top-down render) ----
 const minimap = createMinimap(
   { minX: bounds.min.x, maxX: bounds.max.x, minY: bounds.min.z, maxY: bounds.max.z },
-  apLayer.items.map((i) => ({ id: i.ap.id, x: i.position.x, y: i.position.z, warn: !i.mounted })),
+  aps.all.map((i) => ({
+    id: i.ap.id,
+    x: i.position.x,
+    y: i.position.z,
+    warn: !i.mounted,
+    color: `#${aps.colorOf(i.ap.group).toString(16).padStart(6, '0')}`,
+    visible: () => aps.isVisible(i.ap.group),
+  })),
 );
 {
   const fog = world.scene.fog;
   world.scene.fog = null;
-  apLayer.group.visible = false;
+  aps.root.visible = false;
   overlay.visible = false;
   world.setRoofCut(true);
   minimap.bake(renderer, world.scene);
   world.setRoofCut(hud.isOn('roof'));
   overlay.visible = hud.isOn('align');
-  apLayer.group.visible = true;
+  aps.root.visible = true;
   world.scene.fog = fog;
 }
 addEventListener('keydown', (e) => {
@@ -197,7 +230,7 @@ function pickAt(clientX: number, clientY: number, center: boolean, clearOnMiss: 
   if (center) pickPointer.set(0, 0);
   else pickPointer.set((clientX / innerWidth) * 2 - 1, -(clientY / innerHeight) * 2 + 1);
   pickRaycaster.setFromCamera(pickPointer, camera);
-  const item = apLayer.pick(pickRaycaster);
+  const item = aps.pick(pickRaycaster);
   if (item) setPanelState({ ...panelState, pinned: item.ap.id });
   else if (clearOnMiss && panelState.pinned) setPanelState({ ...panelState, pinned: null });
 }
@@ -224,7 +257,7 @@ const touch = touchMode
 addEventListener('keydown', (e) => {
   if (e.code !== 'KeyE' || e.repeat) return;
   pickRaycaster.setFromCamera(pickPointer.set(0, 0), camera);
-  const item = apLayer.pick(pickRaycaster) ?? nearestAp(apLayer.items, camera.position, AP_PROXIMITY_M);
+  const item = aps.pick(pickRaycaster) ?? aps.nearest(camera.position, AP_PROXIMITY_M);
   if (!item || item.ap.id === panelState.pinned) setPanelState({ ...panelState, pinned: null });
   else setPanelState({ ...panelState, pinned: item.ap.id });
 });
@@ -262,7 +295,7 @@ renderer.setAnimationLoop(() => {
     player.eyePosition(camera.position);
     const p = threeToPlan(player.position.x, player.position.y, player.position.z);
     hud.setReadout(`X ${p.x.toFixed(1)}  Y ${p.y.toFixed(1)}  floor h ${p.h.toFixed(2)} m`);
-    const near = nearestAp(apLayer.items, camera.position, AP_PROXIMITY_M)?.ap.id ?? null;
+    const near = aps.nearest(camera.position, AP_PROXIMITY_M)?.ap.id ?? null;
     if (near !== panelState.nearby) setPanelState({ ...panelState, nearby: near });
   } else {
     orbit.update();
@@ -271,13 +304,13 @@ renderer.setAnimationLoop(() => {
   viewEuler.setFromQuaternion(camera.quaternion);
   minimap.draw({ x: player.position.x, y: player.position.z, yaw: viewEuler.y }, panelApId(panelState));
   apPanel.updateDistance(camera.position);
-  apLayer.animate(clock.elapsedTime);
-  if (frame % OCCLUSION_EVERY_N_FRAMES === 0) apLayer.updateOcclusion(camera);
+  aps.animate(clock.elapsedTime);
+  if (frame % OCCLUSION_EVERY_N_FRAMES === 0) aps.updateOcclusion(camera);
   renderer.render(world.scene, camera);
   labelRenderer.render(world.scene, camera);
 });
 
 // Exposed for automated checks (e2e / console inspection).
 Object.assign(window, {
-  __recorrido: { world, camera, renderer, player, setMode, apLayer, hud, goTo, getPanelState: () => panelState },
+  __recorrido: { world, camera, renderer, player, setMode, aps, hud, goTo, getPanelState: () => panelState },
 });

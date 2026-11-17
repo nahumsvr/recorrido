@@ -10,7 +10,7 @@
   "buildingTriangles": 26893,
   "propsTrianglesBefore": 490815,
   "propsTrianglesAfter": 11690,
-  "glbBytes": 358632,
+  "glbBytes": 329532,
   "boundsPlan": {
     "x": [
       -0.202,
@@ -42,6 +42,7 @@
     "AP13": 0.188,
     "AP14": 1.183
   },
+  "modelApCount": 19,
   "areaByClass": {
     "stage": 217.08,
     "wallEW": 1687.864,

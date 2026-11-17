@@ -47,6 +47,13 @@ describe('prepared model', () => {
     expect(far).toEqual(KNOWN_UNMOUNTED);
   });
 
+  it('detects the 19 APs placed in the SketchUp model, each on a wall or ceiling', () => {
+    const modelAps = JSON.parse(readFileSync('src/assets/model-aps.json', 'utf8')) as { id: string; mount: string | null }[];
+    expect(modelAps).toHaveLength(19);
+    expect(modelAps.map((a) => a.id)).toEqual(Array.from({ length: 19 }, (_, i) => `M${String(i + 1).padStart(2, '0')}`));
+    expect(modelAps.filter((a) => a.mount === null)).toEqual([]);
+  });
+
   it('keeps the model light enough for mobile', () => {
     expect(report.buildingTriangles).toBeLessThan(40_000);
     expect(report.propsTrianglesAfter).toBeLessThan(20_000);

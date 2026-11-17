@@ -11,6 +11,9 @@ export interface WallMount {
 
 const RAY_COUNT = 32;
 const MAX_WALL_ABS_NY = 0.3;
+/** Two faces closer than this around a point mean the point sits inside a wall slab. */
+const MAX_SLAB_THICKNESS = 0.35;
+const SIDE_PROBE_OFFSET = 0.3;
 
 /**
  * Finds the nearest wall around `position` with horizontal rays. Used to stick
@@ -32,4 +35,47 @@ export function findMountingWall(bvh: MeshBVH, position: Vector3, maxDistance: n
     best = { point: hit.point.clone(), normal, distance: hit.distance };
   }
   return best;
+}
+
+/**
+ * Ceiling (slab underside) holding a device whose center is within `reach`
+ * of a horizontal face above or embedded in it. Returns the underside point.
+ */
+export function findCeilingMount(bvh: MeshBVH, center: Vector3, reach = 0.3): Vector3 | null {
+  const from = center.clone().setY(center.y - reach);
+  const hit = bvh.raycastFirst(new Ray(from, new Vector3(0, 1, 0)), DoubleSide, 0, reach * 2);
+  if (!hit?.face || Math.abs(hit.face.normal.y) < 1 - MAX_WALL_ABS_NY) return null;
+  return hit.point.clone();
+}
+
+/**
+ * Wall mount of a device modeled by hand, whose center may be slightly inside
+ * the wall slab. Returns the wall face on the room side with its normal
+ * pointing into the room, or null when no wall is within `maxDistance`.
+ *
+ * Inside a slab both faces are candidates; the room side is the one with
+ * something overhead (roof or slab: interior, not the open exterior) and,
+ * among those, more free space in front.
+ */
+export function findDeviceMount(bvh: MeshBVH, center: Vector3, maxDistance = 1): WallMount | null {
+  const near = findMountingWall(bvh, center, maxDistance);
+  if (!near) return null;
+
+  // Opposite face of the same slab, if the center is between two faces.
+  const back = bvh.raycastFirst(new Ray(center.clone(), near.normal.clone()), DoubleSide, 0, MAX_SLAB_THICKNESS);
+  const insideSlab = !!back && near.distance + back.distance <= MAX_SLAB_THICKNESS;
+  if (!insideSlab || !back) return near;
+
+  const candidates: WallMount[] = [
+    // Face behind `near`: the room is on the far side of that face.
+    { point: near.point.clone(), normal: near.normal.clone().negate(), distance: near.distance },
+    { point: back.point.clone(), normal: near.normal.clone(), distance: back.distance },
+  ];
+  const score = (m: WallMount): number => {
+    const probe = m.point.clone().addScaledVector(m.normal, SIDE_PROBE_OFFSET);
+    const covered = !!bvh.raycastFirst(new Ray(probe, new Vector3(0, 1, 0)), DoubleSide);
+    const free = bvh.raycastFirst(new Ray(probe, m.normal.clone()), DoubleSide)?.distance ?? 0;
+    return (covered ? 1e6 : 0) + Math.min(free, 1e5);
+  };
+  return score(candidates[0]!) >= score(candidates[1]!) ? candidates[0]! : candidates[1]!;
 }

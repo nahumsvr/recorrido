@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { BoxGeometry, Mesh, Vector3 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
-import { findMountingWall } from '../../src/aps/mounting.ts';
+import { findCeilingMount, findDeviceMount, findMountingWall } from '../../src/aps/mounting.ts';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { nearestAp, panelApId } from '../../src/aps/selection.ts';
 import { ACCESS_POINTS } from '../../src/data/aps.ts';
 
@@ -26,6 +27,53 @@ describe('findMountingWall', () => {
 
   it('returns null when no wall is within range', () => {
     expect(findMountingWall(wallBvh(), new Vector3(-5, 4.5, 0), 2)).toBeNull();
+  });
+});
+
+describe('findDeviceMount', () => {
+  /** Wall slab x ∈ [0, 0.2] with a roof only over the x > 0.2 side (the room). */
+  function roomBvh(): MeshBVH {
+    const parts = [
+      [0.2, 6, 10, 0.1, 3, 0],
+      [10, 0.2, 10, 5.2, 7, 0],
+    ].map(([w, h, d, x, y, z]) => {
+      const g = new BoxGeometry(w, h, d);
+      const m = new Mesh(g);
+      m.position.set(x!, y!, z!);
+      m.updateMatrixWorld();
+      return g.applyMatrix4(m.matrixWorld).toNonIndexed();
+    });
+    return new MeshBVH(mergeGeometries(parts));
+  }
+
+  it('keeps the side the device is on when it is outside the slab', () => {
+    const mount = findDeviceMount(roomBvh(), new Vector3(-0.05, 4, 0));
+    expect(mount!.point.x).toBeCloseTo(0, 3);
+    expect(mount!.normal.x).toBeCloseTo(-1, 3);
+  });
+
+  it('picks the covered room side when the device center is inside the slab', () => {
+    // Center 2 cm inside the face at x = 0: the nearest face is the exterior one.
+    const mount = findDeviceMount(roomBvh(), new Vector3(0.02, 4, 0));
+    expect(mount!.point.x).toBeCloseTo(0.2, 3);
+    expect(mount!.normal.x).toBeCloseTo(1, 3);
+  });
+
+  it('returns null without a wall nearby', () => {
+    expect(findDeviceMount(roomBvh(), new Vector3(-5, 4, 0))).toBeNull();
+  });
+});
+
+describe('findCeilingMount', () => {
+  it('finds the slab underside for a device embedded in it', () => {
+    // Roof slab spans h 6.9..7.1 over x 0.2..10.2.
+    const g = new BoxGeometry(10, 0.2, 10);
+    const m = new Mesh(g);
+    m.position.set(5.2, 7, 0);
+    m.updateMatrixWorld();
+    const bvh = new MeshBVH(g.applyMatrix4(m.matrixWorld));
+    expect(findCeilingMount(bvh, new Vector3(5, 6.95, 0))!.y).toBeCloseTo(6.9, 3);
+    expect(findCeilingMount(bvh, new Vector3(5, 4, 0))).toBeNull();
   });
 });
 

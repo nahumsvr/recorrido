@@ -362,3 +362,44 @@ body[data-mode='orbit'] .jump-button {
     width: calc(100vw - 32px);
   }
 }
+
+.hud__section,
+.teleport-menu h2 {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hud__section:first-child {
+  margin-top: 0;
+}
+
+.hud__swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 0;
+}
+
+.ap-label--model {
+  border-color: rgba(176, 124, 255, 0.85);
+}
+
+.ap-label--model.ap-label--active {
+  background: #b07cff;
+  color: #170d26;
+}
+
+.hud {
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+
+.ap-panel[data-group='model'] h2 {
+  color: #b07cff;
+}

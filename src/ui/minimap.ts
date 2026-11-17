@@ -6,6 +6,9 @@ export interface MinimapMarker {
   readonly x: number;
   readonly y: number;
   readonly warn: boolean;
+  /** CSS color of the marker's group. */
+  readonly color: string;
+  readonly visible: () => boolean;
 }
 
 export interface Minimap {
@@ -17,7 +20,6 @@ export interface Minimap {
 }
 
 const CSS_WIDTH = 220;
-const MARKER_COLOR = '#36c2d6';
 const WARN_COLOR = '#f2a43a';
 const PLAYER_COLOR = '#ff5a5a';
 
@@ -76,7 +78,8 @@ export function createMinimap(bounds: MapBounds, markers: readonly MinimapMarker
     },
     draw(player, highlightedId) {
       if (canvas.hidden) return;
-      const key = `${player.x.toFixed(2)},${player.y.toFixed(2)},${player.yaw.toFixed(3)},${highlightedId}`;
+      const shown = markers.map((m) => (m.visible() ? 1 : 0)).join('');
+      const key = `${player.x.toFixed(2)},${player.y.toFixed(2)},${player.yaw.toFixed(3)},${highlightedId},${shown}`;
       if (key === last) return;
       last = key;
 
@@ -84,11 +87,12 @@ export function createMinimap(bounds: MapBounds, markers: readonly MinimapMarker
       ctx.drawImage(background, 0, 0);
 
       for (const m of markers) {
+        if (!m.visible()) continue;
         const { u, v } = planToMinimap(m.x, m.y, bounds, width, height);
         const active = m.id === highlightedId;
         ctx.beginPath();
         ctx.arc(u, v, (active ? 5 : 3.5) * dpr, 0, Math.PI * 2);
-        ctx.fillStyle = m.warn ? WARN_COLOR : MARKER_COLOR;
+        ctx.fillStyle = m.warn ? WARN_COLOR : m.color;
         ctx.fill();
         if (active) {
           ctx.lineWidth = 1.5 * dpr;

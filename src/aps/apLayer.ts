@@ -17,7 +17,7 @@ import {
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import type { MeshBVH } from 'three-mesh-bvh';
 import type { AccessPoint } from '../data/aps.ts';
-import { findMountingWall } from './mounting.ts';
+import { findCeilingMount, findMountingWall } from './mounting.ts';
 import type { ApWithPosition } from './selection.ts';
 
 /** APs farther than this from any wall are flagged as "not mounted in the model". */
@@ -25,13 +25,27 @@ export const MOUNT_TOLERANCE_M = 0.6;
 /** Approximate coverage radius drawn by the toggle. Not an RF simulation. */
 export const COVERAGE_RADIUS_M = 15;
 
-const MARKER_COLOR = 0x36c2d6;
 const UNMOUNTED_COLOR = 0xf2a43a;
 const LABEL_OFFSET_H = 0.35;
+/** A wall hint starts the wall search this far in front of the device, outside its own body. */
+const HINT_OFFSET_M = 0.15;
+
+/** Visual identity of one AP group. */
+export interface ApLayerStyle {
+  readonly name: string;
+  readonly color: number;
+  /** Extra CSS class for labels (group color). */
+  readonly labelClass?: string;
+  /** Lifts this group's floor coverage so two groups never z-fight. */
+  readonly floorLift: number;
+}
+
+export type MountKind = 'wall' | 'ceiling';
 
 export interface ApItem extends ApWithPosition {
-  /** True when a wall was found within MOUNT_TOLERANCE_M. */
+  /** True when a wall (within MOUNT_TOLERANCE_M) or a ceiling holds the AP. */
   readonly mounted: boolean;
+  readonly mountKind: MountKind | null;
   readonly wallDistance: number | null;
   readonly label: HTMLDivElement;
   readonly marker: Mesh;
@@ -43,8 +57,8 @@ export interface ApLayer {
   setCoverage(mode: { sphere: boolean; floor: boolean }): void;
   /** Highlights the AP shown in the panel (null clears). */
   setHighlighted(id: string | null): void;
-  /** AP hit by the raycaster, or null. */
-  pick(raycaster: Raycaster): ApItem | null;
+  /** AP hit by the raycaster and its distance, or null (also when the group is hidden). */
+  pick(raycaster: Raycaster): { item: ApItem; distance: number } | null;
   /** Dims labels hidden behind walls; call every few frames. */
   updateOcclusion(camera: Camera): void;
   /** Pulses the highlighted marker. */
@@ -66,9 +80,15 @@ export interface Footprint {
   readonly maxH: number;
 }
 
-export function createApLayer(aps: readonly AccessPoint[], bvh: MeshBVH, footprint: Footprint): ApLayer {
+export function createApLayer(
+  aps: readonly AccessPoint[],
+  bvh: MeshBVH,
+  footprint: Footprint,
+  style: ApLayerStyle,
+): ApLayer {
+  const MARKER_COLOR = style.color;
   const group = new Group();
-  group.name = 'aps';
+  group.name = style.name;
   const spheres = new Group();
   const floors = new Group();
   spheres.visible = false;
@@ -104,10 +124,16 @@ export function createApLayer(aps: readonly AccessPoint[], bvh: MeshBVH, footpri
   floorRingMat.opacity = 0.6;
 
   const up = new Vector3(0, 1, 0);
+  const down = new Vector3(0, -1, 0);
   const items: ApItem[] = aps.map((ap, index) => {
     const tablePos = new Vector3(ap.position.x, ap.position.h, ap.position.y);
-    const mount = findMountingWall(bvh, tablePos, 3);
-    const mounted = !!mount && mount.distance <= MOUNT_TOLERANCE_M;
+    const hint = ap.mountHint;
+    const ceiling = hint?.kind === 'ceiling' ? findCeilingMount(bvh, tablePos) : null;
+    const searchFrom =
+      hint?.kind === 'wall' ? tablePos.clone().add(new Vector3(hint.normal.x, 0, hint.normal.y).multiplyScalar(HINT_OFFSET_M)) : tablePos;
+    const mount = ceiling ? null : findMountingWall(bvh, searchFrom, 3);
+    const onWall = !!mount && mount.distance <= MOUNT_TOLERANCE_M;
+    const mounted = onWall || !!ceiling;
 
     const material = new MeshStandardMaterial({
       color: 0xf4f6f8,
@@ -117,7 +143,11 @@ export function createApLayer(aps: readonly AccessPoint[], bvh: MeshBVH, footpri
     });
     const marker = new Mesh(mounted ? discGeo : freeGeo, material);
     marker.name = ap.id;
-    if (mounted && mount) {
+    if (ceiling) {
+      // Flush under the slab, facing down.
+      marker.position.copy(ceiling).addScaledVector(down, 0.025);
+      marker.quaternion.setFromUnitVectors(up, down);
+    } else if (onWall && mount) {
       // Flush against the wall surface, facing the room.
       marker.position.copy(mount.point).addScaledVector(mount.normal, 0.025);
       marker.position.y = ap.position.h;
@@ -131,7 +161,7 @@ export function createApLayer(aps: readonly AccessPoint[], bvh: MeshBVH, footpri
     group.add(marker);
 
     const label = document.createElement('div');
-    label.className = mounted ? 'ap-label' : 'ap-label ap-label--warn';
+    label.className = ['ap-label', style.labelClass, mounted ? '' : 'ap-label--warn'].filter(Boolean).join(' ');
     label.textContent = mounted ? ap.id : `${ap.id} ⚠`;
     const labelObj = new CSS2DObject(label);
     labelObj.position.set(0, 0, 0);
@@ -156,7 +186,7 @@ export function createApLayer(aps: readonly AccessPoint[], bvh: MeshBVH, footpri
       for (const m of [fill, ring]) {
         m.rotation.x = -Math.PI / 2;
         // Tiny per-AP lift keeps overlapping translucent discs from z-fighting.
-        m.position.set(marker.position.x, floorH + 0.02 + index * 0.002, marker.position.z);
+        m.position.set(marker.position.x, floorH + 0.02 + style.floorLift + index * 0.002, marker.position.z);
         m.renderOrder = 3;
         floors.add(m);
       }
@@ -166,6 +196,7 @@ export function createApLayer(aps: readonly AccessPoint[], bvh: MeshBVH, footpri
       ap,
       position: marker.position,
       mounted,
+      mountKind: ceiling ? 'ceiling' : onWall ? 'wall' : null,
       wallDistance: mount ? mount.distance : null,
       label,
       marker,
@@ -201,12 +232,14 @@ export function createApLayer(aps: readonly AccessPoint[], bvh: MeshBVH, footpri
       highlighted = id ? (byId.get(id) ?? null) : null;
     },
     pick(raycaster) {
+      if (!group.visible) return null;
       const hits = raycaster.intersectObjects(items.map((i) => i.marker), true);
       const apHit = hits.find((h) => h.object.userData.apId);
       if (!apHit) return null;
       // Ignore APs behind a wall.
       if (blockingDistance(raycaster.ray, apHit.distance) < apHit.distance - 0.7) return null;
-      return byId.get(apHit.object.userData.apId as string) ?? null;
+      const item = byId.get(apHit.object.userData.apId as string);
+      return item ? { item, distance: apHit.distance } : null;
     },
     updateOcclusion(camera) {
       for (const item of items) {

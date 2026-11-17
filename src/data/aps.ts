@@ -1,21 +1,30 @@
 import type { PlanPoint } from '../domain/coords.ts';
 
+/** `table`: design table coordinates. `model`: devices placed in the SketchUp model. */
+export type ApGroupId = 'table' | 'model';
+
+/** Where the marker should attach; without it the nearest wall within range is used. */
+export type MountHint =
+  | { readonly kind: 'wall'; /** Room-side normal in plan axes (X east, Y south). */ readonly normal: { x: number; y: number } }
+  | { readonly kind: 'ceiling' };
+
 export interface AccessPoint {
   readonly id: string;
+  readonly group: ApGroupId;
   readonly position: PlanPoint;
   readonly model: string;
-  readonly mount: 'wall';
-  /** Provisional zone names; to be confirmed by the network design. */
+  /** Zone name; table zones are provisional until confirmed by the network design. */
   readonly zone: string;
+  readonly mountHint?: MountHint;
 }
 
 const MODEL = 'TP-Link EAP773';
 
 const ap = (id: string, x: number, y: number, h: number, zone: string): AccessPoint => ({
   id,
+  group: 'table',
   position: { x, y, h },
   model: MODEL,
-  mount: 'wall',
   zone,
 });
 

@@ -3,6 +3,8 @@ export interface HudToggle {
   readonly label: string;
   readonly initial: boolean;
   readonly onChange: (enabled: boolean) => void;
+  /** Starts a new titled section before this toggle. */
+  readonly section?: string;
 }
 
 export interface HudOptions {
@@ -47,6 +49,12 @@ export function createHud(title: string, toggles: readonly HudToggle[], options:
 
   const inputs = new Map<string, { input: HTMLInputElement; toggle: HudToggle }>();
   for (const t of toggles) {
+    if (t.section) {
+      const h2 = document.createElement('h2');
+      h2.className = 'hud__section';
+      h2.textContent = t.section;
+      body.append(h2);
+    }
     const label = document.createElement('label');
     const input = document.createElement('input');
     input.type = 'checkbox';

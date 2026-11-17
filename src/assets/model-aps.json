@@ -1,0 +1,227 @@
+[
+  {
+    "id": "M01",
+    "x": 4.705,
+    "y": 0.393,
+    "h": 3.313,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": 1
+    },
+    "zone": "Courts - north wall"
+  },
+  {
+    "id": "M02",
+    "x": 15.706,
+    "y": 0.257,
+    "h": 3.294,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": 1
+    },
+    "zone": "Courts - north wall"
+  },
+  {
+    "id": "M03",
+    "x": 26.785,
+    "y": 0.108,
+    "h": 3.294,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": 1
+    },
+    "zone": "Courts - north wall"
+  },
+  {
+    "id": "M04",
+    "x": 37.743,
+    "y": 0.079,
+    "h": 3.271,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": 1
+    },
+    "zone": "Courts - north wall"
+  },
+  {
+    "id": "M05",
+    "x": -0.003,
+    "y": 8.413,
+    "h": 3.312,
+    "mount": "wall",
+    "normal": {
+      "x": 1,
+      "y": 0
+    },
+    "zone": "Courts - west wall"
+  },
+  {
+    "id": "M06",
+    "x": 0.096,
+    "y": 19.441,
+    "h": 3.335,
+    "mount": "wall",
+    "normal": {
+      "x": 1,
+      "y": 0
+    },
+    "zone": "Courts - west wall"
+  },
+  {
+    "id": "M07",
+    "x": -0.003,
+    "y": 29.249,
+    "h": 5.113,
+    "mount": "wall",
+    "normal": {
+      "x": 1,
+      "y": 0
+    },
+    "zone": "Stands - west wall"
+  },
+  {
+    "id": "M08",
+    "x": 8.997,
+    "y": 32.279,
+    "h": 5.415,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": -1
+    },
+    "zone": "Stands - south wall"
+  },
+  {
+    "id": "M09",
+    "x": 16.342,
+    "y": 32.279,
+    "h": 5.363,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": -1
+    },
+    "zone": "Stands - south wall"
+  },
+  {
+    "id": "M10",
+    "x": 25.357,
+    "y": 32.279,
+    "h": 5.415,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": -1
+    },
+    "zone": "Stands - south wall"
+  },
+  {
+    "id": "M11",
+    "x": 33.482,
+    "y": 32.279,
+    "h": 5.266,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": -1
+    },
+    "zone": "Stands - south wall"
+  },
+  {
+    "id": "M12",
+    "x": 42.477,
+    "y": 28.472,
+    "h": 4.138,
+    "mount": "wall",
+    "normal": {
+      "x": -1,
+      "y": 0
+    },
+    "zone": "Stands - east wall"
+  },
+  {
+    "id": "M13",
+    "x": 11.578,
+    "y": 32.479,
+    "h": 2.312,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": 1
+    },
+    "zone": "South annex"
+  },
+  {
+    "id": "M14",
+    "x": 21.238,
+    "y": 34.174,
+    "h": 3.292,
+    "mount": "ceiling",
+    "normal": null,
+    "zone": "South annex"
+  },
+  {
+    "id": "M15",
+    "x": 30.817,
+    "y": 32.479,
+    "h": 2.312,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": 1
+    },
+    "zone": "South annex"
+  },
+  {
+    "id": "M16",
+    "x": 46.452,
+    "y": 24.779,
+    "h": 2.905,
+    "mount": "wall",
+    "normal": {
+      "x": 0,
+      "y": 1
+    },
+    "zone": "Offices"
+  },
+  {
+    "id": "M17",
+    "x": 48.208,
+    "y": 20.41,
+    "h": 2.883,
+    "mount": "wall",
+    "normal": {
+      "x": -0.915,
+      "y": -0.403
+    },
+    "zone": "Stage"
+  },
+  {
+    "id": "M18",
+    "x": 48.275,
+    "y": 4.262,
+    "h": 2.842,
+    "mount": "wall",
+    "normal": {
+      "x": -0.915,
+      "y": 0.402
+    },
+    "zone": "Stage"
+  },
+  {
+    "id": "M19",
+    "x": 54.585,
+    "y": 12.251,
+    "h": 3.333,
+    "mount": "wall",
+    "normal": {
+      "x": -1,
+      "y": 0
+    },
+    "zone": "Stage - east wall"
+  }
+]

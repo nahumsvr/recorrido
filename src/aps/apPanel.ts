@@ -1,6 +1,12 @@
 import type { Vector3 } from 'three';
+import type { ApGroupId } from '../data/aps.ts';
 import { MOUNT_TOLERANCE_M } from './apLayer.ts';
 import type { ApItem } from './apLayer.ts';
+
+const GROUP_LABEL: Record<ApGroupId, string> = {
+  table: 'Design table',
+  model: 'SketchUp model',
+};
 
 export interface ApPanel {
   /** Shows `item` (or hides with null); `pinned` adds a close button. */
@@ -29,6 +35,7 @@ export function createApPanel(): ApPanel {
       root.dataset.pinned = String(pinned);
       if (!item) return;
       const { ap } = item;
+      root.dataset.group = ap.group;
       root.replaceChildren();
 
       const header = document.createElement('header');
@@ -55,11 +62,12 @@ export function createApPanel(): ApPanel {
         dl.append(dt, dd);
         return dd;
       };
+      row('Group', GROUP_LABEL[ap.group]);
       row('Model', ap.model);
       row('Zone', ap.zone);
       row('Mount height', `${ap.position.h.toFixed(1)} m`);
       row('Position (plan)', `X ${ap.position.x.toFixed(1)} · Y ${ap.position.y.toFixed(1)} m`);
-      row('Mount', 'Wall');
+      row('Mount', item.mountKind === 'ceiling' ? 'Ceiling' : item.mountKind === 'wall' ? 'Wall' : 'Wall (not found in model)');
       distanceEl = row('Distance', '');
       root.append(dl);
 

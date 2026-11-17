@@ -12,17 +12,35 @@ import { meshopt, weld as weldTransform } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 import { BufferAttribute, BufferGeometry, Color, Vector3 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
-import { findMountingWall } from '../src/aps/mounting.ts';
+import { findCeilingMount, findDeviceMount, findMountingWall } from '../src/aps/mounting.ts';
 import { ACCESS_POINTS } from '../src/data/aps.ts';
 import { ALIGNMENT, LAYOUT, STAGE_PROPS_BOX_STL } from '../src/config/alignment.ts';
 import { stlToThree } from '../src/domain/coords.ts';
 import { classifyFace, type FaceClass } from '../src/domain/faceClassifier.ts';
-import { FACE_PALETTE } from '../src/world/palette.ts';
+import { zoneOf } from '../src/domain/zones.ts';
+import { DEVICE_COLOR, FACE_PALETTE } from '../src/world/palette.ts';
+import { componentStats, matchesSignature, type DeviceSignature } from './lib/devices.ts';
 import { cleanTriangles, componentsInsideBox, parseBinaryStl, triangleArea, triangleComponents, weld } from './lib/stl.ts';
 
 const SRC = process.argv[2] ?? 'auditorio.stl';
 const OUT_DIR = 'src/assets';
 const PROPS_TARGET_TRIS = 12_000;
+const AP_BODY_SIGNATURE: DeviceSignature = { triangles: 580, triangleTolerance: 4, size: [0.03, 0.16, 0.2], tolerance: 0.08 };
+const AP_BRACKET_SIGNATURE: DeviceSignature = { triangles: 192, triangleTolerance: 4, size: [0.01, 0.02, 0.17], tolerance: 0.06 };
+/** Model AP numbering walks the building: north wall, west wall, stands, annex, offices, stage. */
+const ZONE_ORDER = [
+  'Courts - north wall',
+  'Courts - west wall',
+  'Stands - west wall',
+  'Stands - south wall',
+  'Stands - east wall',
+  'South annex',
+  'Offices',
+  'Stage',
+  'Stage - east wall',
+  'Stands',
+  'Courts',
+];
 
 const raw = readFileSync(SRC);
 const triangles = parseBinaryStl(new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength));
@@ -45,11 +63,21 @@ const [bx, by, bz] = stlToThree(STAGE_PROPS_BOX_STL.max[0], STAGE_PROPS_BOX_STL.
 const comp = triangleComponents(cleanMesh.indices, mesh.vertices.length / 3);
 const isProp = componentsInsideBox(cleanMesh, comp, { min: [ax, ay, az], max: [bx, by, bz] });
 
+// Wall-mounted AP models placed in SketchUp: body 0.03 × 0.16 × 0.20 m (580 tris) + bracket (192 tris).
+// Size tolerance is loose because some are tilted (larger axis-aligned bounds); the triangle count is specific.
+const stats = componentStats(cleanMesh, comp);
+const apBodies = stats.filter((s) => matchesSignature(s, AP_BODY_SIGNATURE));
+const apParts = stats.filter((s) => matchesSignature(s, AP_BRACKET_SIGNATURE) || matchesSignature(s, AP_BODY_SIGNATURE));
+const isDevice = new Uint8Array(cleanMesh.indices.length / 3);
+for (const s of apParts) for (const t of s.triangles) isDevice[t] = 1;
+
 // ---- Building: non-indexed, flat normals, vertex color per face class ----
 const P = mesh.vertices;
 const buildingPos: number[] = [];
 const buildingNrm: number[] = [];
 const buildingCol: number[] = [];
+/** Building without the AP devices; used for wall raycasts. */
+const structurePos: number[] = [];
 const propIdx: number[] = [];
 const classArea: Partial<Record<FaceClass, number>> = {};
 const wallPlanes = new Map<string, number>();
@@ -82,13 +110,16 @@ for (let t = 0; t < triCount; t++) {
     wallPlanes.set(key, (wallPlanes.get(key) ?? 0) + area);
   }
 
-  // Subtle height gradient on walls so the volume reads better.
-  tint.setHex(FACE_PALETTE[cls]);
-  if (cls === 'wallNS' || cls === 'wallEW') tint.multiplyScalar(0.82 + 0.18 * Math.min(cy / LAYOUT.roofStartH, 1));
+  // Subtle height gradient on walls so the volume reads better; AP devices stay black.
+  tint.setHex(isDevice[t] ? DEVICE_COLOR : FACE_PALETTE[cls]);
+  if (!isDevice[t] && (cls === 'wallNS' || cls === 'wallEW')) {
+    tint.multiplyScalar(0.82 + 0.18 * Math.min(cy / LAYOUT.roofStartH, 1));
+  }
   for (const v of [a, b, c]) {
     buildingPos.push(P[v * 3]!, P[v * 3 + 1]!, P[v * 3 + 2]!);
     buildingNrm.push(nx, ny, nz);
     buildingCol.push(tint.r, tint.g, tint.b);
+    if (!isDevice[t]) structurePos.push(P[v * 3]!, P[v * 3 + 1]!, P[v * 3 + 2]!);
   }
 }
 
@@ -145,8 +176,32 @@ const round = (n: number) => Math.round(n * 1000) / 1000;
 
 // Distance from each AP in the design table to the nearest wall of the model.
 const collider = new BufferGeometry();
-collider.setAttribute('position', new BufferAttribute(new Float32Array(buildingPos), 3));
+collider.setAttribute('position', new BufferAttribute(new Float32Array(structurePos), 3));
 const colliderBvh = new MeshBVH(collider);
+
+// ---- APs modeled in SketchUp: position = body center; mount = room-side wall face ----
+const modelAps = apBodies
+  .map((body) => {
+    const [cx, cy, cz] = body.center;
+    const center = new Vector3(cx, cy, cz);
+    const wall = findDeviceMount(colliderBvh, center);
+    const ceiling = wall ? null : findCeilingMount(colliderBvh, center);
+    // Zone from a point in front of the wall, so devices embedded in a wall get the room's zone.
+    const zx = wall ? wall.point.x + wall.normal.x * 0.3 : cx;
+    const zy = wall ? wall.point.z + wall.normal.z * 0.3 : cz;
+    return {
+      x: round(cx),
+      y: round(cz),
+      h: round(cy),
+      mount: wall ? ('wall' as const) : ceiling ? ('ceiling' as const) : null,
+      /** Room-side wall normal in plan axes (X east, Y south); only for wall mounts. */
+      normal: wall ? { x: round(wall.normal.x), y: round(wall.normal.z) } : null,
+      zone: zoneOf(zx, zy),
+    };
+  })
+  .sort((m, n) => ZONE_ORDER.indexOf(m.zone) - ZONE_ORDER.indexOf(n.zone) || m.x - n.x || m.y - n.y)
+  .map((ap, i) => ({ id: `M${String(i + 1).padStart(2, '0')}`, ...ap }));
+writeFileSync(`${OUT_DIR}/model-aps.json`, `${JSON.stringify(modelAps, null, 2)}\n`);
 const apWallDistance = Object.fromEntries(
   ACCESS_POINTS.map((ap) => {
     const mount = findMountingWall(colliderBvh, new Vector3(ap.position.x, ap.position.h, ap.position.y), 3);
@@ -171,6 +226,7 @@ const report = {
   stageEdgeX: round(stageMinX),
   /** Meters to the nearest wall within 3 m; null = none. */
   apWallDistance,
+  modelApCount: modelAps.length,
   areaByClass: Object.fromEntries(Object.entries(classArea).map(([k, v]) => [k, round(v)])),
   wallPlanes: Object.fromEntries(
     [...wallPlanes.entries()]

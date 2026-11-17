@@ -14,3 +14,6 @@ export const FACE_PALETTE: Record<FaceClass, number> = {
 };
 
 export const PROPS_COLOR = 0x3c3f46;
+
+/** AP devices modeled in SketchUp (black). */
+export const DEVICE_COLOR = 0x1c1d20;
