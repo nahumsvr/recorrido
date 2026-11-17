@@ -15,6 +15,7 @@ import { MeshBVH } from 'three-mesh-bvh';
 import { findCeilingMount, findDeviceMount, findMountingWall } from '../src/aps/mounting.ts';
 import { ACCESS_POINTS } from '../src/data/aps.ts';
 import { ALIGNMENT, LAYOUT, STAGE_PROPS_BOX_STL } from '../src/config/alignment.ts';
+import { EXCLUDED_MODEL_APS, EXCLUSION_TOLERANCE_M } from '../src/config/modelAps.ts';
 import { stlToThree } from '../src/domain/coords.ts';
 import { classifyFace, type FaceClass } from '../src/domain/faceClassifier.ts';
 import { zoneOf } from '../src/domain/zones.ts';
@@ -200,7 +201,12 @@ const modelAps = apBodies
     };
   })
   .sort((m, n) => ZONE_ORDER.indexOf(m.zone) - ZONE_ORDER.indexOf(n.zone) || m.x - n.x || m.y - n.y)
-  .map((ap, i) => ({ id: `M${String(i + 1).padStart(2, '0')}`, ...ap }));
+  // Number every detected device first, so excluding some never renumbers the rest.
+  .map((ap, i) => ({ id: `M${String(i + 1).padStart(2, '0')}`, ...ap }))
+  .filter(
+    (ap) =>
+      !EXCLUDED_MODEL_APS.some((e) => Math.hypot(ap.x - e.x, ap.y - e.y, ap.h - e.h) <= EXCLUSION_TOLERANCE_M),
+  );
 writeFileSync(`${OUT_DIR}/model-aps.json`, `${JSON.stringify(modelAps, null, 2)}\n`);
 const apWallDistance = Object.fromEntries(
   ACCESS_POINTS.map((ap) => {
@@ -227,6 +233,7 @@ const report = {
   /** Meters to the nearest wall within 3 m; null = none. */
   apWallDistance,
   modelApCount: modelAps.length,
+  modelApsDetected: apBodies.length,
   areaByClass: Object.fromEntries(Object.entries(classArea).map(([k, v]) => [k, round(v)])),
   wallPlanes: Object.fromEntries(
     [...wallPlanes.entries()]

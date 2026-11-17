@@ -47,10 +47,11 @@ describe('prepared model', () => {
     expect(far).toEqual(KNOWN_UNMOUNTED);
   });
 
-  it('detects the 19 APs placed in the SketchUp model, each on a wall or ceiling', () => {
+  it('keeps 15 of the 19 devices in the SketchUp model as APs, each on a wall or ceiling', () => {
     const modelAps = JSON.parse(readFileSync('src/assets/model-aps.json', 'utf8')) as { id: string; mount: string | null }[];
-    expect(modelAps).toHaveLength(19);
-    expect(modelAps.map((a) => a.id)).toEqual(Array.from({ length: 19 }, (_, i) => `M${String(i + 1).padStart(2, '0')}`));
+    const all = Array.from({ length: 19 }, (_, i) => `M${String(i + 1).padStart(2, '0')}`);
+    // M05, M08, M11 and M19 were removed by the user; the rest keep their numbers.
+    expect(modelAps.map((a) => a.id)).toEqual(all.filter((id) => !['M05', 'M08', 'M11', 'M19'].includes(id)));
     expect(modelAps.filter((a) => a.mount === null)).toEqual([]);
   });
 

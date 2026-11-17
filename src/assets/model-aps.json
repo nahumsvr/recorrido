@@ -48,18 +48,6 @@
     "zone": "Courts - north wall"
   },
   {
-    "id": "M05",
-    "x": -0.003,
-    "y": 8.413,
-    "h": 3.312,
-    "mount": "wall",
-    "normal": {
-      "x": 1,
-      "y": 0
-    },
-    "zone": "Courts - west wall"
-  },
-  {
     "id": "M06",
     "x": 0.096,
     "y": 19.441,
@@ -84,18 +72,6 @@
     "zone": "Stands - west wall"
   },
   {
-    "id": "M08",
-    "x": 8.997,
-    "y": 32.279,
-    "h": 5.415,
-    "mount": "wall",
-    "normal": {
-      "x": 0,
-      "y": -1
-    },
-    "zone": "Stands - south wall"
-  },
-  {
     "id": "M09",
     "x": 16.342,
     "y": 32.279,
@@ -112,18 +88,6 @@
     "x": 25.357,
     "y": 32.279,
     "h": 5.415,
-    "mount": "wall",
-    "normal": {
-      "x": 0,
-      "y": -1
-    },
-    "zone": "Stands - south wall"
-  },
-  {
-    "id": "M11",
-    "x": 33.482,
-    "y": 32.279,
-    "h": 5.266,
     "mount": "wall",
     "normal": {
       "x": 0,
@@ -211,17 +175,5 @@
       "y": 0.402
     },
     "zone": "Stage"
-  },
-  {
-    "id": "M19",
-    "x": 54.585,
-    "y": 12.251,
-    "h": 3.333,
-    "mount": "wall",
-    "normal": {
-      "x": -1,
-      "y": 0
-    },
-    "zone": "Stage - east wall"
   }
 ]

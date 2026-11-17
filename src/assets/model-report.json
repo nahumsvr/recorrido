@@ -42,7 +42,8 @@
     "AP13": 0.188,
     "AP14": 1.183
   },
-  "modelApCount": 19,
+  "modelApCount": 15,
+  "modelApsDetected": 19,
   "areaByClass": {
     "stage": 217.08,
     "wallEW": 1687.864,
