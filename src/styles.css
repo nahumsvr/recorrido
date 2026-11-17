@@ -207,3 +207,53 @@ body {
   inset: 0;
   pointer-events: none;
 }
+
+.teleport-menu h2 {
+  margin: 10px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.teleport-menu__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 240px;
+}
+
+.teleport-menu button {
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.teleport-menu button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.teleport-menu button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.minimap {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--panel);
+  cursor: crosshair;
+}
+
+.minimap[hidden] {
+  display: none;
+}

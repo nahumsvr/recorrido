@@ -10,6 +10,8 @@ export interface Hud {
   /** Sets a toggle and fires its onChange. */
   setToggle(id: string, enabled: boolean): void;
   isOn(id: string): boolean;
+  /** Adds a section (e.g. the teleport menu) at the bottom of the HUD. */
+  append(section: HTMLElement): void;
 }
 
 export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
@@ -50,6 +52,9 @@ export function createHud(title: string, toggles: readonly HudToggle[]): Hud {
     },
     isOn(id) {
       return inputs.get(id)?.input.checked ?? false;
+    },
+    append(section) {
+      root.append(section);
     },
   };
 }

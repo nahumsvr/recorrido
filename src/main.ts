@@ -1,4 +1,4 @@
-import { Clock, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer } from 'three';
+import { Clock, Euler, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { createApLayer } from './aps/apLayer.ts';
@@ -6,6 +6,7 @@ import { createApPanel } from './aps/apPanel.ts';
 import { nearestAp, panelApId, type PanelState } from './aps/selection.ts';
 import modelUrl from './assets/auditorio.glb?url';
 import { ACCESS_POINTS } from './data/aps.ts';
+import { TELEPORTS, type Teleport } from './data/teleports.ts';
 import { LAYOUT } from './config/alignment.ts';
 import { threeToPlan } from './domain/coords.ts';
 import { createAlignOverlay } from './debug/alignOverlay.ts';
@@ -13,6 +14,8 @@ import { createDesktopInput } from './input/desktopInput.ts';
 import { FixedStep } from './player/fixedStep.ts';
 import { PlayerController } from './player/playerController.ts';
 import { createHud } from './ui/hud.ts';
+import { createMinimap } from './ui/minimap.ts';
+import { createTeleportMenu } from './ui/teleportMenu.ts';
 import { loadModel } from './world/loadModel.ts';
 import { createWorld } from './world/scene.ts';
 
@@ -127,6 +130,39 @@ crosshair.className = 'crosshair';
 crosshair.hidden = true;
 document.body.append(crosshair);
 
+// ---- Teleports ----
+function goTo(t: Teleport): void {
+  if (!t.position) return;
+  setMode('walk');
+  hud.setToggle('inspect', false);
+  player.teleport(new Vector3(t.position.x, t.position.h, t.position.y), true);
+  camera.rotation.set(0, t.yaw, 0);
+  setPanelState({ pinned: null, nearby: null });
+}
+hud.append(createTeleportMenu(TELEPORTS, goTo));
+
+// ---- Minimap (background baked once from a top-down render) ----
+const minimap = createMinimap(
+  { minX: bounds.min.x, maxX: bounds.max.x, minY: bounds.min.z, maxY: bounds.max.z },
+  apLayer.items.map((i) => ({ id: i.ap.id, x: i.position.x, y: i.position.z, warn: !i.mounted })),
+);
+{
+  const fog = world.scene.fog;
+  world.scene.fog = null;
+  apLayer.group.visible = false;
+  overlay.visible = false;
+  world.setRoofCut(true);
+  minimap.bake(renderer, world.scene);
+  world.setRoofCut(hud.isOn('roof'));
+  overlay.visible = hud.isOn('align');
+  apLayer.group.visible = true;
+  world.scene.fog = fog;
+}
+addEventListener('keydown', (e) => {
+  if (e.code === 'KeyM' && !e.repeat) minimap.setVisible(!minimap.isVisible());
+});
+const viewEuler = new Euler(0, 0, 0, 'YXZ');
+
 // Click-to-walk hint shown while the pointer is free in walk mode.
 const startHint = document.createElement('button');
 startHint.className = 'start-hint';
@@ -206,6 +242,8 @@ renderer.setAnimationLoop(() => {
     orbit.update();
     if (panelState.nearby) setPanelState({ ...panelState, nearby: null });
   }
+  viewEuler.setFromQuaternion(camera.quaternion);
+  minimap.draw({ x: player.position.x, y: player.position.z, yaw: viewEuler.y }, panelApId(panelState));
   apPanel.updateDistance(camera.position);
   apLayer.animate(clock.elapsedTime);
   if (frame % OCCLUSION_EVERY_N_FRAMES === 0) apLayer.updateOcclusion(camera);
@@ -214,4 +252,6 @@ renderer.setAnimationLoop(() => {
 });
 
 // Exposed for automated checks (e2e / console inspection).
-Object.assign(window, { __recorrido: { world, camera, player, setMode, apLayer, hud, getPanelState: () => panelState } });
+Object.assign(window, {
+  __recorrido: { world, camera, player, setMode, apLayer, hud, goTo, getPanelState: () => panelState },
+});
