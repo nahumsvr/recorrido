@@ -36,11 +36,11 @@ export interface PlayerConfig {
 
 export const DEFAULT_PLAYER_CONFIG: PlayerConfig = {
   radius: 0.3,
-  height: 1.75,
-  eyeHeight: 1.65,
+  height: 1.70,
+  eyeHeight: 1.60,
   gravity: 9.8,
-  walkSpeed: 1.4,
-  runSpeed: 3.0,
+  walkSpeed: 2.5,
+  runSpeed: 6.0,
   jumpSpeed: 3.6,
   maxStep: 0.35,
   maxSlopeDeg: 40,

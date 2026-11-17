@@ -35,11 +35,11 @@ function walk(p: PlayerController, seconds: number, input: Partial<PlayerInput> 
 }
 
 describe('PlayerController', () => {
-  it('stands on the floor with eyes at 1.65 m under gravity', () => {
+  it('stands on the floor with eyes at 1.60 m under gravity', () => {
     const p = new PlayerController(world(floor()), { spawn: new Vector3(0, 2, 0) });
     walk(p, 2, { forward: 0 });
     expect(p.position.y).toBeCloseTo(0, 2);
-    expect(p.eyePosition().y).toBeCloseTo(1.65, 2);
+    expect(p.eyePosition().y).toBeCloseTo(1.6, 2);
     expect(p.onGround).toBe(true);
   });
 
@@ -53,7 +53,7 @@ describe('PlayerController', () => {
 
   it('climbs a 0.30 m step by walking', () => {
     const p = new PlayerController(world(floor(), box(10, 0.3, 4, 0, 0.15, -4)), { spawn: new Vector3(0, 0, 0) });
-    walk(p, 3);
+    walk(p, 1.5);
     expect(p.position.y).toBeCloseTo(0.3, 2);
     expect(p.position.z).toBeLessThan(-2.5);
   });
@@ -64,7 +64,7 @@ describe('PlayerController', () => {
     expect(p.position.y).toBeCloseTo(0, 2);
     expect(p.position.z).toBeGreaterThan(-2.0);
     walk(p, DT * 2, { jump: true });
-    walk(p, 2);
+    walk(p, 1);
     expect(p.position.y).toBeCloseTo(0.5, 2);
     expect(p.position.z).toBeLessThan(-2.5);
   });
