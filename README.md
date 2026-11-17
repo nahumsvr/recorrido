@@ -24,22 +24,29 @@ Useful URL options: `?debug=align` (plan grid on start), `?touch=1` (force touch
 | E: info of the AP under the crosshair or the nearest one | Tap an AP for its info |
 | M: toggle minimap · Esc: release the mouse | Jump button |
 
-The AP panel also opens on its own within 4 m of an AP. The HUD has the inspection (orbit) view, roof cut, edges, the "Go to" teleports and two independent AP groups, each with its own show / coverage (spheres, floor) toggles:
+The AP panel also opens on its own within 4 m of an AP. The HUD has the inspection (orbit) view, roof cut, edges, the "Go to" teleports and the AP group with its show / coverage (spheres, floor) toggles. The design-table APs (AP01–AP14) are no longer drawn; their data stays in `src/data/aps.ts` for the model build script and the `?debug=align` overlay.
 
-- **Table APs** (cyan, AP01–AP14): coordinates from the design table.
 - **Model APs** (violet, M01–M19): the black AP devices placed in the SketchUp model, detected automatically by `npm run prepare-model` (body 0.20 × 0.16 × 0.03 m). Numbering walks the building: north wall, west wall, stands, annex, offices, stage.
+
+## Security camera monitor
+
+The network room desk has a monitor. Walk up to it and press **E** (or tap it) for a full-screen view of the security cameras: ◀ ▶ buttons, the numbered chips, or ← → / A D to switch, **Esc** or **E** to leave. Each view is rendered from the camera's lens position with the **datasheet horizontal FOV** of its lens (VIGI C240I: 2.8 / 4 mm; C340I: 2.8 / 4 / 6 mm; source: TP-Link/Omada spec pages, checked 2026-11-16) in a 16:9 stream, with an on-screen display: camera name, live date and time, REC, model, lens, resolution, codec, fps, IR range and protection rating. The vertical angle is derived from the 16:9 image (datasheet vertical angles include lens distortion that a rectilinear render cannot reproduce). The "View cones" toggle draws the same FOV as a pyramid.
+
+### Editing camera positions
+
+HUD → Cameras → **Edit cameras** opens a panel. Click a camera (or pick it in the list), then click a wall to move it there, or type X / Y / H; change pan, tilt, lens and type (dome / bullet). Edits are saved in this browser (`localStorage`) and survive reloads. **Save to project** (only with `npm run dev`) writes them to `src/data/cameraOverrides.json`, which is committed and is the permanent source; **Export JSON** copies the same data. **Reset camera / Reset all** go back to the last saved project values. Order of precedence: code defaults (`src/data/cameras.ts`) < project file < this browser's edits. A live preview of what the selected camera sees (datasheet FOV, 16:9) sits next to the panel and updates as you edit. Cameras mount on walls only (no ceiling mount yet).
 
 ## Where the data lives
 
 - `src/config/alignment.ts`: STL → plan alignment (origin = inner north-west corner of the courts) and reference dimensions.
 - `src/data/aps.ts`: AP table (plan X east, Y south, mounting height h, zone).
 - `src/assets/model-aps.json`: generated list of model APs (position, wall or ceiling mount, zone). Do not edit by hand; move the devices in SketchUp, re-export and run `npm run prepare-model`.
+- `src/data/cameras.ts` / `src/data/cameraOverrides.json`: camera defaults and the saved edits.
 - `src/data/teleports.ts`: teleport destinations; `position: null` shows the button disabled.
 
 Coordinates everywhere are plan meters: a plan point (X, Y, h) is `new Vector3(X, h, Y)` in three.js.
 
 ## Known gaps (2026-11-16)
 
-- AP06, AP07 and AP14 are not next to a wall in the model; they are drawn at their table position with a ⚠ warning.
 - The gym level is not modeled; the "Gym" teleport lands on the stage under AP13.
 - Coverage spheres are a fixed 15 m radius drawing, not an RF simulation.
