@@ -18,6 +18,7 @@ import { LAYOUT } from '../config/alignment.ts';
 import type { AuditoriumModel } from './loadModel.ts';
 import { PROPS_COLOR } from './palette.ts';
 import { createCourtLines } from './courtLines.ts';
+import { createGrass } from './grass.ts';
 
 // Enable BVH-accelerated raycasts on every Mesh.
 (Mesh.prototype as Mesh).raycast = acceleratedRaycast;
@@ -28,17 +29,20 @@ export interface World {
   /** Collision structure of the building (props never collide). */
   readonly bvh: MeshBVH;
   readonly edges: LineSegments;
+  /** Field of grass around the building; hidden while the minimap is baked. */
+  readonly grass: Mesh;
   /** Clips everything above it; toggled by "cut roof". */
   readonly roofCut: Plane;
   setRoofCut(enabled: boolean): void;
 }
 
 const EDGE_THRESHOLD_DEG = 30;
+const SKY_COLOR = 0xbfd9ec;
 
 export function createWorld(model: AuditoriumModel): World {
   const scene = new Scene();
-  scene.background = new Color(0x1d2128);
-  scene.fog = new Fog(0x1d2128, 60, 160);
+  scene.background = new Color(SKY_COLOR);
+  scene.fog = new Fog(SKY_COLOR, 80, 300);
 
   const roofCut = new Plane(new Vector3(0, -1, 0), LAYOUT.roofStartH - 0.1);
   const clipping: Plane[] = [];
@@ -72,6 +76,11 @@ export function createWorld(model: AuditoriumModel): World {
 
   scene.add(createCourtLines());
 
+  model.building.computeBoundingBox();
+  const box = model.building.boundingBox!;
+  const grass = createGrass({ x: (box.min.x + box.max.x) / 2, y: (box.min.z + box.max.z) / 2 });
+  scene.add(grass);
+
   // Soft sky/ground fill plus one directional key light; no shadow maps (mobile budget).
   // Ground color is kept fairly bright: it is the only light the roof underside gets.
   scene.add(new HemisphereLight(0xf4f1ea, 0x9a9184, 1.6));
@@ -84,6 +93,7 @@ export function createWorld(model: AuditoriumModel): World {
     building,
     bvh,
     edges,
+    grass,
     roofCut,
     setRoofCut(enabled) {
       clipping.length = 0;

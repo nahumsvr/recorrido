@@ -1,4 +1,4 @@
-import { Clock, Euler, type Object3D, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer } from 'three';
+import { Clock, Color, Euler, type Object3D, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { createApGroups } from './aps/apGroups.ts';
@@ -412,7 +412,10 @@ const minimap = createMinimap(
 {
   const fog = world.scene.fog;
   world.scene.fog = null;
+  const sky = world.scene.background;
   aps.root.visible = false;
+  world.scene.background = new Color(0x1d2128);
+  world.grass.visible = false;
   cameras.group.visible = false;
   overlay.visible = false;
   world.setRoofCut(true);
@@ -423,6 +426,8 @@ const minimap = createMinimap(
   cameras.group.visible = true;
   world.scene.fog = fog;
 }
+  world.scene.background = sky;
+  world.grass.visible = true;
 addEventListener('keydown', (e) => {
   if (e.code === 'KeyM' && !e.repeat) minimap.setVisible(!minimap.isVisible());
 });
@@ -478,7 +483,7 @@ function pickInfra(): InfoTarget | null {
     for (let n = o; n; n = n.parent) if (!n.visible) return false;
     return true;
   };
-  const roots = [cabling.pathways, cabling.penetrations, cabling.drops, audio.installed];
+  const roots = [cabling.pathways, cabling.penetrations, cabling.drops, audio.installed, audio.power];
   for (const hit of pickRaycaster.intersectObjects(roots, true)) {
     if (!shown(hit.object)) continue;
     for (let n: Object3D | null = hit.object; n; n = n.parent) {
