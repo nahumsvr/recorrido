@@ -42,6 +42,7 @@ import { createNetworkDesk, deskObstacle, monitorPoint, MONITOR_REACH_M } from '
 import { createCameraViewer } from './cameras/cameraViewer.ts';
 import { createNetworkRack, rackObstacle } from './world/networkRack.ts';
 import { createNetworkRoomDoor } from './world/networkRoomDoor.ts';
+import { createNetworkRoomWiring } from './world/networkRoomWiring.ts';
 import { createToast } from './ui/toast.ts';
 import type { Obstacle } from './player/obstacles.ts';
 import { createWorld } from './world/scene.ts';
@@ -103,6 +104,8 @@ const cameras = createCameraLayer(applyOverrides(baseCameras, localOverrides), w
 world.scene.add(cameras.group);
 const viewer = createCameraViewer(cameras.items);
 world.scene.add(createNetworkRack());
+const roomWiring = createNetworkRoomWiring();
+world.scene.add(roomWiring);
 const desk = createNetworkDesk();
 world.scene.add(desk);
 const monitor = monitorPoint();
@@ -369,8 +372,9 @@ const hud = createHud(
     })),
     { id: 'supportsShow', label: 'Soportes (ménsulas, varillas y abrazaderas)', initial: true, onChange: (on) => (supports.group.visible = on) },
     { id: 'dropsShow', label: 'Bajadas a APs y cámaras', initial: true, onChange: (on) => (cabling.drops.visible = on) },
+    { id: 'roomWiringShow', label: 'Cuarto de red: energía, contactos y cables', initial: true, onChange: (on) => (roomWiring.visible = on) },
     { id: 'holesShow', label: `Hoyos en muros (${PENETRATIONS.length})`, initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
-    { id: 'audioShow', label: 'Bocinas y cables', initial: true, section: 'Audio (4 bocinas)', onChange: (on) => (audio.installed.visible = on) },
+    { id: 'audioShow', label: 'Bocinas y cables', initial: true, section: 'Audio (2 bocinas)', onChange: (on) => (audio.installed.visible = on) },
     { id: 'mixerShow', label: 'Consola en la mesa', initial: true, onChange: (on) => (foh.mixer.visible = on) },
   ],
   { collapsed: innerWidth < 700 },

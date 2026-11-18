@@ -13,13 +13,15 @@ import {
   RACK_DEVICES,
   RACK_MODEL,
   RACK_PLACEMENT,
+  RACK_PLINTH_M,
+  RACK_U_M,
   RACK_UNITS,
   type RackDevice,
   type RackDeviceKind,
 } from '../data/networkRack.ts';
 
-const U_M = 0.04445;
-const PLINTH_M = 0.1;
+const U_M = RACK_U_M;
+const PLINTH_M = RACK_PLINTH_M;
 const POST_M = 0.04;
 /** 19-inch equipment width and a typical shallow depth. */
 const EQUIP_W = 0.482;

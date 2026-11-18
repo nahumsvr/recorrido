@@ -1,5 +1,6 @@
 import { BoxGeometry, CanvasTexture, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace } from 'three';
 import { DESK_PLACEMENT } from '../data/networkDesk.ts';
+import { PC_TOWER } from '../data/networkRoomWiring.ts';
 import type { Obstacle } from '../player/obstacles.ts';
 
 const TOP_T = 0.03;
@@ -76,6 +77,10 @@ export function createNetworkDesk(): Group {
   const screen = new Mesh(new PlaneGeometry(MONITOR_W, MONITOR_H), new MeshBasicMaterial({ map: screenTexture() }));
   screen.position.set(0, panelY, baseZ + 0.0135);
   root.add(screen);
+
+  // PC tower under the desk, ports toward the east wall (its local -Z). Local x runs along the wall, like plan Y.
+  const tower = PC_TOWER.size;
+  add(new BoxGeometry(tower.w, tower.h, tower.d), plastic, PC_TOWER.y - DESK_PLACEMENT.center.y, tower.h / 2 + 0.02, DESK_PLACEMENT.center.x - PC_TOWER.x);
 
   // Keyboard in front of the monitor.
   add(new BoxGeometry(0.4, 0.015, 0.13), plastic, 0, topHeight + 0.0075, 0.12);

@@ -14,6 +14,12 @@ export interface RackDevice {
 }
 
 export const RACK_UNITS = 42;
+/** One rack unit (EIA-310) and the height of the plinth under the first unit, meters. */
+export const RACK_U_M = 0.04445;
+export const RACK_PLINTH_M = 0.1;
+
+/** Height of the vertical center of a device above the floor. */
+export const rackDeviceCenterH = (d: Pick<RackDevice, 'u' | 'units'>): number => RACK_PLINTH_M + (d.u - 1) * RACK_U_M + (d.units * RACK_U_M) / 2;
 export const RACK_MODEL = 'Tripp Lite SR42UB';
 
 /** Rack footprint center (floor plan) and size in meters. Front faces south; ~0.9 m of rear access behind it. */

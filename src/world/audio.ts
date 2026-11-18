@@ -14,12 +14,9 @@ import {
   Vector3,
 } from 'three';
 import {
-  FLOOR_RUN_H,
-  FLOOR_RUN_Y,
   FOH,
   MIXER_MODEL,
   SPEAKERS,
-  STAND_FRONT_Y,
   type AudioLine,
   type Speaker,
 } from '../data/audio.ts';
@@ -83,12 +80,12 @@ function buildSpeaker(spk: Speaker): Group {
   const cone = new MeshStandardMaterial({ color: 0x0b0b0c, roughness: 0.5 });
   const metal = new MeshStandardMaterial({ color: 0x59616b, roughness: 0.5, metalness: 0.7 });
 
-  // Cabinet tilted up about its center; the face looks south, toward the seats.
+  // Upright cabinet on a bracket off the end wall; its face (local -Z) looks at the aim point. lookAt turns +Z toward
+  // its target, so it is given the mirror of the aim point.
+  const [ax, ah, az] = planToThree(spk.aim);
   const cab = new Group();
   cab.position.set(x, h, z);
-  cab.rotation.order = 'YXZ';
-  cab.rotation.y = Math.PI;
-  cab.rotation.x = (spk.tiltUpDeg * Math.PI) / 180;
+  cab.lookAt(2 * x - ax, 2 * h - ah, 2 * z - az);
   cab.add(new Mesh(new BoxGeometry(SPK_W, SPK_H, SPK_D), body));
   const face = new Mesh(new BoxGeometry(SPK_W - 0.04, SPK_H - 0.04, 0.012), grille);
   face.position.z = -SPK_D / 2 - 0.004;
@@ -102,14 +99,15 @@ function buildSpeaker(spk: Speaker): Group {
   cab.add(horn);
   root.add(cab);
 
-  // Yoke: arm from the plate on the riser face to the cabinet.
-  const armLen = STAND_FRONT_Y - z;
-  const arm = new Mesh(new BoxGeometry(0.08, 0.12, armLen), metal);
-  arm.position.set(x, h, z + armLen / 2);
-  root.add(arm);
-  const plate = new Mesh(new BoxGeometry(0.2, 0.3, 0.012), metal);
-  plate.position.set(x, h, STAND_FRONT_Y - 0.006);
+  // Bracket: a plate on the wall and an arm out to the cabinet.
+  const towardRoom = Math.sign(x - spk.wallX);
+  const plate = new Mesh(new BoxGeometry(0.012, 0.3, 0.2), metal);
+  plate.position.set(spk.wallX + towardRoom * 0.006, h, z);
   root.add(plate);
+  const armLen = Math.abs(x - spk.wallX);
+  const arm = new Mesh(new BoxGeometry(armLen, 0.08, 0.08), metal);
+  arm.position.set((x + spk.wallX) / 2, h, z);
+  root.add(arm);
   return root;
 }
 
@@ -118,13 +116,13 @@ export interface AudioSystem {
   readonly installed: Group;
 }
 
-/** The four speakers (two per stand, on the front of each stand) and the audio cable runs that feed them. */
+/** The two speakers (one on the end wall of each stand) and the audio cable runs that feed them. */
 export function createAudioSystem(): AudioSystem {
   const installed = new Group();
   installed.name = 'audioSystem';
   for (const spk of SPEAKERS) installed.add(buildSpeaker(spk));
 
-  // Each line lies in its own steel conduit: EMT up high, rigid conduit (RMC) near the floor; straps are in the support layer.
+  // Each line lies in its own steel conduit: EMT all the way; straps are in the support layer.
   for (const w of PATHWAYS.filter((x) => x.service === 'audio')) {
     const line: AudioLine = w.id.startsWith('AUDIO_L') ? 'L' : 'R';
     const mat = new MeshStandardMaterial({ color: LINE_COLOR[line], roughness: 0.45, metalness: 0.6 });
@@ -134,11 +132,15 @@ export function createAudioSystem(): AudioSystem {
       installed.add(segment(pts[i]!, b, od / 2, mat), pickable(segment(pts[i]!, b, PICK_R, pickMaterial), { type: 'audio', line }));
     });
   }
-  // Short drops from the floor conduit box to the connector panel of each cabinet.
+  // Short tail from the box at the end of each line to the connector panel on the back of the cabinet.
   for (const spk of SPEAKERS) {
     const mat = new MeshStandardMaterial({ color: LINE_COLOR[spk.line], roughness: 0.6 });
-    const run = new Vector3(spk.position.x, FLOOR_RUN_H, FLOOR_RUN_Y);
-    const rear = new Vector3(spk.position.x, spk.position.h - 0.3, spk.position.y - 0.1);
+    const end = PATHWAYS.find((w) => w.id === `AUDIO_${spk.line}`)!.points.at(-1)!;
+    const run = vec(end);
+    const [x, h, z] = planToThree(spk.position);
+    const [ax, ah, az] = planToThree(spk.aim);
+    const back = new Vector3(x - ax, h - ah, z - az).normalize();
+    const rear = new Vector3(x, h - 0.2, z).addScaledVector(back, SPK_D / 2);
     installed.add(segment(run, rear, CABLE_R, mat), pickable(segment(run, rear, PICK_R, pickMaterial), { type: 'audio', line: spk.line }));
   }
   return { installed };

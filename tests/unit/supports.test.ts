@@ -77,6 +77,6 @@ describe('planSupports', () => {
   });
 
   it('holds both audio lines with straps on wall, none in free air', async () => {
-    for (const id of ['AUDIO_R', 'AUDIO_R_LOW', 'AUDIO_L', 'AUDIO_L_LOW']) expect(await stats(id), id).toMatchObject({ thin: 0, none: 0 });
+    for (const id of ['AUDIO_R', 'AUDIO_L']) expect(await stats(id), id).toMatchObject({ thin: 0, none: 0 });
   });
 });

@@ -2,7 +2,7 @@ import { DoubleSide, Ray, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { SPEAKERS } from '../../src/data/audio.ts';
 import { MODEL_ACCESS_POINTS } from '../../src/data/modelAps.ts';
-import { BACKBONE_FIBER_CHAIN, CABLE_DEVICES, DEVICE_ROUTES, FREE_SPANS, HUG_DISTANCE_M, IDF, JUNCTIONS, MAX_PULL_M, OM3_MAX_M, carriesFiber, backboneFiberM, PATHWAYS, PENETRATIONS, cablesOn, pathLength, pathway } from '../../src/data/cabling.ts';
+import { BACKBONE_FIBER_CHAIN, DESK_LINK_CHAIN, CABLE_DEVICES, DEVICE_ROUTES, FREE_SPANS, HUG_DISTANCE_M, IDF, JUNCTIONS, MAX_PULL_M, OM3_MAX_M, carriesFiber, backboneFiberM, PATHWAYS, PENETRATIONS, cablesOn, pathLength, pathway } from '../../src/data/cabling.ts';
 import { planDrop } from '../../src/domain/dropRouting.ts';
 import { loadBuildingBvh } from '../helpers/realModel.ts';
 
@@ -159,7 +159,7 @@ describe('cabling: containment (TIA-569)', () => {
   });
 
   it('has a pathway for every segment of the chains and nothing orphaned', () => {
-    const used = new Set([...DEVICE_ROUTES.flatMap((r) => r.chain), ...BACKBONE_FIBER_CHAIN]);
+    const used = new Set([...DEVICE_ROUTES.flatMap((r) => r.chain), ...BACKBONE_FIBER_CHAIN, ...DESK_LINK_CHAIN]);
     for (const w of PATHWAYS.filter((x) => x.service === 'data')) expect(used.has(w.id), w.id).toBe(true);
   });
 
@@ -259,7 +259,7 @@ describe('cabling: topology (restrooms and locker rooms under the stands)', () =
   it('each device is fed from the hub its list says, and the IDF serves 7 of them', () => {
     expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'idf')).toHaveLength(IDF.ports);
     expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'rack')).toHaveLength(26 - IDF.ports);
-    for (const r of DEVICE_ROUTES) expect(r.chain[0], r.device.id).toBe(r.device.hub === 'idf' ? 'IDF_UP' : 'ANNEX_FEED');
+    for (const r of DEVICE_ROUTES) expect(r.chain[0], r.device.id).toBe(r.device.hub === 'idf' ? 'IDF_UP' : r.device.id === 'CAM16' ? 'ROOM_TRAY_E' : 'ANNEX_FEED');
   });
 
   it('puts the IDF cabinet against the north wall, out of ball reach and below the north tray', async () => {
@@ -310,9 +310,9 @@ describe('cabling: hybrid containment (annex tray, EMT on the stands and courts,
   const CAT6_MM2 = Math.PI * 3.5 ** 2;
 
   it('keeps tray only in the annex and puts everything on the stands and courts side in EMT', () => {
-    expect(kindOf('tray')).toEqual(['ANNEX_E1', 'ANNEX_E2', 'ANNEX_FEED']);
+    expect(kindOf('tray')).toEqual(['ANNEX_E1', 'ANNEX_E2', 'ANNEX_FEED', 'ROOM_TRAY_E']);
     expect(kindOf('emt')).toEqual(['BACK_E', 'BACK_W', 'BR_M18', 'IDF_UP', 'ID_W', 'NORTH_A', 'NORTH_B', 'NORTH_C', 'OFFICES_IN', 'RISER_E', 'RISER_W', 'STAGE_A', 'STAGE_B', 'STAGE_M', 'STAGE_R', 'WEST']);
-    expect(kindOf('plastic')).toEqual(['ANNEX_E3', 'ANNEX_W', 'OFF_IN', 'OFF_N', 'OFF_S']);
+    expect(kindOf('plastic')).toEqual(['ANNEX_E3', 'ANNEX_W', 'OFF_IN', 'OFF_N', 'OFF_S', 'ROOM_DESK']);
     for (const id of kindOf('plastic')) expect(cablesOn(id), id).toBeLessThanOrEqual(3);
   });
 
@@ -368,19 +368,15 @@ describe('cabling: hybrid containment (annex tray, EMT on the stands and courts,
     }
   });
 
-  it('runs the audio in EMT above 2 m and in rigid conduit (RMC) below it, each line in its own conduit', () => {
+  it('runs the audio in EMT, above the 2 m protected height, each line in its own conduit', () => {
     const audio = PATHWAYS.filter((w) => w.service === 'audio');
-    expect(audio.map((w) => `${w.id}:${w.kind}`).sort()).toEqual(['AUDIO_L:emt', 'AUDIO_L_LOW:rmc', 'AUDIO_R:emt', 'AUDIO_R_LOW:rmc']);
-    for (const w of audio) {
-      const hs = w.points.map((q) => q.h);
-      if (w.kind === 'emt') expect(Math.min(...hs), w.id).toBeGreaterThanOrEqual(2 - 1e-9);
-      else expect(Math.max(...hs), w.id).toBeLessThanOrEqual(2 + 1e-9);
-    }
+    expect(audio.map((w) => `${w.id}:${w.kind}`).sort()).toEqual(['AUDIO_L:emt', 'AUDIO_R:emt']);
+    for (const w of audio) expect(Math.min(...w.points.map((q) => q.h)), w.id).toBeGreaterThanOrEqual(2 - 1e-9);
   });
 
-  it('gives each speaker a box on the floor conduit of its line', () => {
+  it('gives each speaker a box at the end of the conduit of its line', () => {
     for (const k of SPEAKERS) {
-      expect(JUNCTIONS.some((j) => j.pathway === `AUDIO_${k.line}_LOW` && j.device === k.id), k.id).toBe(true);
+      expect(JUNCTIONS.some((j) => j.pathway === `AUDIO_${k.line}` && j.device === k.id), k.id).toBe(true);
     }
   });
 });

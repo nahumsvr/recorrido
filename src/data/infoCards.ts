@@ -1,4 +1,4 @@
-import { AUDIO_RUNS, FLOOR_CONDUIT, FLOOR_RUN_H, FRONT_ROW_EAR, BACK_ROW_EAR, MIXER_MODEL, SPEAKERS, STAND_FRONT_Y, floorRunLengthM } from './audio.ts';
+import { AUDIO_RUNS, EON715_COVERAGE, MIXER_MODEL, SPEAKERS, bearing, coverageEars, offAxisDeg } from './audio.ts';
 import {
   DEVICE_ROUTES,
   FREE_SPANS,
@@ -257,18 +257,13 @@ function idfCard(): InfoCard {
   };
 }
 
-/** Elevation, in degrees above horizontal, from a cabinet to a seated ear point. */
-function elevation(spk: (typeof SPEAKERS)[number], ear: { y: number; h: number }): number {
-  return (Math.atan2(ear.h - spk.position.h, ear.y - spk.position.y) * 180) / Math.PI;
-}
-const EON715_VERTICAL_HALF_DEG = 30;
-
 function speakerCard(id: string): InfoCard | null {
   const spk = SPEAKERS.find((s) => s.id === id);
   if (!spk) return null;
-  const front = elevation(spk, FRONT_ROW_EAR);
-  const back = elevation(spk, BACK_ROW_EAR);
-  const worst = Math.max(Math.abs(front - spk.tiltUpDeg), Math.abs(back - spk.tiltUpDeg));
+  const axis = bearing(spk.position, spk.aim);
+  const offAxis = coverageEars(spk.stand).map((ear) => offAxisDeg(spk, ear));
+  const worstH = Math.max(...offAxis.map((o) => o.horizontal));
+  const worstV = Math.max(...offAxis.map((o) => o.vertical));
   return {
     kind: 'Bocina',
     title: spk.id,
@@ -276,18 +271,19 @@ function speakerCard(id: string): InfoCard | null {
     specs: [
       ['Modelo', `${spk.model} (amplificada, 15" de dos vías)`],
       ['Consola', `${MIXER_MODEL} (portátil)`],
-      ['Señal', `XLR balanceada, línea ${spk.line}; thru a la segunda bocina`],
+      ['Señal', `XLR balanceada, línea ${spk.line}`],
       ['Posición', `X ${spk.position.x.toFixed(1)} · Y ${spk.position.y.toFixed(1)} m, h ${ceil1(spk.position.h)} m`],
-      ['Inclinación', `${spk.tiltUpDeg}° hacia arriba, mirando a las gradas`],
-      ['Montaje', `Soporte tipo yugo en la cara del escalón (Y ${STAND_FRONT_Y} m)`],
+      ['Apunta a', `X ${spk.aim.x.toFixed(1)} · Y ${spk.aim.y.toFixed(1)} m (centro de la grada): ${Math.round(Math.abs(axis.pitchDeg))}° ${axis.pitchDeg >= 0 ? 'hacia arriba' : 'hacia abajo'}, ${Math.round(Math.abs(axis.yawDeg))}° hacia el fondo de la grada`],
+      ['Montaje', `En el muro lateral de la grada ${spk.stand === 'west' ? 'oeste' : 'este'}, sobre un brazo a ${Math.round(Math.abs(spk.position.x - spk.wallX) * 100)} cm del muro, a h ${ceil1(spk.position.h)} m (fuera del paso)`],
     ],
     checks: [
       check(
-        'Cobertura vertical (±30°)',
-        worst <= EON715_VERTICAL_HALF_DEG ? 'pass' : 'fail',
-        `Primera fila ${Math.round(front)}°, última fila ${Math.round(back)}° contra el eje de ${spk.tiltUpDeg}°: máximo ${Math.round(worst)}° fuera de eje.`,
+        'Cobertura (EON715: ±45° horizontal, ±30° vertical)',
+        worstH <= EON715_COVERAGE.horizontalHalfDeg && worstV <= EON715_COVERAGE.verticalHalfDeg ? 'pass' : 'fail',
+        `Extremo y centro de la grada, primera y última fila: máximo ${Math.round(worstH)}° horizontal y ${Math.round(worstV)}° vertical fuera de eje.`,
       ),
-      check('NOM-001-SEDE (alimentación)', 'check', 'Un contacto protegido por bocina al pie de la grada, en canaleta de potencia aparte del audio: no modelado.'),
+      check('Asientos junto al muro de la bocina', 'check', 'Los asientos más cercanos a la bocina, sobre el mismo muro, quedan fuera de su patrón (más de 45° fuera de eje) y se oirán más bajo; validar en sitio.'),
+      check('NOM-001-SEDE (alimentación)', 'check', 'Un contacto protegido por bocina junto al muro, en canalización de potencia aparte del audio: no modelado.'),
       check('Montaje', 'check', 'Confirmar en obra la capacidad del soporte y los anclajes contra el peso de la bocina.'),
       LABELING,
     ],
@@ -298,31 +294,27 @@ function audioCard(line: 'L' | 'R', supports?: SupportIndex): InfoCard | null {
   const run = AUDIO_RUNS.find((r) => r.line === line);
   if (!run) return null;
   const west = line === 'L';
-  const upper = supports?.get(`AUDIO_${line}`);
-  const lower = supports?.get(`AUDIO_${line}_LOW`);
-  const total = upper && lower ? { total: upper.total + lower.total, thin: upper.thin + lower.thin, none: upper.none + lower.none } : undefined;
+  const total = supports?.get(`AUDIO_${line}`);
   const held = supportCheck(total, EMT_SPACING_M, 'emt');
-  const boxes = junctionsOf(`AUDIO_${line}`).length + junctionsOf(`AUDIO_${line}_LOW`).length;
+  const boxes = junctionsOf(`AUDIO_${line}`).length;
   return {
     kind: 'Cable de audio',
     title: `AUDIO_${line}`,
-    subtitle: west ? 'Muro de oficinas, por arriba del muro trasero, pie de la grada oeste' : 'Muro de oficinas, pie de la grada este',
+    subtitle: west ? 'Muro de oficinas, por arriba del muro trasero, muro lateral de la grada oeste' : 'Muro de oficinas, muro lateral de la grada este',
     specs: [
       ['Tipo', 'Cable de audio XLR balanceado en tubo conduit'],
-      ['Tubo', `EMT ${FLOOR_CONDUIT.trade} arriba de ${FLOOR_CONDUIT.protectedHeightM} m; rígido de acero (RMC) ${FLOOR_CONDUIT.trade} por debajo`],
-      ['Alimenta', west ? 'SPK-W1, SPK-W2 (grada oeste)' : 'SPK-E1, SPK-E2 (grada este)'],
+      ['Tubo', 'EMT ¾" en todo el tendido (termina a 3.0 m, arriba de los 2 m de zona protegida)'],
+      ['Alimenta', west ? 'SPK-W1 (grada oeste)' : 'SPK-E1 (grada este)'],
       ['Largo', `${ceil1(pathLength(run.points))} m`],
       ['Altura', hRange(run.points)],
-      ['Tramo de piso', `${ceil1(floorRunLengthM(line))} m en tubo rígido pegado a la contrahuella, a ${ceil1(FLOOR_RUN_H * 100).replace('.0', '')} cm del piso`],
       ...(total ? [['Abrazaderas', `${total.total} (una a ≤ 0.9 m de cada caja y cada ≤ ${EMT_SPACING_M} m)`] as [string, string]] : []),
       ['Cajas de registro', `${boxes}`],
     ],
     checks: [
-      check('Proyecto: protección mecánica del tramo de piso', 'check', 'Tubo rígido de pared gruesa contra balonazos, pies, carritos y trapeadoras: confirmar con el cliente el tipo de uso y que la contrahuella admita los anclajes. No encontré el artículo de la NOM que la exija.'),
       check('Proyecto: separado de la canalización de datos ≥ 0.3 m', 'pass', 'Trayectoria independiente; solo cruza en ángulo recto (curva de desvío en el tubo de datos o en este).'),
-      check('Cruces en piso', 'pass', 'Nada cruza la boca del pasillo central por el piso, así que no se pisa.'),
+      check('Cruces en piso', 'pass', 'Nada va por el piso ni cruza la boca del pasillo central: no se pisa.'),
       check('NOM-001-SEDE (audio vs potencia)', 'check', 'La potencia va en su propia canalización: no modelado.'),
-      check('Presupuesto de cable XLR', 'check', 'El lote de XLR se calculó para ≈ 77 m y los dos tendidos suman ≈ 107 m: verificar la cotización.'),
+      check('Presupuesto de cable XLR', 'check', `El lote de XLR se calculó para ≈ 77 m; este tendido mide ≈ ${ceil1(pathLength(run.points))} m: verificar la cotización.`),
       ...(held ? [held] : []),
       LABELING,
     ],
