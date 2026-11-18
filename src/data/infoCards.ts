@@ -14,6 +14,7 @@ import {
   pathLength,
   type PathwayKind,
 } from './cabling.ts';
+import { AUDIO_BOARD } from './audioPower.ts';
 import { PROJECT_CAMERAS } from './projectCameras.ts';
 import { MODEL_ACCESS_POINTS } from './modelAps.ts';
 import { MIN_SOLID_M, EMT_SPACING_M, spacingFor, type SupportStats } from '../domain/supports.ts';
@@ -28,7 +29,8 @@ export type InfoTarget =
   | { readonly type: 'sleeve'; readonly id: string }
   | { readonly type: 'idf' }
   | { readonly type: 'speaker'; readonly id: string }
-  | { readonly type: 'audio'; readonly line: 'L' | 'R' };
+  | { readonly type: 'audio'; readonly line: 'L' | 'R' }
+  | { readonly type: 'power'; readonly id: string };
 
 /** `pass`: cumple. `fail`: no cumple (todavía). `check`: especificado, falta verificar en obra. */
 export type Verdict = 'pass' | 'fail' | 'check';
@@ -283,7 +285,7 @@ function speakerCard(id: string): InfoCard | null {
         `Extremo y centro de la grada, primera y última fila: máximo ${Math.round(worstH)}° horizontal y ${Math.round(worstV)}° vertical fuera de eje.`,
       ),
       check('Asientos junto al muro de la bocina', 'check', 'Los asientos más cercanos a la bocina, sobre el mismo muro, quedan fuera de su patrón (más de 45° fuera de eje) y se oirán más bajo; validar en sitio.'),
-      check('NOM-001-SEDE (alimentación)', 'check', 'Un contacto protegido por bocina junto al muro, en canalización de potencia aparte del audio: no modelado.'),
+      check('NOM-001-SEDE (alimentación)', 'check', `Contacto protegido junto a la bocina, en su propia canalización de potencia (PWR_${spk.line}), aparte del audio. La bocina es activa: confirmar su consumo en la ficha del fabricante.`),
       check('Montaje', 'check', 'Confirmar en obra la capacidad del soporte y los anclajes contra el peso de la bocina.'),
       LABELING,
     ],
@@ -321,6 +323,55 @@ function audioCard(line: 'L' | 'R', supports?: SupportIndex): InfoCard | null {
   };
 }
 
+function powerCard(id: string, supports?: SupportIndex): InfoCard | null {
+  if (id === AUDIO_BOARD.id) {
+    return {
+      kind: 'Tablero',
+      title: AUDIO_BOARD.id,
+      subtitle: 'Circuito de audio, muro de oficinas (lado del escenario)',
+      specs: [
+        ['Alimenta', 'SPK-W1 y SPK-E1 (una canalización de potencia por bocina)'],
+        ['Posición', `X ${AUDIO_BOARD.position.x.toFixed(1)} · Y ${AUDIO_BOARD.position.y.toFixed(1)} m, h ${ceil1(AUDIO_BOARD.position.h)} m`],
+      ],
+      checks: [
+        check('Origen del circuito', 'check', 'El tablero que alimenta TA-1 está fuera del modelo: confirmar en el levantamiento su ubicación, la protección y la capacidad.'),
+        LABELING,
+      ],
+    };
+  }
+  const run = PATHWAYS.find((w) => w.service === 'power' && w.id === id);
+  if (!run) return null;
+  const total = supports?.get(run.id);
+  const held = supportCheck(total, EMT_SPACING_M, 'emt');
+  const speaker = SPEAKERS.find((k) => `PWR_${k.line}` === run.id)!.id;
+  const boxes = junctionsOf(run.id).length;
+  const low = Math.min(...run.points.map((q) => q.h));
+  return {
+    kind: 'Alimentación de bocina',
+    title: run.id,
+    subtitle: `${AUDIO_BOARD.id} → ${speaker}`,
+    specs: [
+      ['Tipo', '3 conductores 12 AWG (fase, neutro y tierra) en tubo EMT'],
+      ['Tubo', `EMT ${run.trade}, pegado al muro con abrazaderas`],
+      ['Alimenta', speaker],
+      ['Largo', `${ceil1(pathLength(run.points))} m`],
+      ['Altura', hRange(run.points)],
+      ...(total ? [['Abrazaderas', `${total.total} (una a ≤ 0.9 m de cada caja y cada ≤ ${EMT_SPACING_M} m)`] as [string, string]] : []),
+      ['Cajas de registro', `${boxes}`],
+      ['Salida', 'Caja con contacto protegido (GFCI) junto a la bocina'],
+    ],
+    checks: [
+      check('NEC art. 800 (potencia y comunicaciones)', 'check', 'Va en su propio tubo metálico, pegado al de audio y sin tocarlo: los conductores de potencia y de señal no comparten canalización. Confirmar en la NOM-001-SEDE (fuentes secundarias del NEC).'),
+      low >= 2.7
+        ? check('NOM-001-SEDE art. 358.12 (EMT y daño físico)', 'pass', `Va a ${ceil1(low)} m o más, fuera del alcance de balones y personas.`)
+        : check('NOM-001-SEDE art. 358.12 (EMT y daño físico)', 'check', `Baja hasta ${ceil1(low)} m: confirmar que no es daño físico severo.`),
+      check('NOM-001-SEDE (contacto protegido)', 'check', 'Confirmar el tipo de protección (GFCI) y el consumo de la bocina con el electricista.'),
+      ...(held ? [held] : []),
+      LABELING,
+    ],
+  };
+}
+
 /** Builds the card for a clicked target, or null when the target no longer exists. */
 export function infoCardFor(target: InfoTarget, supports?: SupportIndex): InfoCard | null {
   switch (target.type) {
@@ -336,5 +387,7 @@ export function infoCardFor(target: InfoTarget, supports?: SupportIndex): InfoCa
       return speakerCard(target.id);
     case 'audio':
       return audioCard(target.line, supports);
+    case 'power':
+      return powerCard(target.id, supports);
   }
 }

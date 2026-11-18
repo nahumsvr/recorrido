@@ -113,7 +113,7 @@ const cabling = createCablingLayer(world.bvh);
 const supports = createSupportLayer(world.bvh);
 world.scene.add(cabling.pathways, cabling.penetrations, cabling.drops, supports.group);
 const audio = createAudioSystem();
-world.scene.add(audio.installed);
+world.scene.add(audio.installed, audio.power);
 const foh = createFohStation();
 world.scene.add(foh.fixed, foh.mixer);
 const door = createNetworkRoomDoor();
@@ -375,6 +375,7 @@ const hud = createHud(
     { id: 'roomWiringShow', label: 'Cuarto de red: energía, contactos y cables', initial: true, onChange: (on) => (roomWiring.visible = on) },
     { id: 'holesShow', label: `Hoyos en muros (${PENETRATIONS.length})`, initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
     { id: 'audioShow', label: 'Bocinas y cables', initial: true, section: 'Audio (2 bocinas)', onChange: (on) => (audio.installed.visible = on) },
+    { id: 'audioPowerShow', label: 'Alimentación de bocinas', initial: true, section: 'Audio (2 bocinas)', onChange: (on) => (audio.power.visible = on) },
     { id: 'mixerShow', label: 'Consola en la mesa', initial: true, onChange: (on) => (foh.mixer.visible = on) },
   ],
   { collapsed: innerWidth < 700 },
@@ -411,11 +412,11 @@ const minimap = createMinimap(
 );
 {
   const fog = world.scene.fog;
-  world.scene.fog = null;
   const sky = world.scene.background;
-  aps.root.visible = false;
+  world.scene.fog = null;
   world.scene.background = new Color(0x1d2128);
   world.grass.visible = false;
+  aps.root.visible = false;
   cameras.group.visible = false;
   overlay.visible = false;
   world.setRoofCut(true);
@@ -425,9 +426,9 @@ const minimap = createMinimap(
   aps.root.visible = true;
   cameras.group.visible = true;
   world.scene.fog = fog;
-}
   world.scene.background = sky;
   world.grass.visible = true;
+}
 addEventListener('keydown', (e) => {
   if (e.code === 'KeyM' && !e.repeat) minimap.setVisible(!minimap.isVisible());
 });

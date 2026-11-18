@@ -1,5 +1,6 @@
 import type { PlanPoint } from '../domain/coords.ts';
 import { AUDIO_RUNS, SPEAKERS } from './audio.ts';
+import { POWER_RUNS } from './audioPower.ts';
 import { PROJECT_CAMERAS } from './projectCameras.ts';
 import { MODEL_ACCESS_POINTS } from './modelAps.ts';
 
@@ -20,7 +21,8 @@ import { MODEL_ACCESS_POINTS } from './modelAps.ts';
  * Everything on the courts and stands side (back wall, risers, west and north walls) is EMT metal conduit: the public can reach the stands and the courts take balls. Wire-basket tray stays only in the annex, where nobody goes.
  */
 export type PathwayKind = 'tray' | 'conduit' | 'raceway' | 'emt' | 'rmc' | 'plastic';
-export type Service = 'data' | 'audio';
+/** `power`: the mains feed of the active speakers, in its own EMT. */
+export type Service = 'data' | 'audio' | 'power';
 
 export interface Pathway {
   readonly id: string;
@@ -65,7 +67,8 @@ const SLEEVE_2IN = { widthMm: 50, depthMm: 50 } as const;
 
 /** Courts trays: above the top stand row (3.77 m) and under the roof start (6.85 m). */
 const H_HIGH = 5.7;
-const H_ROOM = 2.4;
+/** Network room ceiling soffit is at 2.59 m: the EMT axis sits 0.03 m under it so the straps reach the slab. */
+const H_ROOM = 2.56;
 /** Just under the annex ceiling / the lintel over the aisle opening (soffit at 3.28 m). */
 const H_ANNEX = 3.1;
 /** The risers hug the lintel soffit (3.28 m) while they pass through the aisle opening: the tube axis sits 0.03 m under it. */
@@ -93,10 +96,8 @@ export const IDF = {
 } as const;
 const X_IDF = IDF.position.x;
 /** Plastic raceway goes flush on the wall (0.04 m off): annex north wall face Y 32.4, offices inside faces X 42.68 and Y 24.7. */
-/** Network room east wall, plastic raceway flush on its inner face (X 16.44). */
+/** Network room east wall, EMT 0.08 m off its inner face (X 16.44). */
 const X_ROOM_E = 16.36;
-/** The desk raceway crosses just under the ceiling tray (2.4 m) so the two never touch. */
-const H_ROOM_DESK = 2.3;
 const Y_ANNEX_FLUSH = 32.44;
 const X_OFFICES_FLUSH = 42.72;
 const Y_OFFICES_N_FLUSH = 24.74;
@@ -165,10 +166,10 @@ function audioPathways(line: 'L' | 'R', points: readonly PlanPoint[]): Pathway[]
 
 export const PATHWAYS: readonly Pathway[] = [
   // -- From the rack: network room → south wall sleeve → annex trunk.
-  { id: 'ANNEX_FEED', kind: 'tray', service: 'data', label: 'Rack to the south wall sleeve (PEN-3)', ...BASKET_WIDE, points: [p(14.44, 30.1, H_ROOM), p(12.9, 30.1, 2.5), p(12.9, 32.6, 2.5)] },
-  // Network room: one tray over the rack carries the CAM16 cable east along the ceiling and down the corner.
-  { id: 'ROOM_TRAY_E', kind: 'tray', service: 'data', label: 'Network room ceiling tray, over the rack to the east wall corner (CAM16)', ...BASKET, points: [p(14.44, 30.1, H_ROOM), p(X_ROOM_E, 30.1, H_ROOM), p(X_ROOM_E, 31.6, H_ROOM)] },
-  { id: 'ROOM_DESK', kind: 'plastic', service: 'data', label: 'Network room: desk link, from the wall jack up the east wall and under the ceiling to the top of the rack', ...PLASTIC, points: [p(X_ROOM_E, 30.95, 0.35), p(X_ROOM_E, 30.95, H_ROOM_DESK), p(14.365, 30.95, H_ROOM_DESK), p(14.365, 30.1, H_ROOM_DESK)] },
+  { id: 'ANNEX_FEED', kind: 'tray', service: 'data', label: 'Rack to the south wall sleeve (PEN-3)', ...BASKET_WIDE, points: [p(14.44, 30.1, H_ROOM), p(12.9, 30.1, 2.5), p(12.9, 32.6, 2.5), p(12.9, 32.6, H_ANNEX)] },
+  // Network room: one EMT over the rack carries the CAM16 cable and the desk link: east along the ceiling, then the east wall corner.
+  { id: 'ROOM_EMT_E', kind: 'emt', service: 'data', label: 'Network room ceiling EMT, over the rack to the east wall corner (CAM16 and the desk link)', ...EMT_THREE_QUARTER, points: [p(14.44, 30.1, H_ROOM), p(X_ROOM_E, 30.1, H_ROOM), p(X_ROOM_E, 31.6, H_ROOM)] },
+  { id: 'ROOM_DESK', kind: 'emt', service: 'data', label: 'Network room: desk link, from the wall jack up the east wall into the ceiling EMT', ...EMT_HALF, points: [p(X_ROOM_E, 30.95, 0.35), p(X_ROOM_E, 30.95, H_ROOM)] },
   { id: 'ANNEX_W', kind: 'plastic', service: 'data', label: 'Annex, west branch', ...PLASTIC, points: [p(12.9, Y_ANNEX_FLUSH, H_ANNEX), p(5.0, Y_ANNEX_FLUSH, H_ANNEX)] },
   { id: 'ANNEX_E1', kind: 'tray', service: 'data', label: 'Annex trunk, to the west pier of the aisle opening', ...BASKET, points: [p(12.9, 32.6, H_ANNEX), p(X_PIER_W, 32.6, H_ANNEX)] },
   { id: 'ANNEX_E2', kind: 'tray', service: 'data', label: 'Annex trunk, hung across the aisle opening under the lintel', ...BASKET, points: [p(X_PIER_W, 32.6, H_ANNEX), p(X_PIER_E, 32.6, H_ANNEX)] },
@@ -203,6 +204,8 @@ export const PATHWAYS: readonly Pathway[] = [
   { id: 'PEN9', kind: 'conduit', service: 'data', label: 'South wall sleeve at the south-west corner (PEN-9), to CAM18', ...SLEEVE_2IN, points: [p(1.0, Y_BACK, H_HIGH), p(1.0, 32.45, H_HIGH)] },
   // -- Audio (see src/data/audio.ts for the exact routes): EMT, ending at the speaker on each stand end wall.
   ...AUDIO_RUNS.flatMap((r): Pathway[] => audioPathways(r.line, r.points)),
+  // -- Speaker power (see src/data/audioPower.ts): one EMT per speaker, apart from the audio.
+  ...POWER_RUNS.map((r): Pathway => ({ id: r.id, kind: 'emt', service: 'power', label: r.label, ...EMT_HALF, points: r.points })),
 ];
 
 export interface Penetration {
@@ -289,7 +292,7 @@ const ROUTE_BY_ID: Readonly<Record<string, { hub: Hub; chain: readonly string[] 
   // Stage east end (watches the mixer): shares the CAM05 conduit.
   CAM15: { hub: 'rack', chain: [...FROM_RACK_STAGE, 'STAGE_A', 'STAGE_B'] },
   // Inside the network room: the cable leaves the rack by the room tray.
-  CAM16: { hub: 'rack', chain: ['ROOM_TRAY_E'] },
+  CAM16: { hub: 'rack', chain: ['ROOM_EMT_E'] },
   // Exterior cameras at the west corners: along the back wall conduit (and the west wall conduit for CAM17), then through a sleeve.
   CAM17: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'WEST', 'PEN8'] },
   CAM18: { hub: 'rack', chain: [...FROM_RACK_W, 'BACK_W', 'PEN9'] },
@@ -311,8 +314,8 @@ export const CABLE_DEVICES: readonly CableDevice[] = [
 
 /** Fiber backbone rack → IDF (OM3, 10GBASE-SR): same pathways as the copper to the north wall. */
 export const BACKBONE_FIBER_CHAIN: readonly string[] = ['ANNEX_FEED', 'ANNEX_E1', 'RISER_W', 'BACK_W', 'WEST', 'NORTH_A', 'IDF_UP'];
-/** Desk workstation link (wall jack → switch): not an AP or camera, so it is not in `CABLE_DEVICES`; its own plastic raceway to the rack. */
-export const DESK_LINK_CHAIN: readonly string[] = ['ROOM_DESK'];
+/** Desk workstation link (wall jack → switch): not an AP or camera, so it is not in `CABLE_DEVICES`; its own riser into the CAM16 ceiling EMT, then to the rack. */
+export const DESK_LINK_CHAIN: readonly string[] = ['ROOM_DESK', 'ROOM_EMT_E'];
 /** 10GBASE-SR over OM3 reaches 300 m (TIA-568.3). */
 export const OM3_MAX_M = 300;
 
@@ -435,8 +438,8 @@ function bendAt(points: readonly PlanPoint[], i: number): number {
 
 /** Speaker boxes at the end of an audio line: where the speaker's tail leaves the conduit. */
 const speakerMarks = (w: Pathway): { s: number; junction: Junction }[] =>
-  w.service === 'audio'
-    ? SPEAKERS.filter((k) => `AUDIO_${k.line}` === w.id).map((k) => {
+  w.service === 'audio' || w.service === 'power'
+    ? SPEAKERS.filter((k) => `${w.service === 'audio' ? 'AUDIO' : 'PWR'}_${k.line}` === w.id).map((k) => {
         const at = w.points[w.points.length - 1]!;
         return { s: attachPoint(w, at).along, junction: { pathway: w.id, kind: 'device', at, device: k.id } };
       })

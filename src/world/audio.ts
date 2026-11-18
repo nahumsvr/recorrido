@@ -20,6 +20,7 @@ import {
   type AudioLine,
   type Speaker,
 } from '../data/audio.ts';
+import { AUDIO_BOARD, SPEAKER_OUTLETS } from '../data/audioPower.ts';
 import { EMT_OD_MM, PATHWAYS, RMC_OD_MM } from '../data/cabling.ts';
 import { planToThree, type PlanPoint } from '../domain/coords.ts';
 import type { Obstacle } from '../player/obstacles.ts';
@@ -114,6 +115,43 @@ function buildSpeaker(spk: Speaker): Group {
 export interface AudioSystem {
   /** Speakers and the audio conduit, always installed. */
   readonly installed: Group;
+  /** Mains power for the speakers: board TA-1, one EMT per speaker on struts, and the outlet box beside each one. */
+  readonly power: Group;
+}
+
+const POWER_COLOR = 0xff7a1a;
+
+/** Board TA-1, the EMT of each speaker (strapped on the wall, straps are in the support layer) and a cord from each outlet box to its speaker. */
+function buildPower(): Group {
+  const power = new Group();
+  power.name = 'audioPower';
+  const tube = new MeshStandardMaterial({ color: POWER_COLOR, roughness: 0.45, metalness: 0.6 });
+  const cord = new MeshStandardMaterial({ color: 0x151515, roughness: 0.7 });
+
+  const b = AUDIO_BOARD;
+  const [bx, bh, bz] = planToThree(b.position);
+  const board = new Mesh(new BoxGeometry(b.size.w, b.size.h, b.size.d), new MeshStandardMaterial({ color: 0xb8bdc4, roughness: 0.5, metalness: 0.4 }));
+  board.position.set(bx, bh, bz);
+  board.userData = { info: { type: 'power', id: AUDIO_BOARD.id } };
+  power.add(board);
+
+  for (const w of PATHWAYS.filter((x) => x.service === 'power')) {
+    const info = { type: 'power', id: w.id };
+    const od = (EMT_OD_MM[w.trade ?? ''] ?? 17.9) / 1000;
+    const pts = w.points.map(vec);
+    pts.slice(1).forEach((q, i) => {
+      power.add(segment(pts[i]!, q, od / 2, tube), pickable(segment(pts[i]!, q, PICK_R, pickMaterial), info));
+    });
+  }
+
+  // Short cord from the outlet box at the end of each run to the rear of the cabinet.
+  for (const o of SPEAKER_OUTLETS) {
+    const spk = SPEAKERS.find((x) => x.id === o.speaker)!;
+    const side = Math.sign(spk.position.x - spk.wallX);
+    const rear = vec({ x: spk.position.x + side * 0.12, y: spk.position.y - SPK_W / 2, h: spk.position.h - 0.2 });
+    power.add(segment(vec(o.position), rear, CABLE_R * 0.8, cord));
+  }
+  return power;
 }
 
 /** The two speakers (one on the end wall of each stand) and the audio cable runs that feed them. */
@@ -143,7 +181,7 @@ export function createAudioSystem(): AudioSystem {
     const rear = new Vector3(x, h - 0.2, z).addScaledVector(back, SPK_D / 2);
     installed.add(segment(run, rear, CABLE_R, mat), pickable(segment(run, rear, PICK_R, pickMaterial), { type: 'audio', line: spk.line }));
   }
-  return { installed };
+  return { installed, power: buildPower() };
 }
 
 export interface FohStation {

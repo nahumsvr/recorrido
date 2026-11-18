@@ -259,7 +259,7 @@ describe('cabling: topology (restrooms and locker rooms under the stands)', () =
   it('each device is fed from the hub its list says, and the IDF serves 7 of them', () => {
     expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'idf')).toHaveLength(IDF.ports);
     expect(DEVICE_ROUTES.filter((r) => r.device.hub === 'rack')).toHaveLength(26 - IDF.ports);
-    for (const r of DEVICE_ROUTES) expect(r.chain[0], r.device.id).toBe(r.device.hub === 'idf' ? 'IDF_UP' : r.device.id === 'CAM16' ? 'ROOM_TRAY_E' : 'ANNEX_FEED');
+    for (const r of DEVICE_ROUTES) expect(r.chain[0], r.device.id).toBe(r.device.hub === 'idf' ? 'IDF_UP' : r.device.id === 'CAM16' ? 'ROOM_EMT_E' : 'ANNEX_FEED');
   });
 
   it('puts the IDF cabinet against the north wall, out of ball reach and below the north tray', async () => {
@@ -310,9 +310,9 @@ describe('cabling: hybrid containment (annex tray, EMT on the stands and courts,
   const CAT6_MM2 = Math.PI * 3.5 ** 2;
 
   it('keeps tray only in the annex and puts everything on the stands and courts side in EMT', () => {
-    expect(kindOf('tray')).toEqual(['ANNEX_E1', 'ANNEX_E2', 'ANNEX_FEED', 'ROOM_TRAY_E']);
-    expect(kindOf('emt')).toEqual(['BACK_E', 'BACK_W', 'BR_M18', 'IDF_UP', 'ID_W', 'NORTH_A', 'NORTH_B', 'NORTH_C', 'OFFICES_IN', 'RISER_E', 'RISER_W', 'STAGE_A', 'STAGE_B', 'STAGE_M', 'STAGE_R', 'WEST']);
-    expect(kindOf('plastic')).toEqual(['ANNEX_E3', 'ANNEX_W', 'OFF_IN', 'OFF_N', 'OFF_S', 'ROOM_DESK']);
+    expect(kindOf('tray')).toEqual(['ANNEX_E1', 'ANNEX_E2', 'ANNEX_FEED']);
+    expect(kindOf('emt')).toEqual(['BACK_E', 'BACK_W', 'BR_M18', 'IDF_UP', 'ID_W', 'NORTH_A', 'NORTH_B', 'NORTH_C', 'OFFICES_IN', 'RISER_E', 'RISER_W', 'ROOM_DESK', 'ROOM_EMT_E', 'STAGE_A', 'STAGE_B', 'STAGE_M', 'STAGE_R', 'WEST']);
+    expect(kindOf('plastic')).toEqual(['ANNEX_E3', 'ANNEX_W', 'OFF_IN', 'OFF_N', 'OFF_S']);
     for (const id of kindOf('plastic')) expect(cablesOn(id), id).toBeLessThanOrEqual(3);
   });
 
@@ -340,7 +340,8 @@ describe('cabling: hybrid containment (annex tray, EMT on the stands and courts,
       const total = pathLength(w.points);
       const marks = mine.map((j) => attachPointAlong(w, j.at)).sort((a, b) => a - b);
       const gaps = [marks[0]!, ...marks.slice(1).map((m, i) => m - marks[i]!), total - marks.at(-1)!];
-      for (const g of gaps) expect(g, w.id).toBeLessThanOrEqual(MAX_PULL_M + 1e-6);
+      // attachPointAlong measures in 0.05 m steps, so a box placed at exactly 30 m can read up to that much further.
+      for (const g of gaps) expect(g, w.id).toBeLessThanOrEqual(MAX_PULL_M + 0.05);
     }
   });
 

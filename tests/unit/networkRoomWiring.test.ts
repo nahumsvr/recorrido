@@ -12,7 +12,7 @@ const cable = (id: string) => {
 const powerTo = (to: string) => ROOM_CABLES.filter((c) => c.kind === 'power' && c.to === to);
 
 describe('network room wiring', () => {
-  it('keeps every cable and fixture inside the room (X 12.44-16.44, Y 28.64-32.2, under the 2.4 m tray)', () => {
+  it('keeps every cable and fixture inside the room (X 12.44-16.44, Y 28.64-32.2, under the 2.59 m ceiling)', () => {
     const pts = [...ROOM_CABLES.flatMap((c) => c.points), ...WALL_FIXTURES.map((f) => f.position)];
     for (const q of pts) {
       expect(q.x).toBeGreaterThan(12.44);
@@ -20,7 +20,7 @@ describe('network room wiring', () => {
       expect(q.y).toBeGreaterThanOrEqual(28.64);
       expect(q.y).toBeLessThan(32.2);
       expect(q.h).toBeGreaterThanOrEqual(0);
-      expect(q.h).toBeLessThanOrEqual(2.4);
+      expect(q.h).toBeLessThanOrEqual(2.59);
     }
   });
 
