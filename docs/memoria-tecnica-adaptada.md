@@ -12,7 +12,7 @@ Auditorio de la Facultad de Informática, UAQ · Dream Team Networks
 | Access points TP-Link EAP773 | 14 | **15** (M01–M18; faltan M05, M08, M11 y M19, excluidos) |
 | Cámaras VIGI C240I (domo) | 10 | **8** |
 | Cámaras VIGI C340I (bullet) | 4 | **3** |
-| Bocinas JBL EON715 | 4 (sin ubicación) | **4**, 2 por grada, ubicadas |
+| Bocinas JBL EON715 | 4 (sin ubicación) | **2**, 1 por grada, ubicadas (quedan 2 de reserva) |
 | Canalización | 500 m (estimación) | **390 m** (calculada sobre rutas) |
 | Cable UTP Cat6 | 9 cajas (2 745 m) | **4 cajas** (1 220 m; ≈ 979 m calculados) |
 | Puntos de red (salidas) | 28 | **27** (15 AP + 11 cámaras + 1 escritorio) |
@@ -84,11 +84,11 @@ Rack Tripp Lite SR42UB en (14.44, 30.1), bajo la grada oeste, con puerta hacia e
 
 ### 4.1 Criterio
 
-Dos bocinas por grada, cuatro en total: coincide con las 4 JBL EON715 ya presupuestadas, así que el audio no cambia el costo de hardware.
+Una bocina por grada, dos en total, de las 4 JBL EON715 ya presupuestadas (quedan 2 de reserva): el audio no cambia el costo de hardware.
 
 ### 4.2 Ubicación de bocinas
 
-Las bocinas van **al frente de cada grada**, apoyadas en la cara del primer contrahuella (Y 24.7), de cara al público sentado. Cada cabinete queda con su centro a 0.45 m del contrahuella y a h 0.5 m (ocupa h 0.1–0.9 m), sujeto con una horquilla a una placa en el contrahuella, y se inclina **42° hacia arriba**. Se colocan a ¼ y ¾ del ancho de cada grada.
+Las bocinas van **en el muro lateral de cada grada** (el muro oeste y el muro este), a **3.0 m de altura** (arriba de la cabeza del público de pie, fuera del paso y de los balonazos de piso), sobre un brazo a 0.45 m del muro y cerca del frente de la grada (Y 25.3, a más de 3 m del AP M12 del mismo muro). Cada una **apunta al centro de su grada** (X 9.0 / 34.0, Y 29.0, a la altura de la cabeza de un espectador sentado): ≈ 19° hacia el fondo y ≈ 8° hacia arriba, a lo largo de la grada.
 
 | ID | Grada | X | Y | h | Línea |
 |---|---|---:|---:|---:|---|
@@ -107,21 +107,21 @@ Las posiciones este son el espejo de las oeste respecto a X = 21.5.
 - Tablero de pared fijo a **(47.6, 24.5), h 2.23 m** (1.05 m sobre el piso del escenario), con 2 salidas XLR (L / R) y un contacto protegido. La consola solo se conecta con 2 cables XLR de parcheo al tablero: se desconecta y se guarda sin tocar la instalación. Los cables fijos (canaleta, bajadas y bocinas) se quedan instalados.
 - Salida principal **L → grada oeste**, **R → grada este**, con línea balanceada XLR; cada bocina lleva el *thru* a la segunda de su grada.
 - Cada línea va en su **propio tubo conduit de acero** de ¾", pegado al muro (eje a ≈ 2.5 cm de la cara) y sujeto con abrazaderas, igual que el tubo de datos. Ambas salen del tablero (L a la izquierda, R al centro) por el muro de oficinas a h 3.0 m (sobre el poste de X 46.5 y el vano) hasta la esquina de la grada este; en ese tramo L va 3.5 cm más afuera que R para poder subir cruzando sobre R sin tocarla. **Nada cruza en el piso la boca del pasillo central**, para que nadie pise ni se tropiece con el cable.
-- **Línea R (grada este):** baja por la cara oeste del muro lateral de la grada este, en la esquina, y sigue el tubo de piso al pie de la grada hasta E1 y E2 (≈ 21 m en total).
-- **Línea L (grada oeste):** sube por la cara norte del muro de oficinas (X 42.9, para no cruzar la canalización de datos del lado del escenario) hasta h 6.6 m, rodea la esquina, sigue el muro este y el muro trasero por arriba de las gradas y del vano del pasillo hasta el muro oeste, recorre ese muro hasta su esquina frontal y baja pegada a él; al pasar frente al tubo de datos del muro oeste (h 5.7 m) hace una curva de desvío de 10 cm (dos curvas de 30°) para no tocarlo. Sigue el tubo de piso al pie de la grada hasta W1 y W2 (≈ 87 m en total).
-- Total de XLR: ≈ 107 m más holgura. **Verificar el lote de cableado XLR** ($12,000 en la versión anterior, calculado para ≈ 77 m): no se modificó porque no hay precio unitario en el documento.
+- **Línea R (grada este):** sigue el muro lateral de la grada este desde la esquina, a h 3.0 m, hasta la bocina SPK-E1 (≈ 6 m en total).
+- **Línea L (grada oeste):** sube por la cara norte del muro de oficinas (X 42.9, para no cruzar la canalización de datos del lado del escenario) hasta h 6.6 m, rodea la esquina, sigue el muro este y el muro trasero por arriba de las gradas y del vano del pasillo hasta el muro oeste, recorre ese muro hasta su esquina frontal y baja pegada a él hasta h 3.0 m, donde termina en la bocina SPK-W1; al pasar frente al tubo de datos del muro oeste (h 5.7 m) hace una curva de desvío de 10 cm (dos curvas de 30°) para no tocarlo (≈ 71 m en total).
+- Total de XLR: ≈ 77 m más holgura, igual al lote ya calculado (≈ 77 m): sigue por verificar la cotización, porque el documento no trae precio unitario.
 - La L pasa a ≈ 3.8 m sobre la última fila (h 3.77): fuera del alcance de público.
-- **Tubo y protección del tramo de piso (≈ 14 m por lado):** el cable al pie de las gradas está expuesto a balonazos, pies, carritos y trapeadoras, así que todo lo que queda a menos de 2 m del piso va en **tubo rígido de acero (RMC) de ¾"**, de pared gruesa, pegado a la contrahuella con su eje a **16 cm del piso** (libre del agua del trapeado) y sujeto con abrazaderas; arriba de 2 m va en EMT de ¾". Se quitó la canaleta de 50 × 40 mm con ángulo de guarda: el tubo rígido ya es la protección. Va a ≈ 2 cm de la contrahuella. Es criterio de proyecto: no encontré el artículo de la NOM que lo exija, y falta confirmar con el cliente el tipo de uso del piso (carritos, limpiadora) y que la contrahuella admita los anclajes.
-- **Abrazaderas y cajas del audio:** solo las que pide la norma (NEC 358.30 y 344.30, fuente secundaria): una a ≤ 0.9 m de cada caja o extremo y una cada ≤ 3 m. Son **47 abrazaderas** (R 11, L 36) y **11 cajas de registro** (entrada en el tablero, una por bocina en el tubo de piso, y de paso cada ≤ 30 m o cada 360° de curvas).
+- **Nada va por el piso:** las dos líneas terminan a 3.0 m, arriba de la zona protegida de 2 m, así que todo el audio va en EMT de ¾" y ya no hay tubo rígido (RMC). Cada línea termina en una caja de registro junto a la bocina, de donde sale un tramo corto de cable hasta el panel de conectores del cabinete.
+- **Abrazaderas y cajas del audio:** solo las que pide la norma (NEC 358.30, fuente secundaria): una a ≤ 0.9 m de cada caja o extremo y una cada ≤ 3 m. Son **32 abrazaderas** (R 3, L 29) y **7 cajas de registro** (entrada en el tablero, una por bocina al final del tubo, y de paso cada ≤ 30 m o cada 360° de curvas).
 - **El audio no comparte canalización con los datos.** Sigue en sus propios tubos, a ≥ 0.3 m de la canalización de Cat6; solo se cruzan en ángulo recto: en el lado del escenario el tubo de datos pasa por delante del de audio con una curva de desvío (§5.2) y L pasa por delante del tubo de datos del muro oeste. Los Cat6 de los AP y las cámaras llevan PoE (circuito Clase 2) y el NEC 725.139(F) separa los circuitos de audio de los Clase 2/3; que esa regla aplique a XLR de línea hacia bocinas amplificadas no está confirmado, y las fuentes consultadas no tratan audio en bandeja con datos. Compartirla exigiría separador metálico y confirmar el texto vigente de la NOM-001-SEDE.
-- Alimentación: 4 tomas protegidas, una por bocina, en el pie de las gradas (canalización de potencia separada de la de audio) (circuito de audio, **no** del UPS del rack, igual que en la versión anterior).
+- Alimentación: 2 tomas protegidas, una por bocina, junto al muro de cada grada (canalización de potencia separada de la de audio) (circuito de audio, **no** del UPS del rack, igual que en la versión anterior).
 
 ### 4.4 Límites a tener claros
 
-- Las 4 bocinas refuerzan **solo las gradas**. Canchas y escenario no tienen refuerzo en este diseño. Si el evento tiene público de pie en canchas, hace falta decidirlo (el presupuesto tiene margen).
-- **Nivel desigual por filas:** la primera fila queda a ≈ 1.7 m de la bocina y la última a ≈ 8 m (≈ 13 dB de diferencia). Es el costo de poner las bocinas al frente; se compensa con el nivel de la consola y se debe validar en sitio.
-- **Huecos laterales en las primeras filas:** a 1.7 m la cobertura horizontal de cada bocina es de ± 1.7 m. Los asientos de las primeras filas, entre bocinas, quedan peor cubiertos que los de atrás.
-- **Exposición a golpes:** el frente de la grada es el borde de la cancha. Hay que proteger las bocinas (rejilla o guarda) o aceptar el riesgo de balonazos; el cable de piso ya va en tubo rígido (§4.3).
+- Las 2 bocinas refuerzan **solo las gradas**. Canchas y escenario no tienen refuerzo en este diseño. Si el evento tiene público de pie en canchas, hace falta decidirlo (el presupuesto tiene 2 bocinas de reserva).
+- **Asientos junto al muro de la bocina:** los asientos más cercanos a cada bocina, sobre su mismo muro, quedan a más de 45° fuera de su eje (patrón del EON715: 90° horizontal × 60° vertical) y se oirán más bajo; en cambio el nivel al otro extremo de la grada es más parejo que con bocinas al frente. Se compensa con el nivel de la consola y se debe validar en sitio.
+- **Cobertura calculada:** el extremo y el centro de la grada, en primera y última fila, quedan dentro de ±45° horizontal y ±30° vertical del eje (la prueba lo verifica).
+- **Exposición a golpes:** a 3.0 m del piso y sobre el muro lateral, las bocinas quedan fuera del alcance de los balones y del paso; confirmar en obra la capacidad del muro y de los anclajes del brazo contra el peso del cabinete.
 - El MG12XU no tiene retardo: sin DSP externo no se alinean tiempos con el escenario.
 
 ## 5. Cableado estructurado (capítulo 7 — nuevo)
@@ -167,12 +167,10 @@ Alturas: canalización de las canchas a **5.7 m** (sobre la última fila, 3.77 m
 | NORTH_B | EMT | 1" | Muro norte, hasta el muro de M18 | 16.4 | 3 |
 | BR_M18 | EMT | ½" | Ramal que baja por el muro norte y sigue pegado a la cara del muro de M18 (h 2.95 m, termina 0.35 m antes del AP) | 7.1 | 1 |
 | NORTH_C | EMT | ½" | Muro norte, esquina del escenario (CAM04) | 8.2 | 1 |
-| AUDIO_R | EMT | ¾" | Tablero → cara oeste del muro lateral de la grada este, hasta 2 m del piso (§4.3) | 7.0 | — |
-| AUDIO_R_LOW | RMC | ¾" | Bajada a menos de 2 m del piso y tramo al pie de la grada este (E1, E2) | 14.4 | — |
-| AUDIO_L | EMT | ¾" | Tablero → muro oficinas, muro lateral y trasero a 6.6 m → muro oeste, hasta 2 m del piso | 71.8 | — |
-| AUDIO_L_LOW | RMC | ¾" | Bajada a menos de 2 m del piso y tramo al pie de la grada oeste (W1, W2) | 14.9 | — |
+| AUDIO_R | EMT | ¾" | Tablero → muro lateral de la grada este, hasta la bocina SPK-E1 (h 3.0 m) | 6.3 | — |
+| AUDIO_L | EMT | ¾" | Tablero → muro oficinas, muro lateral y trasero a 6.6 m → muro oeste, hasta la bocina SPK-W1 (h 3.0 m) | 71.1 | — |
 
-Totales: **210 m de canalización de datos (17.0 m de malla, 163.1 m de EMT, 29 m de canaleta plástica y 1.0 m de manga), ≈ 31 m de bajadas EMT y ≈ 108 m de tubo de audio (79 m de EMT ¾" y 29 m de RMC ¾")** (≈ 350 m); con 10% de reserva, **390 m**. (En la versión anterior el audio se sumaba como 102 m; los cuatro tubos de la tabla suman 108.1 m.)
+Totales: **213 m de canalización de datos (17.0 m de malla, 163.1 m de EMT, 32 m de canaleta plástica y 1.0 m de manga), ≈ 31 m de bajadas EMT y ≈ 77 m de tubo de audio (EMT ¾")** (≈ 321 m); con 10% de reserva, **353 m**. (En la versión anterior el audio se sumaba como 102 m; los dos tubos de la tabla suman 77.4 m.)
 
 **Qué va en cada tipo y por qué.** Las gradas están al alcance del público y las canchas se usan para voleibol y tenis, así que todo el recorrido a la vista (muro trasero, subidas, muros oeste y norte, IDF y escenario) va en **tubo EMT**: cerrado, metálico y atornillado, no se abre ni se desconecta a mano como una malla. La malla se queda solo en el anexo (ANNEX_FEED 17 cables, ANNEX_E1 15, ANNEX_E2 9), donde no entra el público. Tamaños con 40 % de relleno y 25 % de crecimiento, contando la fibra donde pasa: ½" para 1 cable, ¾" para 2, 1" para WEST (3 Cat6 + fibra) y NORTH_B (3 cables), **1¼" para RISER_W, BACK_W, NORTH_A, RISER_E y BACK_E** (4 a 6 cables) y **1½" para IDF_UP** (7 cables + fibra).
 
@@ -233,7 +231,7 @@ Charola = distancia por las trayectorias desde su origen hasta la bajada; enlace
 | CAM11 | Bullet | Rack | ANNEX_W | 11.9 | 0.6 | 12.6 | 18.8 |
 | CAM12 | Bullet | Rack | ANNEX_E3 | 28.5 | 0.6 | 29.1 | 37.0 |
 | CAM15 | Domo | Rack | STAGE_B | 55.8 | 1.7 | 57.5 | 68.2 |
-| CAM16 | Domo | Rack | ANNEX_FEED | 0.0 | 3.8 | 3.8 | 9.2 |
+| CAM16 | Domo | Rack | ROOM_TRAY_E | 3.4 | 0.4 | 3.8 | 9.2 |
 | CAM17 | Domo | Rack | PEN8 | 59.7 | 0.5 | 60.3 | 71.3 |
 | CAM18 | Domo | Rack | PEN9 | 27.6 | 0.5 | 28.1 | 35.9 |
 
@@ -241,7 +239,7 @@ Se suma 1 salida para el escritorio de operación (≈ 8 m). **Corte total ≈ 9
 
 ### 5.6 Pegado a paredes
 
-El EMT queda a **≈ 3 cm del muro** (eje del tubo; las subidas bajo el dintel, a 3 cm del techo). Cada bandeja, manga y bajada queda a **≤ 0.35 m de un muro, techo o poste** en todo su largo (la prueba mide la distancia al modelo cada 10 cm). El cruce del vano va pegado al dintel (h 3.1 m; el dintel está a 3.28 m) y las subidas van pegadas a las pilas del vano. El ramal a M18 baja por el muro norte y sigue pegado a la cara del muro de M18 (h 2.95 m, 3 cm bajo el remate), sin cruzar el aire. El lado del escenario no tiene tramos sin pegar: el tronco va pegado a la cara norte del muro de oficinas (salvo las dos curvas de desvío frente al audio, a ≈ 13 cm del muro) y el ramal a M17 sigue la cara del muro que lo carga, así que la bajada a M17 mide 0.5 m (antes ≈ 5 m, con un tramo libre hasta un poste). La excepción documentada del poste suelto desaparece. **Única excepción actual:** la bajada a CAM16, dentro del cuarto de redes (con llave, nadie pasa debajo): el cable cruza ≈ 1.9 m de aire desde la parte alta del rack hasta la cámara, sujeto con abrazaderas de cable a una escalerilla que se coloca en obra.
+El EMT queda a **≈ 3 cm del muro** (eje del tubo; las subidas bajo el dintel, a 3 cm del techo). Cada bandeja, manga y bajada queda a **≤ 0.35 m de un muro, techo o poste** en todo su largo (la prueba mide la distancia al modelo cada 10 cm). El cruce del vano va pegado al dintel (h 3.1 m; el dintel está a 3.28 m) y las subidas van pegadas a las pilas del vano. El ramal a M18 baja por el muro norte y sigue pegado a la cara del muro de M18 (h 2.95 m, 3 cm bajo el remate), sin cruzar el aire. El lado del escenario no tiene tramos sin pegar: el tronco va pegado a la cara norte del muro de oficinas (salvo las dos curvas de desvío frente al audio, a ≈ 13 cm del muro) y el ramal a M17 sigue la cara del muro que lo carga, así que la bajada a M17 mide 0.5 m (antes ≈ 5 m, con un tramo libre hasta un poste). La excepción documentada del poste suelto desaparece. **Sin excepciones:** la bajada a CAM16, dentro del cuarto de redes, ya no cruza el aire: una charola de malla (`ROOM_TRAY_E`) sale de la parte alta del rack, sigue el techo hacia el muro este y llega a la esquina de la cámara; el enlace del escritorio va aparte, en una canaleta de plástico (`ROOM_DESK`) que sube por el muro este, cruza bajo la charola y llega a la parte alta del rack.
 
 ### 5.7 Cumplimiento
 
@@ -324,9 +322,9 @@ Presupuesto máximo $1,600,000.00 → se usa **79.66%**; margen **$325,433.52** 
 1. **Perforaciones:** PEN-3, PEN-7, PEN-8 y PEN-9 (§5.3) salen de las trayectorias que el modelo muestra libres; confirmar en obra que el muro sea el esperado y no haya instalaciones dentro. PEN-8 y PEN-9 dan a la intemperie: sellar contra el agua y usar cable Cat6 de exterior (cubierta UV) o tubo hasta la cámara en los ≈ 0.5 m de afuera. **Obra civil no presupuestada:** 6 mangas y el sellado cortafuego no tienen partida en la lista de precios del documento; falta cotizarlos.
 1b. **IDF-N (§5.4):** faltan por presupuestar el gabinete de pared de 6U, el circuito dedicado y un UPS pequeño; el switch PoE++ de 24 puertos sale del rack. Verificar el presupuesto PoE del SG3428XMPP contra los ≈ 145 W de sus 7 dispositivos (estimado), y que el muro norte permita el montaje (no hay datos de su material).
 1d. **Canalización híbrida (§5.2):** falta cotizar el tubo EMT (½", ¾", 1", 1¼" y 1½", 163.1 m), sus abrazaderas y soportes, el subducto para la fibra, las 42 cajas de registro, 17.0 m de malla y 29 m de canaleta plástica; el presupuesto sigue con la partida mezclada "PVC/charola". Las reglas de registros, de relleno por número de cables y del art. 388 salen de fuentes secundarias (no del texto de la TIA-569 ni de la NOM): confirmarlas, y la clasificación de fuego del cable (plenum o LSZH) dentro de canaleta plástica.
-1c. **Audio (§4.3):** falta cotizar ≈ 79 m de EMT ¾" y ≈ 29 m de tubo rígido (RMC) ¾", sus 47 abrazaderas, 11 cajas de registro y los codos y conectores (sin partida en la lista de precios del documento). Ya no hay canaleta de acero de 50 × 40 mm ni ángulo de guarda.
-2. Posición del puesto FOH (mesa sobre el escenario en 47.6, 24.2; mesa y tablero a 0.4 m de la cabecera de la escalera sur) y cable de audio L por la parte alta del muro trasero (≈ 86 m de XLR) y lote de XLR por verificar.
-3. Cobertura de canchas y escenario sin refuerzo de audio: decisión del cliente. Protección de las bocinas contra balonazos.
+1c. **Audio (§4.3):** falta cotizar ≈ 77 m de EMT ¾", sus 32 abrazaderas, 7 cajas de registro y los codos y conectores (sin partida en la lista de precios del documento). Ya no hay canaleta de acero de 50 × 40 mm ni ángulo de guarda.
+2. Posición del puesto FOH (mesa sobre el escenario en 47.6, 24.2; mesa y tablero a 0.4 m de la cabecera de la escalera sur) y cable de audio L por la parte alta del muro trasero (≈ 71 m de XLR) y lote de XLR por verificar.
+3. Cobertura de canchas y escenario sin refuerzo de audio: decisión del cliente. Capacidad del muro y de los anclajes de las bocinas.
 4. Mano de obra: sin ajustar por menos cámaras y nuevas rutas.
 5. Cámaras: con 7 el diseño se aleja del plano original; confirmar si se reponen (el margen del presupuesto lo permite).
 6. NVR y discos sobredimensionados.
