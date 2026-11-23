@@ -24,7 +24,8 @@ const gap = (a: readonly PlanPoint[], b: readonly PlanPoint[]): number => {
 };
 
 describe('speaker power', () => {
-  const power = PATHWAYS.filter((w) => w.service === 'power');
+  // The IDF-N feed (PWR_IDF) is also a power pathway; it has its own tests in idfPower.test.ts.
+  const power = PATHWAYS.filter((w) => w.service === 'power' && POWER_RUNS.some((r) => r.id === w.id));
 
   it('gives each active speaker its own EMT from the audio board, ending in a box beside it', () => {
     expect(power.map((w) => w.id).sort()).toEqual(['PWR_L', 'PWR_R']);

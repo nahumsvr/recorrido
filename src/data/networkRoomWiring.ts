@@ -2,6 +2,7 @@ import type { PlanPoint } from '../domain/coords.ts';
 import { pathway } from './cabling.ts';
 import { RACK_DEVICES, RACK_PLACEMENT, rackDeviceCenterH } from './networkRack.ts';
 import { DESK_PLACEMENT } from './networkDesk.ts';
+import { ISP_ODF } from './undergroundLink.ts';
 
 /**
  * Wiring inside the network room (X 12.44-16.44, Y 28.64-32.2): power outlets, the power
@@ -95,11 +96,11 @@ export const ROOM_CABLES: readonly RoomCable[] = [
   { id: 'LAN_ER8411_SW48', kind: 'data', label: 'VPN router to the switch (uplink)', from: 'ER8411', to: 'SW48', points: rearRun(DATA_X(0), device('ER8411'), device('SW48')) },
   { id: 'LAN_OC300_SW48', kind: 'data', label: 'SDN controller to the switch', from: 'OC300', to: 'SW48', points: rearRun(DATA_X(1), device('OC300'), device('SW48')) },
   { id: 'LAN_NVR_SW48', kind: 'data', label: 'NVR to the switch (camera recording)', from: 'NVR', to: 'SW48', points: rearRun(DATA_X(2), device('NVR'), device('SW48')) },
-  { id: 'LAN_SW48_PP24', kind: 'data', label: 'Patch cords, switch to patch panel 24p', from: 'SW48', to: 'PP24', points: frontLoop(RACK.x - 0.12, device('SW48'), device('PP24')) },
   { id: 'LAN_SW48_PP48', kind: 'data', label: 'Patch cords, switch to patch panel 48p', from: 'SW48', to: 'PP48', points: frontLoop(RACK.x + 0.12, device('SW48'), device('PP48')) },
-  // -- The permanent links leave the patch panels by the rear, up to the room tray over the rack.
-  { id: 'LAN_PP24_TRAY', kind: 'data', label: 'Patch panel 24p to the room tray (ANNEX_FEED)', from: 'PP24', to: 'ANNEX_FEED', points: [p(DATA_X(3), Y_EQUIP_REAR, device('PP24')), p(DATA_X(3), Y_REAR_RUN, device('PP24')), p(DATA_X(3), Y_REAR_RUN, TRAY_START.h), p(TRAY_START.x, TRAY_START.y, TRAY_START.h)] },
+  // -- The permanent links leave the patch panel by the rear, up to the room tray over the rack.
   { id: 'LAN_PP48_TRAY', kind: 'data', label: 'Patch panel 48p to the room tray (ANNEX_FEED)', from: 'PP48', to: 'ANNEX_FEED', points: [p(DATA_X(4), Y_EQUIP_REAR, device('PP48')), p(DATA_X(4), Y_REAR_RUN, device('PP48')), p(DATA_X(4), Y_REAR_RUN, TRAY_START.h), p(TRAY_START.x, TRAY_START.y, TRAY_START.h)] },
+  // -- Provider fiber: from the ODF on the south wall up over the rack front and down to the router (WAN, SFP+).
+  { id: 'LAN_ODF_ER8411', kind: 'data', label: 'Provider fiber: ODF to the VPN router (WAN, patch cord)', from: ISP_ODF.id, to: 'ER8411', points: [p(ISP_ODF.position.x, ISP_ODF.position.y - 0.05, ISP_ODF.position.h), p(ISP_ODF.position.x, 31.8, 2.3), p(RACK.x - 0.14, Y_FRONT + 0.06, 2.3), p(RACK.x - 0.14, Y_FRONT + 0.06, device('ER8411'))] },
   // -- Workstation: PC and monitor.
   { id: 'PWR_OUT_D1_PC', kind: 'power', label: 'Duplex outlet to the PC', from: 'OUT-D1', to: 'PC', points: [OUT_D1, p(X_EAST_FACE - 0.04, 30.55, 0.15), p(PC_REAR_X, PC_TOWER.y, 0.15)] },
   { id: 'PWR_OUT_D1_MON', kind: 'power', label: 'Duplex outlet to the monitor', from: 'OUT-D1', to: 'MONITOR', points: [OUT_D1, p(X_EAST_FACE - 0.02, OUT_D1.y, DESK_TOP + 0.03), p(GROMMET.x + 0.1, GROMMET.y - 0.1, DESK_TOP + 0.01), MONITOR_STAND] },

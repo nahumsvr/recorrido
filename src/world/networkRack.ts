@@ -150,6 +150,7 @@ export function createNetworkRack(): Group {
     );
     body.position.set(0, y, frontZ - EQUIP_D / 2);
     body.name = `${device.id}:${device.model}`;
+    body.userData = { info: { type: 'netdevice', id: device.id } };
     root.add(body);
 
     const face = new Mesh(
@@ -158,6 +159,7 @@ export function createNetworkRack(): Group {
     );
     face.position.set(0, y, frontZ);
     face.name = `${device.id}:face`;
+    face.userData = { info: { type: 'netdevice', id: device.id } };
     root.add(face);
   }
 

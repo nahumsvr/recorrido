@@ -251,8 +251,8 @@ describe('cabling: topology (restrooms and locker rooms under the stands)', () =
     expect(below.slice(0, 5)).toEqual([]);
   });
 
-  it('no wall or slab hole opens into the stand voids: only the room south wall, the offices west wall and the two exterior camera sleeves in the outer wall at 5.7 m', () => {
-    expect(PENETRATIONS.map((x) => x.id).sort()).toEqual(['PEN-3', 'PEN-7', 'PEN-8', 'PEN-9']);
+  it('no wall or slab hole opens into the stand voids: only the room south wall (the data sleeve and the provider fiber), the offices west wall and the two exterior camera sleeves in the outer wall at 5.7 m', () => {
+    expect(PENETRATIONS.map((x) => x.id).sort()).toEqual(['PEN-10', 'PEN-3', 'PEN-7', 'PEN-8', 'PEN-9']);
     expect(PENETRATIONS.every((x) => x.kind === 'wall')).toBe(true);
   });
 

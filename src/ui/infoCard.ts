@@ -49,25 +49,27 @@ export function createInfoCard(): InfoCardView {
       for (const [k, v] of card.specs) dl.append(el('dt', undefined, k), el('dd', undefined, v));
       root.append(dl);
 
-      const tally = { pass: 0, fail: 0, check: 0 };
-      for (const c of card.checks) tally[c.verdict]++;
-      const summary = el('p', 'info-card__summary');
-      summary.append(
-        el('span', 'info-card__pill info-card__pill--pass', `${tally.pass} cumplen`),
-        el('span', 'info-card__pill info-card__pill--fail', `${tally.fail} no cumplen`),
-        el('span', 'info-card__pill info-card__pill--check', `${tally.check} por verificar`),
-      );
-      root.append(el('h3', undefined, 'Normativas'), summary);
+      if (card.checks.length > 0) {
+        const tally = { pass: 0, fail: 0, check: 0 };
+        for (const c of card.checks) tally[c.verdict]++;
+        const summary = el('p', 'info-card__summary');
+        summary.append(
+          el('span', 'info-card__pill info-card__pill--pass', `${tally.pass} cumplen`),
+          el('span', 'info-card__pill info-card__pill--fail', `${tally.fail} no cumplen`),
+          el('span', 'info-card__pill info-card__pill--check', `${tally.check} por verificar`),
+        );
+        root.append(el('h3', undefined, 'Normativas'), summary);
 
-      const list = el('ul', 'info-card__checks');
-      for (const c of card.checks) {
-        const li = el('li', `info-card__check info-card__check--${c.verdict}`);
-        const head = el('div', 'info-card__check-head');
-        head.append(el('span', 'info-card__standard', c.standard), el('span', 'info-card__verdict', VERDICT_LABEL[c.verdict]));
-        li.append(head, el('div', 'info-card__detail', c.detail));
-        list.append(li);
+        const list = el('ul', 'info-card__checks');
+        for (const c of card.checks) {
+          const li = el('li', `info-card__check info-card__check--${c.verdict}`);
+          const head = el('div', 'info-card__check-head');
+          head.append(el('span', 'info-card__standard', c.standard), el('span', 'info-card__verdict', VERDICT_LABEL[c.verdict]));
+          li.append(head, el('div', 'info-card__detail', c.detail));
+          list.append(li);
+        }
+        root.append(list);
       }
-      root.append(list);
     },
     onClose(cb) {
       closeCb = cb;

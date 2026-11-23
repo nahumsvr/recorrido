@@ -59,7 +59,7 @@ describe('network room wiring', () => {
 
   it('leaves the rack toward the existing room tray at its first point', () => {
     const start = pathway('ANNEX_FEED').points[0]!;
-    for (const id of ['LAN_PP24_TRAY', 'LAN_PP48_TRAY']) {
+    for (const id of ['LAN_PP48_TRAY']) {
       const end = cable(id).points.at(-1)!;
       expect(end).toEqual(start);
     }

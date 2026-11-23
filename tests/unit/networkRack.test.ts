@@ -25,8 +25,9 @@ describe('network rack data', () => {
     // Two switches in the budget: the 48-port one in the rack, the 24-port one in the north IDF.
     expect(count('switch') + (IDF.switchModel === 'TP-Link SG3428XMPP' ? 1 : 0)).toBe(2);
     expect(RACK_DEVICES.find((d) => d.kind === 'switch')?.model).toBe('TP-Link SG3452XMPP');
-    expect(count('patch')).toBe(2);
-    expect(count('organizer')).toBe(4);
+    // The 24-port patch panel (PP-B) and the fourth organizer (ORG-4) sit in the north IDF.
+    expect(count('patch')).toBe(1);
+    expect(count('organizer')).toBe(3);
     expect(count('pdu')).toBe(2);
     expect(count('router') + count('controller') + count('nvr') + count('ups')).toBe(4);
   });

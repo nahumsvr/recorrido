@@ -3,6 +3,7 @@ import {
   DEVICE_ROUTES,
   FREE_SPANS,
   IDF,
+  IDF_BOARD,
   MAX_DROP_M,
   OM3_MAX_M,
   PATHWAYS,
@@ -15,7 +16,10 @@ import {
   type PathwayKind,
 } from './cabling.ts';
 import { AUDIO_BOARD } from './audioPower.ts';
+import { ISP_DEPTH_M, ISP_DUCT, ISP_ODF, ISP_SOURCE_Y, ispDuctLengthM } from './undergroundLink.ts';
 import { PROJECT_CAMERAS } from './projectCameras.ts';
+import { RACK_DEVICES } from './networkRack.ts';
+import { INFRASTRUCTURE, networkOf, networkRows } from './network.ts';
 import { MODEL_ACCESS_POINTS } from './modelAps.ts';
 import { MIN_SOLID_M, EMT_SPACING_M, spacingFor, type SupportStats } from '../domain/supports.ts';
 
@@ -30,7 +34,10 @@ export type InfoTarget =
   | { readonly type: 'idf' }
   | { readonly type: 'speaker'; readonly id: string }
   | { readonly type: 'audio'; readonly line: 'L' | 'R' }
-  | { readonly type: 'power'; readonly id: string };
+  | { readonly type: 'power'; readonly id: string }
+  | { readonly type: 'isp'; readonly id: string }
+  | { readonly type: 'netdevice'; readonly id: string }
+  | { readonly type: 'camera'; readonly id: string };
 
 /** `pass`: cumple. `fail`: no cumple (todavía). `check`: especificado, falta verificar en obra. */
 export type Verdict = 'pass' | 'fail' | 'check';
@@ -173,6 +180,35 @@ function pathwayCard(id: string, supports?: SupportIndex): InfoCard | null {
   return { kind: 'Trayectoria', title: w.id, subtitle: w.label, specs, checks };
 }
 
+/** Hostname, VLAN, address and ports of a device, empty when the network table does not know it. */
+function networkRowsFor(id: string): [string, string][] {
+  const entry = networkOf(id);
+  return entry ? networkRows(entry) : [];
+}
+
+function netDeviceCard(id: string): InfoCard | null {
+  const entry = INFRASTRUCTURE[id];
+  const rack = RACK_DEVICES.find((d) => d.id === id);
+  if (!entry) return null;
+  const specs: [string, string][] = [...networkRows(entry)];
+  if (rack) specs.splice(1, 0, ['Equipo', rack.model], ['Ubicación', `RACK-01, U${rack.u}${rack.units > 1 ? `–U${rack.u + rack.units - 1}` : ''}`]);
+  return { kind: 'Equipo de red', title: entry.hostname, subtitle: rack ? rack.label : 'Gabinete IDF-N', specs, checks: [] };
+}
+
+function cameraCard(id: string): InfoCard | null {
+  const cam = PROJECT_CAMERAS.find((c) => c.id === id);
+  if (!cam) return null;
+  const entry = networkOf(id);
+  const specs: [string, string][] = [
+    ['Modelo', cam.model],
+    ['Zona', cam.zone],
+    ['Posición', `X ${cam.position.x.toFixed(1)} · Y ${cam.position.y.toFixed(1)} m, h ${ceil1(cam.position.h)} m`],
+    ['Lente', `${cam.lens.mm} mm`],
+    ...(entry ? networkRows(entry) : []),
+  ];
+  return { kind: 'Cámara IP', title: cam.id, subtitle: cam.kind === 'dome' ? 'Domo 4 MP' : 'Bullet 4 MP', specs, checks: [] };
+}
+
 function dropCard(deviceId: string, blocked: boolean): InfoCard | null {
   const r = DEVICE_ROUTES.find((x) => x.device.id === deviceId);
   if (!r) return null;
@@ -209,6 +245,7 @@ function dropCard(deviceId: string, blocked: boolean): InfoCard | null {
     ['Bajada', `${ceil1(r.dropM)} m`],
     ['Enlace permanente', `${ceil1(r.linkM)} m`],
     ['Largo de corte', `${ceil1(r.cutM)} m (10 % de holgura + 5 m de reservas)`],
+    ...networkRowsFor(deviceId),
   ];
   return { kind: 'Bajada de cable', title: `Bajada a ${r.device.id}`, subtitle: `UTP Cat6 hacia ${r.device.kind === 'AP' ? 'el access point' : 'la cámara'}`, specs, checks };
 }
@@ -247,13 +284,78 @@ function idfCard(): InfoCard {
       ['Switch', `${IDF.switchModel} (24 puertos PoE++, ${IDF.ports} en uso)`],
       ['Backbone', `Fibra OM3 desde el rack, ≈ ${Math.round(fiberM)} m`],
       ['Atiende', 'M01–M04, M18, CAM02, CAM04'],
+      ...IDF.units.map((q) => [`U${q.u}`, `${q.id} · ${q.label}`] as [string, string]),
       ['Altura', `${ceil1(IDF.position.h)} m (fuera del alcance de los balones)`],
+      ['Alimentación', `${IDF_BOARD.id} → EMT ½" (PWR_IDF) → UPS-IDFN, circuito dedicado de 127 V`],
+      ...networkRowsFor('SW-IDFN'),
     ],
     checks: [
       check('ANSI/TIA-568.3 (fibra)', fiberM <= OM3_MAX_M ? 'pass' : 'fail', `10GBASE-SR sobre OM3 llega a ${OM3_MAX_M} m; este enlace mide ≈ ${Math.round(fiberM)} m.`),
-      check('Alimentación', 'fail', 'Aún sin cubrir: el circuito dedicado de 127 V y un UPS pequeño no están presupuestados.'),
+      check('Alimentación', 'fail', 'Modelada (TA-N → IDF-N), pero aún sin cubrir: el circuito dedicado de 127 V y un UPS pequeño no están presupuestados.'),
       check('IEEE 802.3at (presupuesto PoE)', 'check', '≈ 145 W para sus 7 dispositivos (estimado): verificar contra el presupuesto PoE del switch.'),
       check('ANSI/TIA-607 (puesta a tierra)', 'check', 'Conductor de tierra desde la barra del rack, por el mismo tubo EMT que la fibra y el cobre: especificado, no modelado.'),
+      LABELING,
+    ],
+  };
+}
+
+function ispCard(id: string, supports?: SupportIndex): InfoCard | null {
+  const lengthM = ispDuctLengthM(ISP_SOURCE_Y);
+  if (id === ISP_DUCT.id) {
+    return {
+      kind: 'Acometida subterránea',
+      title: ISP_DUCT.id,
+      subtitle: 'Caja blanca (edificio vecino) → cuarto de red',
+      specs: [
+        ['Cable', 'Fibra óptica monomodo OS2, 12 hilos, dieléctrica (sin armadura metálica)'],
+        ['Ducto', `PEAD de ${ISP_DUCT.trade} (${ISP_DUCT.outerMm} mm exterior), enterrado a ${ISP_DEPTH_M.toFixed(1)} m`],
+        ['Largo', `${ceil1(lengthM)} m, en línea recta bajo el pasto y el anexo`],
+        ['Origen', 'Caja blanca: punto de entrega del proveedor de internet'],
+        ['Destino', `${ISP_ODF.id} en el cuarto de red y luego el puerto WAN del router ER8411`],
+      ],
+      checks: [
+        check('Fibra dieléctrica entre edificios', 'pass', 'El cable no lleva metal: no trae potenciales de tierra ni descargas de un edificio al otro.'),
+        check('10GBASE-LR (OS2)', 'pass', `Llega a 10 km sobre fibra monomodo; este enlace mide ≈ ${Math.round(lengthM)} m.`),
+        check('ANSI/TIA-758 (planta externa del cliente)', 'check', 'Confirmar en obra la profundidad, la cinta de advertencia sobre el ducto, los radios de curvatura y el registro del cambio de dirección.'),
+        check('Entrega del proveedor', 'check', 'Confirmar con el proveedor el punto de entrega en la caja blanca, el tipo de transceptor (monomodo) y quién tiende el cable.'),
+        LABELING,
+      ],
+    };
+  }
+  if (id === ISP_ODF.id) {
+    return {
+      kind: 'Caja de fibra (ODF)',
+      title: ISP_ODF.id,
+      subtitle: 'Cuarto de red, cara interior del muro sur',
+      specs: [
+        ['Recibe', 'La fibra OS2 del proveedor, por el hoyo PEN-10'],
+        ['Salida', 'Cable de parcheo de fibra monomodo (LC) al puerto WAN del router ER8411'],
+        ['Altura', `${ceil1(ISP_ODF.position.h)} m`],
+      ],
+      checks: [
+        check('Puerto WAN del router', 'check', 'Confirmar con el proveedor y la ficha del ER8411 el tipo de puerto y el transceptor (SFP+ monomodo).'),
+        LABELING,
+      ],
+    };
+  }
+  const run = PATHWAYS.find((w) => w.service === 'isp' && w.id === id);
+  if (!run) return null;
+  const total = supports?.get(run.id);
+  const held = supportCheck(total, EMT_SPACING_M, 'rmc');
+  return {
+    kind: 'Subida de acometida',
+    title: run.id,
+    subtitle: 'Ducto enterrado → hoyo PEN-10 del cuarto de red',
+    specs: [
+      ['Tubo', `RMC ${run.trade} (acero rígido), pegado a la cara del muro por el lado del anexo`],
+      ['Largo', `${ceil1(pathLength(run.points))} m`],
+      ['Altura', hRange(run.points)],
+      ...(total ? [['Abrazaderas', `${total.total} (una a ≤ 0.9 m de cada caja y cada ≤ ${EMT_SPACING_M} m)`] as [string, string]] : []),
+      ['Cajas de registro', `${junctionsOf(run.id).length}`],
+    ],
+    checks: [
+      check('Protección mecánica', 'pass', 'Sube en tubo de acero rígido dentro de la zona de 2 m, la misma regla que el audio.'),
+      ...(held ? [held] : []),
       LABELING,
     ],
   };
@@ -274,6 +376,7 @@ function speakerCard(id: string): InfoCard | null {
       ['Modelo', `${spk.model} (amplificada, 15" de dos vías)`],
       ['Consola', `${MIXER_MODEL} (portátil)`],
       ['Señal', `XLR balanceada, línea ${spk.line}`],
+      ['Red', 'Sin red: no tiene hostname, VLAN ni dirección IP (solo inventario)'],
       ['Posición', `X ${spk.position.x.toFixed(1)} · Y ${spk.position.y.toFixed(1)} m, h ${ceil1(spk.position.h)} m`],
       ['Apunta a', `X ${spk.aim.x.toFixed(1)} · Y ${spk.aim.y.toFixed(1)} m (centro de la grada): ${Math.round(Math.abs(axis.pitchDeg))}° ${axis.pitchDeg >= 0 ? 'hacia arriba' : 'hacia abajo'}, ${Math.round(Math.abs(axis.yawDeg))}° hacia el fondo de la grada`],
       ['Montaje', `En el muro lateral de la grada ${spk.stand === 'west' ? 'oeste' : 'este'}, sobre un brazo a ${Math.round(Math.abs(spk.position.x - spk.wallX) * 100)} cm del muro, a h ${ceil1(spk.position.h)} m (fuera del paso)`],
@@ -339,13 +442,52 @@ function powerCard(id: string, supports?: SupportIndex): InfoCard | null {
       ],
     };
   }
+  if (id === IDF_BOARD.id) {
+    return {
+      kind: 'Tablero',
+      title: IDF_BOARD.id,
+      subtitle: 'Circuito dedicado del IDF-N, muro norte',
+      specs: [
+        ['Alimenta', 'IDF-N (UPS-IDFN, luego el switch SW-IDFN)'],
+        ['Posición', `X ${IDF_BOARD.position.x.toFixed(1)} · Y ${IDF_BOARD.position.y.toFixed(1)} m, h ${ceil1(IDF_BOARD.position.h)} m`],
+      ],
+      checks: [
+        check('Origen del circuito', 'check', 'El tablero que alimenta TA-N está fuera del modelo: confirmar en el levantamiento su ubicación, la protección y la capacidad.'),
+        LABELING,
+      ],
+    };
+  }
   const run = PATHWAYS.find((w) => w.service === 'power' && w.id === id);
   if (!run) return null;
   const total = supports?.get(run.id);
   const held = supportCheck(total, EMT_SPACING_M, 'emt');
-  const speaker = SPEAKERS.find((k) => `PWR_${k.line}` === run.id)!.id;
   const boxes = junctionsOf(run.id).length;
   const low = Math.min(...run.points.map((q) => q.h));
+  if (run.id === 'PWR_IDF') {
+    return {
+      kind: 'Alimentación de gabinete',
+      title: run.id,
+      subtitle: `${IDF_BOARD.id} → ${IDF.id}`,
+      specs: [
+        ['Tipo', '3 conductores 12 AWG (fase, neutro y tierra) en tubo EMT'],
+        ['Tubo', `EMT ${run.trade}, pegado al muro con abrazaderas`],
+        ['Alimenta', `${IDF.id} (UPS-IDFN, luego SW-IDFN)`],
+        ['Largo', `${ceil1(pathLength(run.points))} m`],
+        ['Altura', hRange(run.points)],
+        ...(total ? [['Abrazaderas', `${total.total} (una a ≤ 0.9 m de cada caja y cada ≤ ${EMT_SPACING_M} m)`] as [string, string]] : []),
+        ['Cajas de registro', `${boxes}`],
+        ['Salida', 'Entra por el costado del gabinete; el UPS se conecta dentro'],
+      ],
+      checks: [
+        check('NEC art. 800 (potencia y comunicaciones)', 'check', 'Va en su propio tubo metálico, aparte de los de datos y fibra: los conductores de potencia y de señal no comparten canalización. Confirmar en la NOM-001-SEDE (fuentes secundarias del NEC).'),
+        check('NOM-001-SEDE art. 358.12 (EMT y daño físico)', 'pass', `Va a ${ceil1(low)} m o más, fuera del alcance de balones y personas.`),
+        check('NOM-001-SEDE (circuito dedicado)', 'check', 'Confirmar con el electricista la protección y el calibre del circuito para el UPS APC BR1500RM2U y el switch.'),
+        ...(held ? [held] : []),
+        LABELING,
+      ],
+    };
+  }
+  const speaker = SPEAKERS.find((k) => `PWR_${k.line}` === run.id)!.id;
   return {
     kind: 'Alimentación de bocina',
     title: run.id,
@@ -389,5 +531,11 @@ export function infoCardFor(target: InfoTarget, supports?: SupportIndex): InfoCa
       return audioCard(target.line, supports);
     case 'power':
       return powerCard(target.id, supports);
+    case 'isp':
+      return ispCard(target.id, supports);
+    case 'netdevice':
+      return netDeviceCard(target.id);
+    case 'camera':
+      return cameraCard(target.id);
   }
 }

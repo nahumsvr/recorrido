@@ -1,5 +1,6 @@
 import type { Vector3 } from 'three';
 import type { ApGroupId } from '../data/aps.ts';
+import { accessPointNetwork, networkRows } from '../data/network.ts';
 import { MOUNT_TOLERANCE_M } from './apLayer.ts';
 import type { ApItem } from './apLayer.ts';
 
@@ -68,6 +69,8 @@ export function createApPanel(): ApPanel {
       row('Altura de montaje', `${ap.position.h.toFixed(1)} m`);
       row('Posición (plano)', `X ${ap.position.x.toFixed(1)} · Y ${ap.position.y.toFixed(1)} m`);
       row('Montaje', item.mountKind === 'ceiling' ? 'Techo' : item.mountKind === 'wall' ? 'Muro' : 'Muro (no encontrado en el modelo)');
+      const net = accessPointNetwork(ap.id);
+      if (net) for (const [k, v] of networkRows(net)) row(k, v);
       distanceEl = row('Distancia', '');
       root.append(dl);
 

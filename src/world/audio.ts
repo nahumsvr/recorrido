@@ -20,7 +20,7 @@ import {
   type AudioLine,
   type Speaker,
 } from '../data/audio.ts';
-import { AUDIO_BOARD, SPEAKER_OUTLETS } from '../data/audioPower.ts';
+import { AUDIO_BOARD, POWER_RUNS, SPEAKER_OUTLETS } from '../data/audioPower.ts';
 import { EMT_OD_MM, PATHWAYS, RMC_OD_MM } from '../data/cabling.ts';
 import { planToThree, type PlanPoint } from '../domain/coords.ts';
 import type { Obstacle } from '../player/obstacles.ts';
@@ -31,8 +31,8 @@ const SPK_H = 0.7;
 const SPK_D = 0.37;
 const CABLE_R = 0.012;
 /** Invisible, fatter cylinder around each cable segment so it can be clicked. */
-const PICK_R = 0.08;
-const pickMaterial = new MeshBasicMaterial({ visible: false });
+export const PICK_R = 0.08;
+export const pickMaterial = new MeshBasicMaterial({ visible: false });
 const LINE_COLOR: Record<AudioLine, number> = { L: 0x4aa3ff, R: 0xff6b6b };
 const TABLE_TOP_T = 0.03;
 const TABLE_LEG = 0.045;
@@ -40,10 +40,10 @@ const MIXER = { w: 0.31, h: 0.1, d: 0.4 } as const;
 /** Clear height of the table for the player collision volume. */
 const TABLE_SOLID_TOP_M = 0.8;
 
-const vec = (p: PlanPoint): Vector3 => new Vector3(...planToThree(p));
+export const vec = (p: PlanPoint): Vector3 => new Vector3(...planToThree(p));
 
 /** Thin cylinder between two points. */
-function segment(a: Vector3, b: Vector3, radius: number, material: Material): Mesh {
+export function segment(a: Vector3, b: Vector3, radius: number, material: Material): Mesh {
   const length = a.distanceTo(b);
   const mesh = new Mesh(new CylinderGeometry(radius, radius, length, 6), material);
   mesh.position.copy(a).add(b).multiplyScalar(0.5);
@@ -52,7 +52,7 @@ function segment(a: Vector3, b: Vector3, radius: number, material: Material): Me
 }
 
 /** Tags a mesh as clickable: the info card shows `info`. */
-function pickable<T extends Mesh>(mesh: T, info: object): T {
+export function pickable<T extends Mesh>(mesh: T, info: object): T {
   mesh.userData = { info };
   return mesh;
 }
@@ -135,7 +135,7 @@ function buildPower(): Group {
   board.userData = { info: { type: 'power', id: AUDIO_BOARD.id } };
   power.add(board);
 
-  for (const w of PATHWAYS.filter((x) => x.service === 'power')) {
+  for (const w of PATHWAYS.filter((x) => x.service === 'power' && POWER_RUNS.some((r) => r.id === x.id))) {
     const info = { type: 'power', id: w.id };
     const od = (EMT_OD_MM[w.trade ?? ''] ?? 17.9) / 1000;
     const pts = w.points.map(vec);

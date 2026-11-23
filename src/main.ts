@@ -35,6 +35,9 @@ import { createMinimap } from './ui/minimap.ts';
 import { createTeleportMenu } from './ui/teleportMenu.ts';
 import { loadModel } from './world/loadModel.ts';
 import { createAudioSystem, createFohStation } from './world/audio.ts';
+import { createIdfPower } from './world/idfPower.ts';
+import { createNeighborBuilding, neighborBox, neighborObstacle } from './world/neighborBuilding.ts';
+import { createUndergroundLink } from './world/undergroundLink.ts';
 import { PENETRATIONS } from './data/cabling.ts';
 import { createCablingLayer, FAMILY_COLORS } from './world/cabling.ts';
 import { createSupportLayer } from './world/supports.ts';
@@ -103,7 +106,8 @@ let localOverrides = loadLocalOverrides();
 const cameras = createCameraLayer(applyOverrides(baseCameras, localOverrides), world.bvh, { minX: bounds.min.x, maxX: bounds.max.x, minY: bounds.min.z, maxY: bounds.max.z });
 world.scene.add(cameras.group);
 const viewer = createCameraViewer(cameras.items);
-world.scene.add(createNetworkRack());
+const networkRack = createNetworkRack();
+world.scene.add(networkRack);
 const roomWiring = createNetworkRoomWiring();
 world.scene.add(roomWiring);
 const desk = createNetworkDesk();
@@ -114,13 +118,19 @@ const supports = createSupportLayer(world.bvh);
 world.scene.add(cabling.pathways, cabling.penetrations, cabling.drops, supports.group);
 const audio = createAudioSystem();
 world.scene.add(audio.installed, audio.power);
+const neighbor = createNeighborBuilding({ minX: bounds.min.x, maxX: bounds.max.x, maxZ: bounds.max.z });
+world.scene.add(neighbor);
+const ispLink = createUndergroundLink(neighborBox({ minX: bounds.min.x, maxX: bounds.max.x, maxZ: bounds.max.z }).minZ);
+world.scene.add(ispLink);
+const idfPower = createIdfPower();
+world.scene.add(idfPower);
 const foh = createFohStation();
 world.scene.add(foh.fixed, foh.mixer);
 const door = createNetworkRoomDoor();
 world.scene.add(door.root);
 const toast = createToast();
 /** Solid props the player cannot cross; the door leaves this list while open. */
-const obstacles: Obstacle[] = [rackObstacle(), deskObstacle(), foh.obstacle, door.obstacle];
+const obstacles: Obstacle[] = [rackObstacle(), deskObstacle(), foh.obstacle, door.obstacle, neighborObstacle({ minX: bounds.min.x, maxX: bounds.max.x, maxZ: bounds.max.z })];
 function setDoorSolid(solid: boolean): void {
   const i = obstacles.indexOf(door.obstacle);
   if (solid && i < 0) obstacles.push(door.obstacle);
@@ -373,6 +383,8 @@ const hud = createHud(
     { id: 'supportsShow', label: 'Soportes (ménsulas, varillas y abrazaderas)', initial: true, onChange: (on) => (supports.group.visible = on) },
     { id: 'dropsShow', label: 'Bajadas a APs y cámaras', initial: true, onChange: (on) => (cabling.drops.visible = on) },
     { id: 'roomWiringShow', label: 'Cuarto de red: energía, contactos y cables', initial: true, onChange: (on) => (roomWiring.visible = on) },
+    { id: 'ispLinkShow', label: 'Internet: fibra subterránea del proveedor', initial: true, onChange: (on) => (ispLink.visible = on) },
+    { id: 'idfPowerShow', label: 'Alimentación del IDF-N', initial: true, onChange: (on) => (idfPower.visible = on) },
     { id: 'holesShow', label: `Hoyos en muros (${PENETRATIONS.length})`, initial: true, onChange: (on) => (cabling.penetrations.visible = on) },
     { id: 'audioShow', label: 'Bocinas y cables', initial: true, section: 'Audio (2 bocinas)', onChange: (on) => (audio.installed.visible = on) },
     { id: 'audioPowerShow', label: 'Alimentación de bocinas', initial: true, section: 'Audio (2 bocinas)', onChange: (on) => (audio.power.visible = on) },
@@ -416,6 +428,8 @@ const minimap = createMinimap(
   world.scene.fog = null;
   world.scene.background = new Color(0x1d2128);
   world.grass.visible = false;
+  neighbor.visible = false;
+  ispLink.visible = false;
   aps.root.visible = false;
   cameras.group.visible = false;
   overlay.visible = false;
@@ -428,6 +442,8 @@ const minimap = createMinimap(
   world.scene.fog = fog;
   world.scene.background = sky;
   world.grass.visible = true;
+  neighbor.visible = true;
+  ispLink.visible = hud.isOn('ispLinkShow');
 }
 addEventListener('keydown', (e) => {
   if (e.code === 'KeyM' && !e.repeat) minimap.setVisible(!minimap.isVisible());
@@ -467,7 +483,8 @@ function pickAt(clientX: number, clientY: number, center: boolean, clearOnMiss: 
     infoCard.show(null);
     return setPanelState({ ...panelState, pinned: item.ap.id });
   }
-  const target = pickInfra();
+  const cam = cameras.pick(pickRaycaster);
+  const target = cam ? ({ type: 'camera', id: cam.camera.id } as InfoTarget) : pickInfra();
   const card = target && infoCardFor(target, supports.stats);
   if (card) {
     if (panelState.pinned) setPanelState({ ...panelState, pinned: null });
@@ -484,7 +501,7 @@ function pickInfra(): InfoTarget | null {
     for (let n = o; n; n = n.parent) if (!n.visible) return false;
     return true;
   };
-  const roots = [cabling.pathways, cabling.penetrations, cabling.drops, audio.installed, audio.power];
+  const roots = [cabling.pathways, cabling.penetrations, cabling.drops, audio.installed, audio.power, idfPower, ispLink, networkRack];
   for (const hit of pickRaycaster.intersectObjects(roots, true)) {
     if (!shown(hit.object)) continue;
     for (let n: Object3D | null = hit.object; n; n = n.parent) {

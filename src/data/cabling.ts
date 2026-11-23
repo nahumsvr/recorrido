@@ -3,6 +3,7 @@ import { AUDIO_RUNS, SPEAKERS } from './audio.ts';
 import { POWER_RUNS } from './audioPower.ts';
 import { PROJECT_CAMERAS } from './projectCameras.ts';
 import { MODEL_ACCESS_POINTS } from './modelAps.ts';
+import { ISP_ENTRY_H, ISP_FLOOR_H, ISP_RISER_Y, ISP_X } from './undergroundLink.ts';
 
 /**
  * Structured cabling plan: pathways (trays, conduits), penetrations and the
@@ -21,8 +22,8 @@ import { MODEL_ACCESS_POINTS } from './modelAps.ts';
  * Everything on the courts and stands side (back wall, risers, west and north walls) is EMT metal conduit: the public can reach the stands and the courts take balls. Wire-basket tray stays only in the annex, where nobody goes.
  */
 export type PathwayKind = 'tray' | 'conduit' | 'raceway' | 'emt' | 'rmc' | 'plastic';
-/** `power`: the mains feed of the active speakers, in its own EMT. */
-export type Service = 'data' | 'audio' | 'power';
+/** `power`: the mains feed of the active speakers, in its own EMT. `isp`: the provider's underground fiber where it enters the building. */
+export type Service = 'data' | 'audio' | 'power' | 'isp';
 
 export interface Pathway {
   readonly id: string;
@@ -64,6 +65,8 @@ const PLASTIC = { widthMm: 40, depthMm: 25 } as const;
 const SLEEVE_4IN = { widthMm: 100, depthMm: 100 } as const;
 /** Rigid sleeve through the outer wall for one exterior camera cable: 50 mm inner diameter (2"). */
 const SLEEVE_2IN = { widthMm: 50, depthMm: 50 } as const;
+/** Rigid steel conduit ¾" for the provider fiber riser: inner diameter 21.2 mm. */
+const RMC_THREE_QUARTER = { widthMm: 21.2, depthMm: 21.2, trade: '¾"' } as const;
 
 /** Courts trays: above the top stand row (3.77 m) and under the roof start (6.85 m). */
 const H_HIGH = 5.7;
@@ -93,8 +96,26 @@ export const IDF = {
   /** The 24-port PoE++ switch of the hardware budget, moved here from the rack; 12 of its ports are used. */
   switchModel: 'TP-Link SG3428XMPP',
   ports: 7,
+  /** Rack units of the cabinet, as in the technical report (U1 at the bottom). */
+  units: [
+    { u: '6', id: 'PP-B', label: 'Patch panel 24p LP-PP-607' },
+    { u: '5', id: 'ORG-4', label: 'Organizador NCMHF1' },
+    { u: '4', id: 'SW-IDFN', label: 'TP-Link SG3428XMPP' },
+    { u: '3', id: '—', label: 'Reserva / gestión de fibra' },
+    { u: '2–1', id: 'UPS-IDFN', label: 'APC BR1500RM2U' },
+  ],
 } as const;
 const X_IDF = IDF.position.x;
+/**
+ * Board TA-N: wall box on the north wall, 1.2 m east of the IDF and at the same height band, source of the cabinet's
+ * dedicated 120 V circuit. The panel that feeds it is outside the 3D model: assumption to confirm in the site survey.
+ */
+export const IDF_BOARD = { id: 'TA-N', position: p(31.67, 0.08, 5.3), size: { w: 0.34, h: 0.5, d: 0.15 } } as const;
+/** Power conduit: from the board's west side to the cabinet's east face (UPS-IDFN plugs in inside). */
+const IDF_POWER_POINTS: readonly PlanPoint[] = [
+  p(IDF_BOARD.position.x - IDF_BOARD.size.w / 2, 0.03, IDF_BOARD.position.h),
+  p(IDF.position.x + IDF.size.w / 2, 0.03, IDF_BOARD.position.h),
+];
 /** Plastic raceway goes flush on the wall (0.04 m off): annex north wall face Y 32.4, offices inside faces X 42.68 and Y 24.7. */
 /** Network room east wall, EMT 0.08 m off its inner face (X 16.44). */
 const X_ROOM_E = 16.36;
@@ -206,6 +227,11 @@ export const PATHWAYS: readonly Pathway[] = [
   ...AUDIO_RUNS.flatMap((r): Pathway[] => audioPathways(r.line, r.points)),
   // -- Speaker power (see src/data/audioPower.ts): one EMT per speaker, apart from the audio.
   ...POWER_RUNS.map((r): Pathway => ({ id: r.id, kind: 'emt', service: 'power', label: r.label, ...EMT_HALF, points: r.points })),
+  // -- IDF-N power: dedicated 120 V circuit from board TA-N to the cabinet, in its own EMT apart from the data.
+  // -- Provider fiber (see src/data/undergroundLink.ts): riser on the annex face of the south wall, then a sleeve through it.
+  { id: 'ISP_RISER', kind: 'rmc', service: 'isp', label: 'Provider fiber: riser from the buried duct up the annex face of the network room wall', ...RMC_THREE_QUARTER, points: [p(ISP_X, ISP_RISER_Y, ISP_FLOOR_H), p(ISP_X, ISP_RISER_Y, ISP_ENTRY_H)] },
+  { id: 'PEN10', kind: 'conduit', service: 'isp', label: 'Network room south wall sleeve (PEN-10), provider fiber', ...SLEEVE_2IN, points: [p(ISP_X, ISP_RISER_Y, ISP_ENTRY_H), p(ISP_X, 32.1, ISP_ENTRY_H)] },
+  { id: 'PWR_IDF', kind: 'emt', service: 'power', label: 'Power to IDF-N: board TA-N along the north wall to the cabinet (UPS-IDFN)', ...EMT_HALF, points: IDF_POWER_POINTS },
 ];
 
 export interface Penetration {
@@ -227,6 +253,7 @@ export const PENETRATIONS: readonly Penetration[] = [
   { id: 'PEN-3', kind: 'wall', description: 'Network room south wall → annex', position: p(12.9, 32.3, 2.5), sleeves: 2, diameterMm: 100, pathway: 'ANNEX_FEED', thicknessM: 0.2 },
   { id: 'PEN-8', kind: 'wall', description: 'West wall, north-west corner → exterior camera CAM17', position: p(-0.1, 0.8, H_HIGH), sleeves: 1, diameterMm: 50, pathway: 'PEN8', thicknessM: 0.2 },
   { id: 'PEN-9', kind: 'wall', description: 'South wall, south-west corner → exterior camera CAM18', position: p(1.0, 32.3, H_HIGH), sleeves: 1, diameterMm: 50, pathway: 'PEN9', thicknessM: 0.2 },
+  { id: 'PEN-10', kind: 'wall', description: 'Network room south wall → provider fiber from the white building', position: p(ISP_X, 32.3, ISP_ENTRY_H), sleeves: 1, diameterMm: 50, pathway: 'PEN10', thicknessM: 0.2 },
   { id: 'PEN-7', kind: 'wall', description: 'Offices west wall (east stand end wall side) → offices', position: p(42.58, 28.2, H_PEN7), sleeves: 2, diameterMm: 100, pathway: 'PEN7', thicknessM: 0.2 },
 ];
 

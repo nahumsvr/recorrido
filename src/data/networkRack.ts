@@ -30,22 +30,23 @@ export const RACK_PLACEMENT = {
 } as const;
 
 /**
- * Devices and quantities follow the hardware budget of the technical report. The
- * 24-port PoE++ switch (SG3428XMPP) of the budget lives in the north IDF (see
- * `IDF` in cabling.ts), so U36 is left free here.
+ * Devices and quantities follow the hardware budget of the technical report, and
+ * the U positions follow its rack table (PP-A U41-U40, SW-RACK U38, RTR-01 U36,
+ * CTRL-01 U35, NVR-01 U34-U33, PDUs U4-U3, UPS U2-U1). The 24-port PoE++ switch
+ * (SG3428XMPP), its patch panel (PP-B) and its organizer (ORG-4) live in the
+ * north IDF (see `IDF` in cabling.ts).
  */
 export const RACK_DEVICES: readonly RackDevice[] = [
   { id: 'UPS', kind: 'ups', label: 'UPS rack 3000 VA', model: 'APC SMT3000RM2U', u: 1, units: 2 },
   { id: 'PDU1', kind: 'pdu', label: 'PDU 20 A', model: 'Tripp Lite PDU1220', u: 3, units: 1 },
-  { id: 'NVR', kind: 'nvr', label: 'NVR 32 ch', model: 'TP-Link VIGI NVR4032H', u: 4, units: 1 },
-  { id: 'PDU2', kind: 'pdu', label: 'PDU 20 A', model: 'Tripp Lite PDU1220', u: 5, units: 1 },
-  { id: 'OC300', kind: 'controller', label: 'SDN controller', model: 'TP-Link OC300', u: 33, units: 1 },
-  { id: 'ER8411', kind: 'router', label: 'VPN router', model: 'TP-Link ER8411', u: 34, units: 1 },
-  { id: 'ORG4', kind: 'organizer', label: 'Cable organizer', model: 'Panduit NCMHF1', u: 35, units: 1 },
-  { id: 'ORG3', kind: 'organizer', label: 'Cable organizer', model: 'Panduit NCMHF1', u: 37, units: 1 },
-  { id: 'PP24', kind: 'patch', label: 'Patch panel 24p', model: 'LinkedPro LP-PP-607', u: 38, units: 1 },
-  { id: 'ORG2', kind: 'organizer', label: 'Cable organizer', model: 'Panduit NCMHF1', u: 39, units: 1 },
-  { id: 'SW48', kind: 'switch', label: 'PoE++ switch 48p', model: 'TP-Link SG3452XMPP', u: 40, units: 1 },
-  { id: 'ORG1', kind: 'organizer', label: 'Cable organizer', model: 'Panduit NCMHF1', u: 41, units: 1 },
-  { id: 'PP48', kind: 'patch', label: 'Patch panel 48p', model: 'LinkedPro LP-PP-608', u: 42, units: 1 },
+  { id: 'PDU2', kind: 'pdu', label: 'PDU 20 A', model: 'Tripp Lite PDU1220', u: 4, units: 1 },
+  // Spare units U5-U31 (growth and ventilation), as in the technical report.
+  { id: 'ORG3', kind: 'organizer', label: 'Cable organizer', model: 'Panduit NCMHF1', u: 32, units: 1 },
+  { id: 'NVR', kind: 'nvr', label: 'NVR 16 ch', model: 'TP-Link VIGI NVR2016H', u: 33, units: 2 },
+  { id: 'OC300', kind: 'controller', label: 'SDN controller', model: 'TP-Link OC300', u: 35, units: 1 },
+  { id: 'ER8411', kind: 'router', label: 'VPN router', model: 'TP-Link ER8411', u: 36, units: 1 },
+  { id: 'ORG2', kind: 'organizer', label: 'Cable organizer', model: 'Panduit NCMHF1', u: 37, units: 1 },
+  { id: 'SW48', kind: 'switch', label: 'PoE++ switch 48p', model: 'TP-Link SG3452XMPP', u: 38, units: 1 },
+  { id: 'ORG1', kind: 'organizer', label: 'Cable organizer', model: 'Panduit NCMHF1', u: 39, units: 1 },
+  { id: 'PP48', kind: 'patch', label: 'Patch panel 48p', model: 'LinkedPro LP-PP-608', u: 40, units: 2 },
 ];
